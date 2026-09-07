@@ -1,0 +1,24 @@
+{
+  "name": "bipescola",
+  "version": "1.0.0",
+  "description": "",
+  "homepage": "https://github.com/victorjohann-hub/bipescola#readme",
+  "bugs": {
+    "url": "https://github.com/victorjohann-hub/bipescola/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/victorjohann-hub/bipescola.git"
+  },
+  "license": "ISC",
+  "author": "",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1"
+  }
+}
