@@ -1,16 +1,46 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  Alert,
+  ActivityIndicator
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { Input } from "@shared/ui/Input/Input";
 import { Button } from "@shared/ui/Button/Button";
+import { createParentAPI } from "@shared/api/userApi";
 
 export const ParentRegister = ({ onBack }) => {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleRegister = async () => {
+    if (!name || !email) {
+      Alert.alert("Erro", "Por favor, preencha todos os campos.");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await createParentAPI({ name, email });
+      
+      // Exibe a senha temporária gerada pelo backend
+      Alert.alert(
+        "Cadastro Concluído!",
+        `Conta criada com sucesso.\nSua senha de acesso é: ${response.tempPassword}\nGuarde-a com segurança!`,
+        [{ text: "OK", onPress: onBack }]
+      );
+    } catch (error) {
+      Alert.alert("Erro no cadastro", error.message || "Não foi possível concluir o cadastro.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -32,19 +62,13 @@ export const ParentRegister = ({ onBack }) => {
 
         <View style={styles.form}>
           <Input
-            label="nome"
+            label="Nome"
             placeholder="John Cena"
             backgroundColor="#C1B4D8"
             borderColor="#68519d"
             labelColor="#68519d"
-          />
-          <Input
-            label="Telefone"
-            placeholder="(79)91234-5678"
-            backgroundColor="#C1B4D8"
-            borderColor="#68519d"
-            labelColor="#68519d"
-            keyboardType="phone-pad"
+            value={name}
+            onChangeText={setName}
           />
           <Input
             label="Email"
@@ -53,68 +77,24 @@ export const ParentRegister = ({ onBack }) => {
             borderColor="#68519d"
             labelColor="#68519d"
             keyboardType="email-address"
-          />
-          <Input
-            label="CPF"
-            placeholder="123.456.789.00"
-            backgroundColor="#C1B4D8"
-            borderColor="#68519d"
-            labelColor="#68519d"
-            keyboardType="numeric"
-          />
-          <Input
-            label="Senha"
-            placeholder="Senha"
-            backgroundColor="#C1B4D8"
-            borderColor="#68519d"
-            labelColor="#68519d"
-            isPassword
-          />
-          <Input
-            label="Repetir Senha"
-            placeholder="Repetir Senha"
-            backgroundColor="#C1B4D8"
-            borderColor="#68519d"
-            labelColor="#68519d"
-            isPassword
+            autoCapitalize="none"
+            value={email}
+            onChangeText={setEmail}
           />
         </View>
 
-        <View style={styles.studentSectionHeader}>
-          <Text style={styles.studentCount}>Aluno(a) 1</Text>
-          <Text style={styles.sectionTitle}>
-            Informações do Aluno(a)/Alunos(as)
-          </Text>
-        </View>
-
-        <View style={styles.form}>
-          <Input
-            label="Nome do Filho"
-            placeholder="Nome do Filho"
-            backgroundColor="#C1B4D8"
-            borderColor="#68519d"
-            labelColor="#68519d"
-          />
-          <Input
-            label="CPF do Filho"
-            placeholder="234.567.890-11"
-            backgroundColor="#C1B4D8"
-            borderColor="#68519d"
-            labelColor="#68519d"
-            keyboardType="numeric"
-          />
-        </View>
-
-        {/* We add some padding at the bottom to ensure scroll passes the nav bar if needed, 
-            though the layout has Confirmar button at the bottom. Let's just put it here. */}
         <View style={styles.buttonContainer}>
-          <Button
-            title="Confirmar"
-            style={styles.confirmButton}
-            backgroundColor="#7E60BF"
-            textColor="#fff"
-            onPress={() => console.log("Confirm Parent Registration")}
-          />
+          {loading ? (
+            <ActivityIndicator size="large" color="#7E60BF" />
+          ) : (
+            <Button
+              title="Confirmar"
+              style={styles.confirmButton}
+              backgroundColor="#7E60BF"
+              textColor="#fff"
+              onPress={handleRegister}
+            />
+          )}
         </View>
       </ScrollView>
     </View>
@@ -168,14 +148,6 @@ const styles = StyleSheet.create({
   },
   form: {
     marginBottom: 24,
-  },
-  studentSectionHeader: {
-    marginBottom: 16,
-  },
-  studentCount: {
-    fontSize: 12,
-    color: "#333",
-    fontFamily: "Roboto_300Light",
   },
   buttonContainer: {
     alignItems: "center",
