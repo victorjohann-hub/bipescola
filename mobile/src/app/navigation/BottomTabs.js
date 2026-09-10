@@ -4,6 +4,9 @@ import { View, Text, StyleSheet } from "react-native";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { RegisterScreen } from "@pages/Register";
 
+import { PresenceNavigator } from "@pages/Presence";
+import { ProfileScreen } from "@pages/Profile";
+
 // Placeholder screens for other tabs
 const PlaceholderScreen = ({ name }) => (
   <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
@@ -11,9 +14,7 @@ const PlaceholderScreen = ({ name }) => (
   </View>
 );
 const HomeScreen = () => <PlaceholderScreen name="Home (Notificações)" />;
-const PresenceScreen = () => <PlaceholderScreen name="Presença" />;
 const EvaluationScreen = () => <PlaceholderScreen name="Avaliação" />;
-const ProfileScreen = () => <PlaceholderScreen name="Perfil" />;
 
 const Tab = createBottomTabNavigator();
 
@@ -44,10 +45,15 @@ export function BottomTabs() {
       />
       <Tab.Screen
         name="Presence"
-        component={PresenceScreen}
+        component={PresenceNavigator}
         options={{
           tabBarIcon: ({ focused }) => (
-            <View style={styles.iconContainer}>
+            <View
+              style={[
+                styles.iconContainer,
+                focused && { backgroundColor: "#C5E1A5" },
+              ]}
+            >
               <Feather
                 name="check-circle"
                 size={24}
@@ -66,7 +72,7 @@ export function BottomTabs() {
             <View
               style={[
                 styles.iconContainer,
-                focused && styles.activeIconContainer,
+                focused && { backgroundColor: "#C1B4D8" },
               ]}
             >
               <Feather
@@ -100,7 +106,12 @@ export function BottomTabs() {
         component={ProfileScreen}
         options={{
           tabBarIcon: ({ focused }) => (
-            <View style={styles.iconContainer}>
+            <View
+              style={[
+                styles.iconContainer,
+                focused && { backgroundColor: "#A0C4E1" },
+              ]}
+            >
               <Feather
                 name="user"
                 size={24}
