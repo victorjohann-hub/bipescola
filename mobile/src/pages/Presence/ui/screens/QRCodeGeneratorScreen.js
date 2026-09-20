@@ -1,12 +1,12 @@
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity, Image } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { ResponsiveContainer } from '@shared/ui/ResponsiveContainer/ResponsiveContainer';
 import { Feather } from "@expo/vector-icons";
 import { Button } from "@shared/ui/Button/Button";
 
 export const QRCodeGeneratorScreen = ({ navigation }) => {
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <ResponsiveContainer style={styles.safeArea}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Qr Code</Text>
         <TouchableOpacity
@@ -51,7 +51,7 @@ export const QRCodeGeneratorScreen = ({ navigation }) => {
           />
         </View>
       </View>
-    </SafeAreaView>
+    </ResponsiveContainer>
   );
 };
 

@@ -7,7 +7,7 @@ import {
   Image,
   TouchableOpacity,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { ResponsiveContainer } from '@shared/ui/ResponsiveContainer/ResponsiveContainer';
 import { Feather } from "@expo/vector-icons";
 
 export const ProfileScreen = () => {
@@ -52,7 +52,7 @@ export const ProfileScreen = () => {
   ];
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <ResponsiveContainer style={styles.safeArea}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Informações Pessoais</Text>
       </View>
@@ -138,7 +138,7 @@ export const ProfileScreen = () => {
           ))}
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </ResponsiveContainer>
   );
 };
 

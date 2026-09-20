@@ -6,14 +6,14 @@ import {
   TouchableOpacity,
   ScrollView,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { ResponsiveContainer } from '@shared/ui/ResponsiveContainer/ResponsiveContainer';
 import { Feather } from "@expo/vector-icons";
 
 export const ClassListScreen = ({ navigation, route }) => {
   // In a real app we would fetch the class data based on route.params.classId
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <ResponsiveContainer style={styles.safeArea}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Validação de Presença</Text>
         <TouchableOpacity
@@ -50,7 +50,7 @@ export const ClassListScreen = ({ navigation, route }) => {
           </TouchableOpacity>
         ))}
       </ScrollView>
-    </SafeAreaView>
+    </ResponsiveContainer>
   );
 };
 

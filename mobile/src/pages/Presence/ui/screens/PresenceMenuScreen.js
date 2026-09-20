@@ -6,12 +6,12 @@ import {
   TouchableOpacity,
   ScrollView,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { ResponsiveContainer } from '@shared/ui/ResponsiveContainer/ResponsiveContainer';
 import { Feather } from "@expo/vector-icons";
 
 export const PresenceMenuScreen = ({ navigation }) => {
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <ResponsiveContainer style={styles.safeArea}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Validação de Presença</Text>
       </View>
@@ -64,7 +64,7 @@ export const PresenceMenuScreen = ({ navigation }) => {
           <Feather name="chevron-down" size={24} color="#000" />
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </ResponsiveContainer>
   );
 };
 

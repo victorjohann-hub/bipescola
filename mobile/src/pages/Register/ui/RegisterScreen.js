@@ -7,7 +7,7 @@ import {
   Modal,
   ScrollView,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { ResponsiveContainer } from '@shared/ui/ResponsiveContainer/ResponsiveContainer';
 import { Feather } from "@expo/vector-icons";
 import { ParentRegister } from "./ParentRegister";
 import { EmployeeRegister } from "./EmployeeRegister";
@@ -22,7 +22,7 @@ export const RegisterScreen = () => {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <ResponsiveContainer style={styles.safeArea}>
       {registerType === "parent" && (
         <ParentRegister onBack={() => setModalVisible(true)} />
       )}
@@ -70,7 +70,7 @@ export const RegisterScreen = () => {
           </View>
         </View>
       </Modal>
-    </SafeAreaView>
+    </ResponsiveContainer>
   );
 };
 

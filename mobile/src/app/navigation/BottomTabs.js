@@ -1,11 +1,14 @@
 import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, useWindowDimensions } from "react-native";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { RegisterScreen } from "@pages/Register";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { PresenceNavigator } from "@pages/Presence";
 import { ProfileScreen } from "@pages/Profile";
+import { NoticesNavigator } from "@pages/Notices";
+import { EvaluationNavigator } from "@pages/Evaluation";
 
 // Placeholder screens for other tabs
 const PlaceholderScreen = ({ name }) => (
@@ -13,32 +16,52 @@ const PlaceholderScreen = ({ name }) => (
     <Text>{name}</Text>
   </View>
 );
-const HomeScreen = () => <PlaceholderScreen name="Home (Notificações)" />;
-const EvaluationScreen = () => <PlaceholderScreen name="Avaliação" />;
 
 const Tab = createBottomTabNavigator();
 
 export function BottomTabs() {
+  const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+  const isTablet = width >= 768;
+
   return (
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
-        tabBarStyle: styles.tabBar,
+        tabBarStyle: [
+          styles.tabBar, 
+          { 
+            // Adiciona o inset da navegação do sistema para não sobrepor os ícones
+            height: 70 + insets.bottom,
+            paddingBottom: 10 + insets.bottom,
+            // Mantém a tab bar alinhada com o conteúdo restrito no tablet
+            alignSelf: 'center',
+            width: '100%',
+            maxWidth: isTablet ? (width > 900 ? 750 : '85%') : '100%',
+            borderTopWidth: 0, // Remove a borda original para ficar mais clean se for card
+            elevation: 0, // Remove sombra no android para evitar linha dupla
+          }
+        ],
         tabBarShowLabel: false,
       }}
     >
       <Tab.Screen
-        name="Home"
-        component={HomeScreen}
+        name="Avisos"
+        component={NoticesNavigator}
         options={{
           tabBarIcon: ({ focused }) => (
-            <View style={styles.iconContainer}>
+            <View
+              style={[
+                styles.iconContainer,
+                focused && { backgroundColor: "#FFCDD2" }, // Rosa claro
+              ]}
+            >
               <Feather
                 name="bell"
                 size={24}
                 color={focused ? "#000" : "#000"}
               />
-              <Text style={styles.iconText}>nome</Text>
+              <Text style={styles.iconText}>Avisos</Text>
             </View>
           ),
         }}
@@ -87,10 +110,15 @@ export function BottomTabs() {
       />
       <Tab.Screen
         name="Evaluation"
-        component={EvaluationScreen}
+        component={EvaluationNavigator}
         options={{
           tabBarIcon: ({ focused }) => (
-            <View style={styles.iconContainer}>
+            <View
+              style={[
+                styles.iconContainer,
+                focused && { backgroundColor: "#FDE68A" }, // Amarelo
+              ]}
+            >
               <Feather
                 name="clipboard"
                 size={24}
@@ -128,12 +156,13 @@ export function BottomTabs() {
 
 const styles = StyleSheet.create({
   tabBar: {
-    height: 80,
     backgroundColor: "#fff",
-    borderTopWidth: 1,
-    borderTopColor: "#e0e0e0",
-    paddingBottom: 10,
     paddingTop: 10,
+    // Adiciona sombra suave no tablet para combinar com o ResponsiveContainer
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
   },
   iconContainer: {
     alignItems: "center",
