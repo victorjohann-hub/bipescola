@@ -17,7 +17,7 @@ const router = express.Router();
 router.post(
   "/",
   authMiddleware,
-  roleMiddleware("ADM", "PROF"),
+  roleMiddleware("ADM", "PROF", "PORTEIRO"),
   createAttendance
 );
 
@@ -54,3 +54,5 @@ router.delete(
 );
 
 export default router;
+
+

@@ -124,3 +124,58 @@ export async function deleteById(id) {
 
   return result.affectedRows > 0;
 }
+
+export async function updatePassword(id, senhaHash) {
+  const sql = `
+    UPDATE users
+    SET senha = ?, firstLogin = 0,
+        reset_token = NULL,
+        reset_token_expires = NULL,
+        data_atualizacao = CURRENT_TIMESTAMP
+    WHERE id = ?
+  `;
+
+  const result = await query(sql, [senhaHash, id]);
+  return result.affectedRows > 0;
+}
+
+export async function saveResetToken(id, token, expiresAt) {
+  const sql = `
+    UPDATE users
+    SET reset_token = ?, reset_token_expires = ?
+    WHERE id = ?
+  `;
+
+  const result = await query(sql, [token, expiresAt, id]);
+  return result.affectedRows > 0;
+}
+
+export async function findByResetToken(email, token) {
+  const sql = `
+    SELECT id, email
+    FROM users
+    WHERE email = ?
+      AND reset_token = ?
+      AND reset_token_expires > NOW()
+  `;
+
+  const results = await query(sql, [email, token]);
+  return results.length > 0 ? results[0] : null;
+}
+
+export async function updatePhoto(id, foto) {
+  const sql = `
+    UPDATE users
+    SET foto = ?, data_atualizacao = CURRENT_TIMESTAMP
+    WHERE id = ?
+  `;
+
+  const result = await query(sql, [foto, id]);
+  return result.affectedRows > 0;
+}
+
+export async function findPasswordById(id) {
+  const sql = 'SELECT id, email, senha FROM users WHERE id = ?';
+  const results = await query(sql, [id]);
+  return results.length > 0 ? results[0] : null;
+}

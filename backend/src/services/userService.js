@@ -1,5 +1,7 @@
-﻿import bcrypt from "bcrypt";
+import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
+import nodemailer from "nodemailer";
 import * as userModel from "../models/userModel.js";
 
 function generatePassword() {
@@ -28,17 +30,17 @@ export async function loginUser({ email, senha }) {
   const user = await userModel.findByEmail(email);
 
   if (!user) {
-    throw new Error("Email ou senha inválidos");
+    throw new Error("Email ou senha inv�lidos");
   }
 
   const passwordMatch = await bcrypt.compare(senha, user.senha);
 
   if (!passwordMatch) {
-    throw new Error("Email ou senha inválidos");
+    throw new Error("Email ou senha inv�lidos");
   }
 
   if (!process.env.JWT_SECRET) {
-    throw new Error("JWT_SECRET não configurado");
+    throw new Error("JWT_SECRET n�o configurado");
   }
 
   const token = jwt.sign(
@@ -78,3 +80,104 @@ export async function updateUser(id, data) {
 export async function deleteUser(id) {
   return await userModel.deleteById(id);
 }
+
+
+export async function changePassword(id, senhaAtual, novaSenha) {
+  const user = await userModel.findByEmail(
+    (await userModel.findById(id))?.email
+  );
+
+  if (!user) {
+    throw new Error("Usu�rio n�o encontrado");
+  }
+
+  const passwordMatch = await bcrypt.compare(senhaAtual, user.senha);
+
+  if (!passwordMatch) {
+    throw new Error("Senha atual incorreta");
+  }
+
+  const senhaHash = await bcrypt.hash(novaSenha, 10);
+  const updated = await userModel.updatePassword(id, senhaHash);
+
+  if (!updated) {
+    throw new Error("N�o foi poss�vel atualizar a senha");
+  }
+
+  return true;
+}
+
+export async function forgotPassword(email) {
+  const user = await userModel.findByEmail(email);
+  if (!user) return true;
+
+  const token = crypto.randomBytes(32).toString("hex");
+  const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+
+  await userModel.saveResetToken(user.id, token, expiresAt);
+
+  if (
+    process.env.RESET_TOKEN_LOG === "true" &&
+    process.env.NODE_ENV !== "production"
+  ) {
+    console.log("[RECUPERACAO - DESENVOLVIMENTO]");
+    console.log("Conta:", user.email);
+    console.log("Token:", token);
+    console.log("Expira em:", expiresAt.toISOString());
+    return true;
+  }
+
+  const smtpUser = process.env.SMTP_USER;
+  const smtpPass = process.env.SMTP_PASS;
+  const smtpHost = process.env.SMTP_HOST;
+
+  if (!smtpHost || !smtpUser || !smtpPass) {
+    throw new Error("Configuração SMTP incompleta");
+  }
+
+  const transporter = nodemailer.createTransport({
+    host: smtpHost,
+    port: Number(process.env.SMTP_PORT || 587),
+    secure: process.env.SMTP_SECURE === "true",
+    auth: { user: smtpUser, pass: smtpPass }
+  });
+
+  await transporter.sendMail({
+    from: process.env.MAIL_FROM || smtpUser,
+    to: user.email,
+    subject: "Redefinição de senha - BipEscola",
+    text: "Seu token de recuperação é: " + token +
+      "\nEle expira em 1 hora."
+  });
+
+  return true;
+}
+export async function resetPassword(email, token, novaSenha) {
+  const user = await userModel.findByResetToken(email, token);
+
+  if (!user) {
+    throw new Error("Token inv�lido ou expirado");
+  }
+
+  const senhaHash = await bcrypt.hash(novaSenha, 10);
+  const updated = await userModel.updatePassword(user.id, senhaHash);
+
+  if (!updated) {
+    throw new Error("N�o foi poss�vel redefinir a senha");
+  }
+
+  return true;
+}
+
+export async function updateUserPhoto(id, foto) {
+  const updated = await userModel.updatePhoto(id, foto);
+
+  if (!updated) {
+    throw new Error("Usu�rio n�o encontrado ou foto n�o atualizada");
+  }
+
+  return await userModel.findById(id);
+}
+
+
+

@@ -1,4 +1,4 @@
-Ôªøimport * as userService from '../services/userService.js';
+import * as userService from '../services/userService.js';
 
 export async function createUser(req, res) {
   try {
@@ -6,7 +6,7 @@ export async function createUser(req, res) {
 
     if (!nome || !email) {
       return res.status(400).json({
-        error: 'nome e email s√£o obrigat√≥rios'
+        error: 'nome e email s„o obrigatÛrios'
       });
     }
 
@@ -39,7 +39,7 @@ export async function loginUser(req, res) {
 
     if (!email || !senha) {
       return res.status(400).json({
-        error: 'email e senha s√£o obrigat√≥rios'
+        error: 'email e senha s„o obrigatÛrios'
       });
     }
 
@@ -66,13 +66,13 @@ export async function listUsers(req, res) {
     const users = await userService.getUsers();
 
     return res.status(200).json({
-      message: 'Lista de usu√°rios retornada com sucesso',
+      message: 'Lista de usu·rios retornada com sucesso',
       data: users
     });
 
   } catch (error) {
     return res.status(500).json({
-      error: 'N√£o foi poss√≠vel listar os usu√°rios',
+      error: 'N„o foi possÌvel listar os usu·rios',
       details: error.message
     });
   }
@@ -84,7 +84,7 @@ export async function getUser(req, res) {
 
     if (!Number.isInteger(userId)) {
       return res.status(400).json({
-        error: 'ID do usu√°rio inv√°lido'
+        error: 'ID do usu·rio inv·lido'
       });
     }
 
@@ -92,18 +92,18 @@ export async function getUser(req, res) {
 
     if (!user) {
       return res.status(404).json({
-        error: 'Usu√°rio n√£o encontrado'
+        error: 'Usu·rio n„o encontrado'
       });
     }
 
     return res.status(200).json({
-      message: 'Usu√°rio encontrado com sucesso',
+      message: 'Usu·rio encontrado com sucesso',
       data: user
     });
 
   } catch (error) {
     return res.status(500).json({
-      error: 'N√£o foi poss√≠vel buscar o usu√°rio',
+      error: 'N„o foi possÌvel buscar o usu·rio',
       details: error.message
     });
   }
@@ -115,7 +115,7 @@ export async function updateUser(req, res) {
 
     if (!Number.isInteger(userId)) {
       return res.status(400).json({
-        error: 'ID do usu√°rio inv√°lido'
+        error: 'ID do usu·rio inv·lido'
       });
     }
 
@@ -123,7 +123,7 @@ export async function updateUser(req, res) {
 
     if (!nome || !email) {
       return res.status(400).json({
-        error: 'nome e email s√£o obrigat√≥rios'
+        error: 'nome e email s„o obrigatÛrios'
       });
     }
 
@@ -131,7 +131,7 @@ export async function updateUser(req, res) {
 
     if (!existingUser) {
       return res.status(404).json({
-        error: 'Usu√°rio n√£o encontrado'
+        error: 'Usu·rio n„o encontrado'
       });
     }
 
@@ -141,13 +141,13 @@ export async function updateUser(req, res) {
     });
 
     return res.status(200).json({
-      message: 'Usu√°rio atualizado com sucesso',
+      message: 'Usu·rio atualizado com sucesso',
       data: user
     });
 
   } catch (error) {
     return res.status(500).json({
-      error: 'N√£o foi poss√≠vel atualizar o usu√°rio',
+      error: 'N„o foi possÌvel atualizar o usu·rio',
       details: error.message
     });
   }
@@ -159,25 +159,25 @@ export async function deleteUser(req, res) {
 
     if (!Number.isInteger(userId)) {
       return res.status(400).json({
-        error: 'ID do usu√°rio inv√°lido'
+        error: 'ID do usu·rio inv·lido'
       });
     }
 
     if (!req.user) {
       return res.status(401).json({
-        error: 'Usu√°rio n√£o autenticado'
+        error: 'Usu·rio n„o autenticado'
       });
     }
 
     if (req.user.role !== 'ADM') {
       return res.status(403).json({
-        error: 'Somente ADM pode excluir usu√°rios'
+        error: 'Somente ADM pode excluir usu·rios'
       });
     }
 
     if (Number(req.user.id) === userId) {
       return res.status(403).json({
-        error: 'ADM n√£o pode excluir a pr√≥pria conta'
+        error: 'ADM n„o pode excluir a prÛpria conta'
       });
     }
 
@@ -185,7 +185,7 @@ export async function deleteUser(req, res) {
 
     if (!existingUser) {
       return res.status(404).json({
-        error: 'Usu√°rio n√£o encontrado'
+        error: 'Usu·rio n„o encontrado'
       });
     }
 
@@ -193,18 +193,129 @@ export async function deleteUser(req, res) {
 
     if (!deleted) {
       return res.status(404).json({
-        error: 'Usu√°rio n√£o encontrado'
+        error: 'Usu·rio n„o encontrado'
       });
     }
 
     return res.status(200).json({
-      message: 'Usu√°rio exclu√≠do com sucesso'
+      message: 'Usu·rio excluÌdo com sucesso'
     });
 
   } catch (error) {
     return res.status(500).json({
-      error: 'N√£o foi poss√≠vel excluir o usu√°rio',
+      error: 'N„o foi possÌvel excluir o usu·rio',
       details: error.message
+    });
+  }
+}
+
+
+export async function changePassword(req, res) {
+  try {
+    const { senhaAtual, novaSenha } = req.body ?? {};
+
+    if (!senhaAtual || !novaSenha) {
+      return res.status(400).json({
+        error: 'senhaAtual e novaSenha s„o obrigatÛrias'
+      });
+    }
+
+    if (novaSenha.length < 8) {
+      return res.status(400).json({
+        error: 'A nova senha deve ter pelo menos 8 caracteres'
+      });
+    }
+
+    await userService.changePassword(
+      req.user.id,
+      senhaAtual,
+      novaSenha
+    );
+
+    return res.status(200).json({
+      message: 'Senha alterada com sucesso'
+    });
+  } catch (error) {
+    const status = error.message === 'Senha atual incorreta' ? 400 : 500;
+    return res.status(status).json({ error: error.message });
+  }
+}
+
+export async function forgotPassword(req, res) {
+  try {
+    const { email } = req.body ?? {};
+
+    if (!email) {
+      return res.status(400).json({ error: 'email È obrigatÛrio' });
+    }
+
+    await userService.forgotPassword(email);
+
+    return res.status(200).json({
+      message: 'Se o email estiver cadastrado, vocÍ receber· instruÁıes para redefinir a senha'
+    });
+  } catch (error) {
+    return res.status(500).json({
+      error: 'N„o foi possÌvel iniciar a recuperaÁ„o de senha'
+    });
+  }
+}
+
+export async function resetPassword(req, res) {
+  try {
+    const { email, token, novaSenha } = req.body ?? {};
+
+    if (!email || !token || !novaSenha) {
+      return res.status(400).json({
+        error: 'email, token e novaSenha s„o obrigatÛrios'
+      });
+    }
+
+    if (novaSenha.length < 8) {
+      return res.status(400).json({
+        error: 'A nova senha deve ter pelo menos 8 caracteres'
+      });
+    }
+
+    await userService.resetPassword(email, token, novaSenha);
+
+    return res.status(200).json({
+      message: 'Senha redefinida com sucesso'
+    });
+  } catch (error) {
+    const status = error.message === 'Token inv·lido ou expirado' ? 400 : 500;
+    return res.status(status).json({ error: error.message });
+  }
+}
+
+export async function updateUserPhoto(req, res) {
+  try {
+    const userId = Number(req.params.id);
+    const { foto } = req.body ?? {};
+
+    if (!Number.isInteger(userId) || userId <= 0) {
+      return res.status(400).json({ error: 'ID do usu·rio inv·lido' });
+    }
+
+    if (!foto || typeof foto !== 'string') {
+      return res.status(400).json({ error: 'foto È obrigatÛria e deve ser texto' });
+    }
+
+    if (Number(req.user.id) !== userId && req.user.role !== 'ADM') {
+      return res.status(403).json({
+        error: 'VocÍ sÛ pode atualizar sua prÛpria foto'
+      });
+    }
+
+    const user = await userService.updateUserPhoto(userId, foto);
+
+    return res.status(200).json({
+      message: 'Foto atualizada com sucesso',
+      data: user
+    });
+  } catch (error) {
+    return res.status(500).json({
+      error: 'N„o foi possÌvel atualizar a foto'
     });
   }
 }
