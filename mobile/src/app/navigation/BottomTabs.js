@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { View, Text, StyleSheet, useWindowDimensions, ActivityIndicator } from "react-native";
-import { Feather, Ionicons } from "@expo/vector-icons";
+import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { colors, radius, shadows, spacing } from "@shared/theme";
 
 import { PresenceNavigator } from "@pages/Presence";
 import { ProfileScreen } from "@pages/Profile";
@@ -36,8 +37,8 @@ export function BottomTabs() {
 
   if (!role) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color="#02386A" />
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }}>
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
@@ -46,7 +47,6 @@ export function BottomTabs() {
   const canSeeNotices = ['ADM', 'PROF', 'PARENT'].includes(role);
   const canSeeAdmin = ['ADM'].includes(role);
   const canSeeEvaluation = ['ADM', 'PROF', 'PARENT'].includes(role);
-  // Porteiro tem acesso exclusivo a presença para ler QR Code, além do app comum
   const canSeePresence = ['ADM', 'PROF', 'PARENT', 'PORTEIRO'].includes(role);
 
   return (
@@ -56,13 +56,11 @@ export function BottomTabs() {
         tabBarStyle: [
           styles.tabBar, 
           { 
-            height: 70 + insets.bottom,
-            paddingBottom: 10 + insets.bottom,
+            height: 64 + insets.bottom,
+            paddingBottom: Math.max(insets.bottom, 8),
             alignSelf: 'center',
             width: '100%',
-            maxWidth: isTablet ? (width > 900 ? 750 : '85%') : '100%',
-            borderTopWidth: 0,
-            elevation: 0,
+            maxWidth: isTablet ? (width > 900 ? 760 : '88%') : '100%',
           }
         ],
         tabBarShowLabel: false,
@@ -74,9 +72,9 @@ export function BottomTabs() {
           component={NoticesNavigator}
           options={{
             tabBarIcon: ({ focused }) => (
-              <View style={[styles.iconContainer, focused && { backgroundColor: "#FFCDD2" }]}>
-                <Feather name="bell" size={24} color={focused ? "#000" : "#000"} />
-                <Text style={styles.iconText}>Avisos</Text>
+              <View style={[styles.iconContainer, focused && { backgroundColor: colors.noticeSurface }]}>
+                <Feather name="bell" size={22} color={focused ? colors.notice : colors.textMuted} />
+                <Text style={[styles.iconText, focused && { color: colors.notice, fontWeight: '700' }]}>Avisos</Text>
               </View>
             ),
           }}
@@ -89,9 +87,9 @@ export function BottomTabs() {
           component={PresenceNavigator}
           options={{
             tabBarIcon: ({ focused }) => (
-              <View style={[styles.iconContainer, focused && { backgroundColor: "#C5E1A5" }]}>
-                <Feather name="check-circle" size={24} color={focused ? "#000" : "#000"} />
-                <Text style={styles.iconText}>Presença</Text>
+              <View style={[styles.iconContainer, focused && { backgroundColor: colors.secondarySurface }]}>
+                <Feather name="check-circle" size={22} color={focused ? colors.secondary : colors.textMuted} />
+                <Text style={[styles.iconText, focused && { color: colors.secondary, fontWeight: '700' }]}>Presença</Text>
               </View>
             ),
           }}
@@ -104,9 +102,9 @@ export function BottomTabs() {
           component={AdminNavigator}
           options={{
             tabBarIcon: ({ focused }) => (
-              <View style={[styles.iconContainer, focused && { backgroundColor: "#C1B4D8" }]}>
-                <Feather name="briefcase" size={24} color={focused ? "#000" : "#000"} />
-                <Text style={styles.iconText}>Painel ADM</Text>
+              <View style={[styles.iconContainer, focused && { backgroundColor: colors.highlightSurface }]}>
+                <Feather name="briefcase" size={22} color={focused ? colors.highlight : colors.textMuted} />
+                <Text style={[styles.iconText, focused && { color: colors.highlight, fontWeight: '700' }]}>Painel ADM</Text>
               </View>
             ),
           }}
@@ -119,9 +117,9 @@ export function BottomTabs() {
           component={EvaluationNavigator}
           options={{
             tabBarIcon: ({ focused }) => (
-              <View style={[styles.iconContainer, focused && { backgroundColor: "#FDE68A" }]}>
-                <Feather name="clipboard" size={24} color={focused ? "#000" : "#000"} />
-                <Text style={styles.iconText}>Avaliação</Text>
+              <View style={[styles.iconContainer, focused && { backgroundColor: colors.accentSurface }]}>
+                <Feather name="clipboard" size={22} color={focused ? colors.accent : colors.textMuted} />
+                <Text style={[styles.iconText, focused && { color: colors.accent, fontWeight: '700' }]}>Avaliação</Text>
               </View>
             ),
           }}
@@ -133,9 +131,9 @@ export function BottomTabs() {
         component={ProfileScreen}
         options={{
           tabBarIcon: ({ focused }) => (
-            <View style={[styles.iconContainer, focused && { backgroundColor: "#A0C4E1" }]}>
-              <Feather name="user" size={24} color={focused ? "#000" : "#000"} />
-              <Text style={styles.iconText}>Perfil</Text>
+            <View style={[styles.iconContainer, focused && { backgroundColor: colors.primarySurface }]}>
+              <Feather name="user" size={22} color={focused ? colors.primary : colors.textMuted} />
+              <Text style={[styles.iconText, focused && { color: colors.primary, fontWeight: '700' }]}>Perfil</Text>
             </View>
           ),
         }}
@@ -146,28 +144,23 @@ export function BottomTabs() {
 
 const styles = StyleSheet.create({
   tabBar: {
-    backgroundColor: "#fff",
-    paddingTop: 10,
-    // Adiciona sombra suave no tablet para combinar com o ResponsiveContainer
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 5,
+    backgroundColor: colors.surface,
+    paddingTop: spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    ...shadows.card,
   },
   iconContainer: {
     alignItems: "center",
     justifyContent: "center",
-    width: 60,
-    height: 60,
-    borderRadius: 8,
-  },
-  activeIconContainer: {
-    backgroundColor: "#C1B4D8", // Light purple background when selected
+    width: 56,
+    height: 48,
+    borderRadius: radius.md,
   },
   iconText: {
-    fontSize: 10,
+    fontSize: 11,
     fontFamily: "Roboto_500Medium",
-    color: "#000",
-    marginTop: 4,
+    color: colors.textMuted,
+    marginTop: 2,
   },
 });

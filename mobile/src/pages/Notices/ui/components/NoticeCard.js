@@ -1,29 +1,36 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image } from 'react-native';
+import { Feather } from '@expo/vector-icons';
+import { colors, radius, shadows, spacing, typography } from '@shared/theme';
 
 export const NoticeCard = ({ notice }) => {
   return (
     <View style={styles.cardContainer}>
       <View style={styles.header}>
         <Image 
-          source={{ uri: notice.avatarUrl || 'https://via.placeholder.com/50' }} 
+          source={{ uri: notice.avatarUrl || 'https://ui-avatars.com/api/?name=Escola&background=C2185B&color=fff' }} 
           style={styles.avatar} 
         />
         <View style={styles.headerTextContainer}>
           <Text style={styles.name}>{notice.authorName}</Text>
-          <Text style={styles.role}>{notice.authorRole}</Text>
+          <Text style={styles.role}>{notice.authorRole || 'Comunicado Oficial'}</Text>
+        </View>
+
+        <View style={styles.badge}>
+          <Feather name="bell" size={12} color={colors.notice} />
+          <Text style={styles.badgeText}>Aviso</Text>
         </View>
       </View>
       
       <View style={styles.bodyContainer}>
         <Text style={styles.subject}>
-          <Text style={styles.subjectLabel}>Assunto: </Text>
           {notice.subject}
         </Text>
         <Text style={styles.content}>{notice.content}</Text>
       </View>
 
       <View style={styles.footer}>
+        <Feather name="calendar" size={12} color={colors.textMuted} style={{ marginRight: 4 }} />
         <Text style={styles.date}>{notice.date}</Text>
       </View>
     </View>
@@ -32,62 +39,78 @@ export const NoticeCard = ({ notice }) => {
 
 const styles = StyleSheet.create({
   cardContainer: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: '#F06292', // Rosa do design
-    borderRadius: 8,
-    padding: 16,
-    marginBottom: 16,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+    ...shadows.card,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: spacing.md,
   },
   avatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    marginRight: 12,
+    width: 44,
+    height: 44,
+    borderRadius: radius.full,
+    marginRight: spacing.md,
+    backgroundColor: colors.noticeSurface,
   },
   headerTextContainer: {
+    flex: 1,
     justifyContent: 'center',
   },
   name: {
-    fontSize: 16,
-    fontFamily: 'Roboto_700Bold',
-    fontWeight: 'bold',
-    color: '#8B1A1A', // Vermelho escuro
+    ...typography.h3,
+    color: colors.textPrimary,
   },
   role: {
-    fontSize: 12,
-    fontFamily: 'Roboto_300Light',
-    color: '#F06292',
+    ...typography.caption,
+    color: colors.textSecondary,
+    marginTop: 1,
+  },
+  badge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.noticeSurface,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.full,
+    gap: 4,
+  },
+  badgeText: {
+    fontSize: 11,
+    fontFamily: 'Roboto_700Bold',
+    color: colors.notice,
+    fontWeight: '700',
   },
   bodyContainer: {
-    marginBottom: 12,
+    marginBottom: spacing.sm,
   },
   subject: {
-    fontSize: 14,
-    color: '#000',
-    marginBottom: 8,
-  },
-  subjectLabel: {
-    fontFamily: 'Roboto_700Bold',
-    fontWeight: 'bold',
-    color: '#8B1A1A',
+    ...typography.h3,
+    color: colors.textPrimary,
+    marginBottom: spacing.xs,
   },
   content: {
-    fontSize: 14,
-    fontFamily: 'Roboto_400Regular',
-    color: '#000',
-    lineHeight: 20,
+    ...typography.body,
+    color: colors.textSecondary,
+    lineHeight: 22,
   },
   footer: {
-    alignItems: 'flex-end',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    borderTopWidth: 1,
+    borderTopColor: colors.divider,
+    paddingTop: spacing.sm,
+    marginTop: spacing.xs,
   },
   date: {
-    fontSize: 10,
-    color: '#F06292',
+    ...typography.caption,
+    color: colors.textMuted,
   },
 });

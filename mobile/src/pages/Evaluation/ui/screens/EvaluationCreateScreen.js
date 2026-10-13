@@ -1,99 +1,167 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, SafeAreaView, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import { Button } from '@shared/ui/Button/Button';
+import { colors, radius, shadows, spacing, typography } from '@shared/theme';
 
-const RadioGroup = ({ options, selectedValue, onSelect }) => {
+const RadioGradeSelector = ({ selectedValue, onSelect }) => {
+  const grades = [
+    { value: 1, label: '1' },
+    { value: 2, label: '2' },
+    { value: 3, label: '3' },
+    { value: 4, label: '4' },
+    { value: 5, label: '5' },
+  ];
+
   return (
-    <View style={styles.radioGroupContainer}>
-      {options.map((option) => (
-        <TouchableOpacity 
-          key={option.value} 
-          style={styles.radioOption}
-          onPress={() => onSelect(option.value)}
-        >
-          <View style={[styles.radioCircle, selectedValue === option.value && styles.radioCircleSelected]}>
-            {selectedValue === option.value && <View style={styles.radioInnerCircle} />}
-          </View>
-          <Text style={styles.radioText}>{option.label}</Text>
-        </TouchableOpacity>
-      ))}
+    <View style={styles.gradeContainer}>
+      {grades.map((item) => {
+        const isSelected = selectedValue === item.value;
+        return (
+          <TouchableOpacity
+            key={item.value}
+            activeOpacity={0.7}
+            style={[
+              styles.gradeCircle,
+              isSelected && styles.gradeCircleSelected,
+            ]}
+            onPress={() => onSelect(item.value)}
+          >
+            <Text style={[styles.gradeText, isSelected && styles.gradeTextSelected]}>
+              {item.label}
+            </Text>
+          </TouchableOpacity>
+        );
+      })}
     </View>
   );
 };
 
 export const EvaluationCreateScreen = () => {
   const navigation = useNavigation();
+  const [alunoNome, setAlunoNome] = useState('Joãozinho da Silva');
   const [grade1, setGrade1] = useState(5);
-  const [grade2, setGrade2] = useState(null);
+  const [comentario1, setComentario1] = useState('');
+  const [grade2, setGrade2] = useState(4);
+  const [comentario2, setComentario2] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
-  const radioOptions = [
-    { label: 'botão', value: 1 },
-    { label: 'botão', value: 2 },
-    { label: 'botão', value: 3 },
-    { label: 'botão', value: 4 },
-    { label: 'botão', value: 5 },
-  ];
+  const handleSubmit = () => {
+    setSubmitting(true);
+    setTimeout(() => {
+      setSubmitting(false);
+      Alert.alert(
+        'Avaliação Registrada',
+        'Os apontamentos pedagógicos foram salvos com sucesso no boletim.',
+        [{ text: 'OK', onPress: () => navigation.goBack() }]
+      );
+    }, 600);
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Avaliações do Aluno</Text>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Text style={styles.backButtonText}>Voltar</Text>
-          <Feather name="chevron-right" size={20} color="#D92D20" />
+        <TouchableOpacity 
+          style={styles.backButton} 
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          onPress={() => navigation.goBack()}
+        >
+          <Feather name="arrow-left" size={24} color={colors.textPrimary} />
         </TouchableOpacity>
+        <Text style={styles.headerTitle}>Lançar Avaliação</Text>
+        <View style={{ width: 24 }} />
       </View>
 
-      <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.screenTitle}>Criar Avaliação</Text>
+      <ScrollView 
+        contentContainerStyle={styles.content} 
+        showsVerticalScrollIndicator={false}
+      >
+        <Text style={styles.screenSubtitle}>Registro pedagógico e desenvolvimento do aluno</Text>
 
+        {/* Destinatário */}
         <View style={styles.formGroup}>
-          <Text style={styles.label}>Quem vai receber?</Text>
+          <Text style={styles.label}>Estudante Selecionado</Text>
           <View style={styles.inputContainer}>
-            <TextInput style={styles.input} placeholder="Aluno X" placeholderTextColor="#8B7500" editable={false} />
-            <Feather name="chevron-down" size={20} color="#8B7500" style={styles.icon} />
-          </View>
-        </View>
-
-        {/* Aspecto 1 */}
-        <View style={styles.aspectSection}>
-          <Text style={styles.aspectTitle}>Aspecto 1</Text>
-          
-          <Text style={styles.label}>Nota</Text>
-          <RadioGroup options={radioOptions} selectedValue={grade1} onSelect={setGrade1} />
-
-          <Text style={styles.label}>Comentário</Text>
-          <View style={styles.textAreaContainer}>
+            <Feather name="user" size={18} color={colors.accent} style={styles.inputIcon} />
             <TextInput 
-              style={[styles.input, styles.textArea]} 
-              placeholder="Insira aqui" 
-              placeholderTextColor="#B8860B"
-              multiline
-              textAlignVertical="top"
+              style={styles.input} 
+              value={alunoNome} 
+              onChangeText={setAlunoNome}
+              placeholder="Nome do aluno" 
+              placeholderTextColor={colors.textMuted}
             />
           </View>
         </View>
 
-        {/* Aspecto 2 */}
-        <View style={styles.aspectSection}>
-          <Text style={styles.aspectTitle}>Aspecto 2</Text>
+        {/* Aspecto 1: Participação & Engajamento */}
+        <View style={styles.aspectCard}>
+          <View style={styles.aspectHeader}>
+            <View style={styles.aspectIconBox}>
+              <Feather name="activity" size={18} color={colors.accent} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.aspectTitle}>Participação & Engajamento</Text>
+              <Text style={styles.aspectDesc}>Interação em sala de aula e colaboração</Text>
+            </View>
+          </View>
           
-          <Text style={styles.label}>Nota</Text>
-          <RadioGroup options={radioOptions} selectedValue={grade2} onSelect={setGrade2} />
+          <Text style={styles.subLabel}>Conceito (1 a 5 estrelas)</Text>
+          <RadioGradeSelector selectedValue={grade1} onSelect={setGrade1} />
 
-          <Text style={styles.label}>Comentário</Text>
+          <Text style={styles.subLabel}>Parecer Descritivo</Text>
           <View style={styles.textAreaContainer}>
             <TextInput 
-              style={[styles.input, styles.textArea]} 
-              placeholder="Insira aqui" 
-              placeholderTextColor="#B8860B"
+              style={styles.textArea} 
+              placeholder="Descreva a evolução, facilidades e pontos a melhorar..." 
+              placeholderTextColor={colors.textMuted}
               multiline
               textAlignVertical="top"
+              value={comentario1}
+              onChangeText={setComentario1}
             />
           </View>
         </View>
 
+        {/* Aspecto 2: Socialização & Autonomia */}
+        <View style={styles.aspectCard}>
+          <View style={styles.aspectHeader}>
+            <View style={styles.aspectIconBox}>
+              <Feather name="smile" size={18} color={colors.accent} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.aspectTitle}>Socialização & Convivência</Text>
+              <Text style={styles.aspectDesc}>Relações com colegas, empatia e regras</Text>
+            </View>
+          </View>
+          
+          <Text style={styles.subLabel}>Conceito (1 a 5 estrelas)</Text>
+          <RadioGradeSelector selectedValue={grade2} onSelect={setGrade2} />
+
+          <Text style={styles.subLabel}>Parecer Descritivo</Text>
+          <View style={styles.textAreaContainer}>
+            <TextInput 
+              style={styles.textArea} 
+              placeholder="Descreva o comportamento nas atividades em grupo..." 
+              placeholderTextColor={colors.textMuted}
+              multiline
+              textAlignVertical="top"
+              value={comentario2}
+              onChangeText={setComentario2}
+            />
+          </View>
+        </View>
+
+        {/* Botão de Envio */}
+        <View style={styles.submitSection}>
+          <Button
+            title="Publicar Avaliação Pedagógica"
+            backgroundColor={colors.accent}
+            loading={submitting}
+            onPress={handleSubmit}
+          />
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -102,125 +170,146 @@ export const EvaluationCreateScreen = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingVertical: 16,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: colors.border,
+    backgroundColor: colors.surface,
   },
   headerTitle: {
-    fontSize: 20,
-    fontFamily: 'Roboto_700Bold',
-    fontWeight: 'bold',
-    color: '#8B7500',
+    ...typography.h2,
+    color: colors.textPrimary,
   },
   backButton: {
-    flexDirection: 'row',
+    minWidth: 44,
+    minHeight: 44,
+    justifyContent: 'center',
     alignItems: 'center',
-  },
-  backButtonText: {
-    color: '#D92D20',
-    fontSize: 12,
-    marginRight: 4,
-    fontWeight: 'bold',
   },
   content: {
-    padding: 24,
-    paddingBottom: 100,
+    padding: spacing.lg,
+    paddingBottom: spacing.xxxl * 2,
+    gap: spacing.lg,
   },
-  screenTitle: {
-    fontSize: 18,
-    fontFamily: 'Roboto_700Bold',
-    fontWeight: 'bold',
-    color: '#8B7500',
-    marginBottom: 24,
+  screenSubtitle: {
+    ...typography.body,
+    color: colors.textSecondary,
+    marginBottom: spacing.xs,
   },
   formGroup: {
-    marginBottom: 24,
+    marginBottom: spacing.xs,
   },
   label: {
-    fontSize: 14,
-    fontFamily: 'Roboto_700Bold',
-    fontWeight: 'bold',
-    color: '#8B7500',
-    marginBottom: 12,
+    ...typography.captionBold,
+    color: colors.textSecondary,
+    marginBottom: spacing.sm,
   },
   inputContainer: {
-    backgroundColor: '#FDE68A', // Amarelo claro (bg dos campos)
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#B8860B',
+    backgroundColor: colors.surface,
+    borderRadius: radius.sm,
+    borderWidth: 1.5,
+    borderColor: colors.border,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    height: 48,
+    paddingHorizontal: spacing.md,
+    minHeight: 48,
+  },
+  inputIcon: {
+    marginRight: spacing.sm,
   },
   input: {
     flex: 1,
-    fontSize: 14,
-    color: '#8B7500',
+    fontSize: 15,
+    color: colors.textPrimary,
+    fontFamily: 'Roboto_500Medium',
   },
-  icon: {
-    marginLeft: 8,
+  aspectCard: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.lg,
+    ...shadows.card,
   },
-  aspectSection: {
-    marginBottom: 32,
-  },
-  aspectTitle: {
-    fontSize: 16,
-    fontFamily: 'Roboto_700Bold',
-    fontWeight: 'bold',
-    color: '#8B7500',
-    marginBottom: 16,
-  },
-  radioGroupContainer: {
-    marginBottom: 16,
-    marginLeft: 16,
-  },
-  radioOption: {
+  aspectHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: spacing.md,
   },
-  radioCircle: {
-    height: 20,
-    width: 20,
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: '#8B7500',
-    alignItems: 'center',
+  aspectIconBox: {
+    width: 38,
+    height: 38,
+    borderRadius: radius.sm,
+    backgroundColor: colors.accentSurface,
     justifyContent: 'center',
-    marginRight: 12,
+    alignItems: 'center',
+    marginRight: spacing.md,
   },
-  radioCircleSelected: {
-    borderColor: '#8B7500',
-    backgroundColor: '#8B7500',
+  aspectTitle: {
+    ...typography.h3,
+    color: colors.textPrimary,
   },
-  radioInnerCircle: {
-    height: 10,
-    width: 10,
-    borderRadius: 5,
-    backgroundColor: '#8B7500', // Dourado interno se precisar, mas preenchido fica melhor
+  aspectDesc: {
+    ...typography.caption,
+    color: colors.textMuted,
   },
-  radioText: {
-    fontSize: 14,
-    color: '#8B7500',
+  subLabel: {
+    ...typography.captionBold,
+    color: colors.textSecondary,
+    marginBottom: spacing.sm,
+    marginTop: spacing.sm,
+  },
+  gradeContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: spacing.md,
+  },
+  gradeCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: radius.md,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    backgroundColor: colors.background,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  gradeCircleSelected: {
+    backgroundColor: colors.accent,
+    borderColor: colors.accent,
+    ...shadows.subtle,
+  },
+  gradeText: {
+    fontSize: 16,
+    fontFamily: 'Roboto_700Bold',
+    fontWeight: '700',
+    color: colors.textSecondary,
+  },
+  gradeTextSelected: {
+    color: colors.textInverse,
   },
   textAreaContainer: {
-    backgroundColor: '#FDE68A',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#B8860B',
-    height: 120,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    backgroundColor: colors.background,
+    borderRadius: radius.sm,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    minHeight: 100,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm + 2,
   },
   textArea: {
-    height: '100%',
+    fontSize: 14,
+    color: colors.textPrimary,
+    fontFamily: 'Roboto_400Regular',
+    minHeight: 80,
+  },
+  submitSection: {
+    marginTop: spacing.sm,
   },
 });

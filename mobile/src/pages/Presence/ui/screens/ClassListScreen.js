@@ -12,38 +12,41 @@ import { ResponsiveContainer } from '@shared/ui/ResponsiveContainer/ResponsiveCo
 import { Feather } from "@expo/vector-icons";
 import { listStudentsAPI } from '@shared/api/adminApi';
 import { markAttendanceAPI } from '@shared/api/schoolApi';
+import { colors, radius, shadows, spacing, typography } from '@shared/theme';
 
-export const ClassListScreen = ({ navigation, route }) => {
+export const ClassListScreen = ({ navigation }) => {
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const fetchStudents = async () => {
+    try {
+      setLoading(true);
+      const res = await listStudentsAPI();
+      setStudents(res.data || []);
+    } catch (error) {
+      console.error("Erro ao buscar alunos", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchStudents = async () => {
-      try {
-        const res = await listStudentsAPI();
-        setStudents(res.data || []);
-      } catch (error) {
-        console.error("Erro ao buscar alunos", error);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchStudents();
   }, []);
 
   const handleMarkAttendance = (student) => {
     Alert.alert(
       "Registrar Presença",
-      `Deseja registrar presença hoje para ${student.nome}?`,
+      `Lançar status no diário escolar para ${student.nome}:`,
       [
         { text: "Cancelar", style: "cancel" },
         { 
-          text: "Falta", 
+          text: "Registrar Falta", 
           style: "destructive",
           onPress: () => submitAttendance(student.id, false)
         },
         { 
-          text: "Presente", 
+          text: "Confirmar Presente", 
           onPress: () => submitAttendance(student.id, true)
         }
       ]
@@ -54,7 +57,7 @@ export const ClassListScreen = ({ navigation, route }) => {
     const today = new Date().toISOString().split('T')[0];
     try {
       await markAttendanceAPI({ aluno_id, data: today, presente });
-      Alert.alert('Sucesso', `Registro salvo: ${presente ? 'Presente' : 'Falta'}`);
+      Alert.alert('Sucesso', `Registro salvo no banco: ${presente ? 'Presente' : 'Falta'}`);
     } catch (error) {
       Alert.alert('Erro', error.message || 'Falha ao registrar presença.');
     }
@@ -63,36 +66,59 @@ export const ClassListScreen = ({ navigation, route }) => {
   return (
     <ResponsiveContainer style={styles.safeArea}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Validação de Presença</Text>
         <TouchableOpacity
-          style={styles.headerButton}
+          style={styles.backButton}
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
           onPress={() => navigation.goBack()}
         >
-          <Text style={styles.headerButtonText}>Voltar</Text>
-          <Feather name="chevron-right" size={20} color="#D92D20" />
+          <Feather name="arrow-left" size={24} color={colors.textPrimary} />
         </TouchableOpacity>
+        <View style={{ flex: 1, marginLeft: spacing.sm }}>
+          <Text style={styles.headerTitle}>Chamada Escolar</Text>
+          <Text style={styles.headerSubtitle}>Validação diária por estudante</Text>
+        </View>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <Text style={styles.sectionTitle}>Alunos (Geral)</Text>
-        <Text style={styles.sectionSubtitle}>Selecione um aluno para lançar presença hoje</Text>
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <View style={styles.infoBox}>
+          <Feather name="check-circle" size={18} color={colors.secondary} />
+          <Text style={styles.infoBoxText}>
+            Toque no aluno para confirmar a presença ou lançar falta no banco de dados.
+          </Text>
+        </View>
 
         {loading ? (
-          <ActivityIndicator size="large" color="#33691E" style={{ marginTop: 20 }} />
+          <ActivityIndicator size="large" color={colors.secondary} style={{ marginTop: spacing.xl }} />
         ) : students.length === 0 ? (
-          <Text style={{textAlign: 'center', marginTop: 20}}>Nenhum aluno cadastrado.</Text>
+          <View style={styles.emptyContainer}>
+            <Feather name="users" size={40} color={colors.textMuted} style={{ marginBottom: spacing.sm }} />
+            <Text style={styles.emptyText}>Nenhum aluno cadastrado no sistema.</Text>
+          </View>
         ) : (
-          students.map((student) => (
-            <TouchableOpacity
-              key={student.id}
-              style={styles.studentItem}
-              onPress={() => handleMarkAttendance(student)}
-            >
-              <Text style={styles.studentItemText}>
-                {student.nome} (Matrícula: {student.matricula})
-              </Text>
-            </TouchableOpacity>
-          ))
+          <View style={styles.studentsList}>
+            {students.map((student) => (
+              <TouchableOpacity
+                key={student.id}
+                style={styles.studentCard}
+                activeOpacity={0.7}
+                onPress={() => handleMarkAttendance(student)}
+              >
+                <View style={styles.studentAvatar}>
+                  <Feather name="user" size={20} color={colors.secondary} />
+                </View>
+
+                <View style={styles.studentInfo}>
+                  <Text style={styles.studentName}>{student.nome}</Text>
+                  <Text style={styles.studentMatricula}>Matrícula: {student.matricula}</Text>
+                </View>
+
+                <View style={styles.actionBadge}>
+                  <Text style={styles.actionBadgeText}>Lançar</Text>
+                  <Feather name="chevron-right" size={16} color={colors.secondary} />
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
         )}
       </ScrollView>
     </ResponsiveContainer>
@@ -102,65 +128,113 @@ export const ClassListScreen = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-    paddingHorizontal: 24,
-    paddingVertical: 16,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.xl,
+    paddingBottom: spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: "#f0f0f0",
+    borderBottomColor: colors.border,
+    backgroundColor: colors.surface,
+  },
+  backButton: {
+    minWidth: 44,
+    minHeight: 44,
+    justifyContent: "center",
+    alignItems: "center",
   },
   headerTitle: {
-    fontSize: 20,
-    fontFamily: "Roboto_700Bold",
-    color: "#33691E",
+    ...typography.h2,
+    color: colors.textPrimary,
   },
-  headerButton: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  headerButtonText: {
-    color: "#D92D20",
-    fontSize: 12,
-    marginRight: 4,
-    fontFamily: "Roboto_500Medium",
+  headerSubtitle: {
+    ...typography.caption,
+    color: colors.textSecondary,
+    marginTop: 1,
   },
   scrollContent: {
-    padding: 24,
-    paddingBottom: 40,
+    padding: spacing.lg,
+    paddingBottom: spacing.xxxl * 2,
+    gap: spacing.md,
   },
-  sectionTitle: {
-    fontSize: 18,
-    fontFamily: "Roboto_700Bold",
-    color: "#33691E",
-    marginBottom: 8,
-    marginTop: 8,
+  infoBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.secondarySurface,
+    padding: spacing.md,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.secondaryLight,
+    gap: spacing.sm,
   },
-  sectionSubtitle: {
-    fontSize: 14,
-    fontFamily: "Roboto_300Light",
-    color: "#666",
-    marginBottom: 16,
+  infoBoxText: {
+    ...typography.body,
+    color: colors.secondary,
+    fontWeight: '500',
+    flex: 1,
+    fontSize: 13,
   },
-  studentItem: {
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+  studentsList: {
+    gap: spacing.sm,
   },
-  studentItemActive: {
-    backgroundColor: "#C5E1A5",
+  studentCard: {
+    backgroundColor: colors.surface,
+    padding: spacing.md,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    flexDirection: 'row',
+    alignItems: 'center',
+    minHeight: 64,
+    ...shadows.card,
   },
-  studentItemText: {
-    fontSize: 16,
-    fontFamily: "Roboto_300Light",
-    color: "#8FC959",
+  studentAvatar: {
+    width: 42,
+    height: 42,
+    borderRadius: radius.full,
+    backgroundColor: colors.secondarySurface,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing.md,
   },
-  studentItemTextActive: {
-    fontFamily: "Roboto_500Medium",
-    color: "#33691E",
+  studentInfo: {
+    flex: 1,
+  },
+  studentName: {
+    ...typography.h3,
+    color: colors.textPrimary,
+  },
+  studentMatricula: {
+    ...typography.caption,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
+  actionBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.secondarySurface,
+    paddingHorizontal: spacing.sm + 2,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.full,
+    gap: 2,
+  },
+  actionBadgeText: {
+    fontSize: 12,
+    fontFamily: 'Roboto_700Bold',
+    fontWeight: '700',
+    color: colors.secondary,
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.xxxl,
+  },
+  emptyText: {
+    ...typography.body,
+    color: colors.textMuted,
+    textAlign: 'center',
   },
 });

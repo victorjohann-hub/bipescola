@@ -6,11 +6,13 @@ import {
   ScrollView,
   Image,
   TouchableOpacity,
+  Alert,
 } from "react-native";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { ResponsiveContainer } from '@shared/ui/ResponsiveContainer/ResponsiveContainer';
 import { Feather } from "@expo/vector-icons";
+import { colors, radius, shadows, spacing, typography } from "@shared/theme";
 
 export const ProfileScreen = () => {
   const navigation = useNavigation();
@@ -18,7 +20,6 @@ export const ProfileScreen = () => {
     nome: "Carregando...",
     email: "...",
     role: "...",
-    image: "https://i.pravatar.cc/150?img=68", // [TODO]: Implementar rota de foto
   });
 
   useEffect(() => {
@@ -35,46 +36,83 @@ export const ProfileScreen = () => {
     loadUser();
   }, []);
 
-  const handleLogout = async () => {
-    await AsyncStorage.removeItem('@bipescola_token');
-    await AsyncStorage.removeItem('@bipescola_user');
-    navigation.reset({
-      index: 0,
-      routes: [{ name: 'Login' }],
-    });
+  const handleLogout = () => {
+    Alert.alert(
+      "Sair da Conta",
+      "Deseja realmente encerrar a sessão?",
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Sair",
+          style: "destructive",
+          onPress: async () => {
+            await AsyncStorage.removeItem('@bipescola_token');
+            await AsyncStorage.removeItem('@bipescola_user');
+            navigation.reset({
+              index: 0,
+              routes: [{ name: 'Login' }],
+            });
+          }
+        }
+      ]
+    );
   };
 
   const messages = [
     {
       id: 1,
-      senderName: "Sara Soares",
-      senderRole: "Professora",
-      avatar: "https://i.pravatar.cc/150?img=47",
-      aspect: "Aspecto",
-      grade: "5",
-      comment:
-        "Feedback inicial que serve para orientar o desenvolvimento futuro e identificar pontos fracos.",
-      date: "12 de dez. 2026",
+      senderName: "Profa. Sara Soares",
+      senderRole: "Língua Portuguesa",
+      avatar: "https://ui-avatars.com/api/?name=Sara+Soares&background=2E7D32&color=fff",
+      aspect: "Expressão Verbal & Leitura",
+      grade: "5/5",
+      comment: "Excelente dedicação nas leituras em grupo durante as últimas semanas.",
+      date: "12 de out. 2026",
     },
     {
       id: 2,
-      senderName: "Larissa Sato",
-      senderRole: "Professora",
-      avatar: "https://i.pravatar.cc/150?img=41",
-      aspect: "Aspecto",
-      grade: "5",
-      comment:
-        "Feedback inicial que serve para orientar o desenvolvimento futuro e identificar pontos fracos.",
-      date: "12 de dez. 2026",
+      senderName: "Profa. Larissa Sato",
+      senderRole: "Artes",
+      avatar: "https://ui-avatars.com/api/?name=Larissa+Sato&background=0B3B60&color=fff",
+      aspect: "Criatividade & Participação",
+      grade: "5/5",
+      comment: "Trabalhos manuais executados com capricho e atenção aos detalhes.",
+      date: "08 de out. 2026",
     },
   ];
+
+  const getRoleLabel = (role) => {
+    switch (role) {
+      case 'ADM':
+        return { label: 'Administrador Escolar', bg: colors.highlightSurface, text: colors.highlight };
+      case 'PROF':
+        return { label: 'Professor(a)', bg: colors.secondarySurface, text: colors.secondary };
+      case 'PARENT':
+        return { label: 'Responsável Legal', bg: colors.primarySurface, text: colors.primary };
+      case 'PORTEIRO':
+        return { label: 'Portaria & Segurança', bg: colors.warningSurface, text: colors.warning };
+      default:
+        return { label: role || 'Usuário', bg: colors.surface, text: colors.textSecondary };
+    }
+  };
+
+  const roleInfo = getRoleLabel(userData.role);
 
   return (
     <ResponsiveContainer style={styles.safeArea}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Informações Pessoais</Text>
-        <TouchableOpacity onPress={handleLogout} style={styles.logoutBtn}>
-          <Feather name="log-out" size={24} color="#CC0000" />
+        <View>
+          <Text style={styles.headerTitle}>Meu Perfil</Text>
+          <Text style={styles.headerSubtitle}>Dados cadastrais e apontamentos</Text>
+        </View>
+
+        <TouchableOpacity 
+          onPress={handleLogout} 
+          style={styles.logoutBtn}
+          activeOpacity={0.7}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <Feather name="log-out" size={22} color={colors.error} />
         </TouchableOpacity>
       </View>
 
@@ -82,67 +120,85 @@ export const ProfileScreen = () => {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* User Info Section */}
-        <View style={styles.profileHeader}>
-          <Image source={{ uri: "https://i.pravatar.cc/150?img=68" }} style={styles.profileImage} />
-          <Text style={styles.todoText}>[TODO] Backend: API de alterar foto</Text>
+        {/* User Info Header Card */}
+        <View style={styles.profileCard}>
+          <View style={styles.avatarContainer}>
+            <Image 
+              source={{ uri: `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.nome || 'Usuario')}&background=0B3B60&color=fff&size=150` }} 
+              style={styles.profileImage} 
+            />
+            <View style={styles.cameraBadge}>
+              <Feather name="camera" size={14} color={colors.textInverse} />
+            </View>
+          </View>
+
           <Text style={styles.profileName}>{userData.nome}</Text>
-          <Text style={styles.profileRole}>Perfil: {userData.role}</Text>
+          
+          <View style={[styles.roleBadge, { backgroundColor: roleInfo.bg }]}>
+            <Text style={[styles.roleText, { color: roleInfo.text }]}>{roleInfo.label}</Text>
+          </View>
         </View>
 
-        <View style={styles.detailsSection}>
+        {/* Informações da Conta */}
+        <View style={styles.sectionCard}>
           <Text style={styles.sectionTitle}>Informações da Conta</Text>
 
-          <Text style={styles.detailText}>
-            <Text style={styles.detailLabel}>Email:</Text> {userData.email}
-          </Text>
-          
-          <TouchableOpacity style={styles.actionBtn}>
-            <Feather name="lock" size={16} color="#02386A" />
-            <Text style={styles.actionBtnText}>Alterar Senha [TODO: Criar rota backend]</Text>
+          <View style={styles.infoRow}>
+            <Feather name="mail" size={18} color={colors.primary} style={styles.infoIcon} />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.infoLabel}>E-mail de Acesso</Text>
+              <Text style={styles.infoValue}>{userData.email}</Text>
+            </View>
+          </View>
+
+          <TouchableOpacity 
+            style={styles.actionBtn} 
+            activeOpacity={0.7}
+            onPress={() => navigation.navigate('ResetPassword')}
+          >
+            <Feather name="lock" size={18} color={colors.primary} style={styles.infoIcon} />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.actionTitle}>Alterar Senha</Text>
+              <Text style={styles.actionSubtitle}>Atualize suas credenciais de segurança</Text>
+            </View>
+            <Feather name="chevron-right" size={18} color={colors.textMuted} />
           </TouchableOpacity>
         </View>
 
-        {/* Messages Section */}
-        <View style={styles.messagesSection}>
+        {/* Seção de Comunicações Recentes */}
+        <View style={styles.sectionCard}>
           <Text style={styles.sectionTitle}>
-            {userData.role === "RESPONSAVEL"
-              ? "Mensagens Recentes"
-              : "Mensagens enviadas recentemente"}
+            {userData.role === "PARENT"
+              ? "Observações do Aluno"
+              : "Apontamentos Recentes"}
           </Text>
 
-          <TouchableOpacity style={styles.semesterDropdown}>
-            <Text style={styles.semesterText}>Semestre X</Text>
-            <Feather name="chevron-down" size={20} color="#5A9BD6" />
-          </TouchableOpacity>
-
-          {messages.map((msg) => (
-            <View key={msg.id} style={styles.messageCard}>
-              <View style={styles.messageHeader}>
-                <Image
-                  source={{ uri: msg.avatar }}
-                  style={styles.messageAvatar}
-                />
-                <View>
-                  <Text style={styles.messageSenderName}>{msg.senderName}</Text>
-                  <Text style={styles.messageSenderRole}>{msg.senderRole}</Text>
+          <View style={styles.messagesList}>
+            {messages.map((msg) => (
+              <View key={msg.id} style={styles.messageCard}>
+                <View style={styles.messageHeader}>
+                  <Image
+                    source={{ uri: msg.avatar }}
+                    style={styles.messageAvatar}
+                  />
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.messageSenderName}>{msg.senderName}</Text>
+                    <Text style={styles.messageSenderRole}>{msg.senderRole}</Text>
+                  </View>
+                  <View style={styles.gradeBadge}>
+                    <Text style={styles.gradeText}>{msg.grade}</Text>
+                  </View>
                 </View>
+
+                <View style={styles.messageBody}>
+                  <Text style={styles.aspectTitle}>{msg.aspect}</Text>
+                  <Text style={styles.messageText}>{msg.comment}</Text>
+                </View>
+
+                <Text style={styles.messageDate}>{msg.date}</Text>
               </View>
-
-              <View style={styles.messageBody}>
-                <Text style={styles.messageDetail}>
-                  <Text style={styles.detailLabel}>{msg.aspect}</Text>
-                  {"\n"}
-                  Nota: <Text style={styles.boldText}>{msg.grade}</Text>
-                </Text>
-
-                <Text style={styles.detailLabel}>Comentário</Text>
-                <Text style={styles.messageText}>{msg.comment}</Text>
-              </View>
-
-              <Text style={styles.messageDate}>{msg.date}</Text>
-            </View>
-          ))}
+            ))}
+          </View>
         </View>
       </ScrollView>
     </ResponsiveContainer>
@@ -152,158 +208,196 @@ export const ProfileScreen = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingVertical: 16,
-    borderBottomWidth: 2,
-    borderBottomColor: "#D0E4F5", // light blue line under header
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.xl,
+    paddingBottom: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    backgroundColor: colors.surface,
   },
   headerTitle: {
-    fontSize: 20,
-    fontFamily: "Roboto_700Bold",
-    color: "#02386A",
+    ...typography.h2,
+    color: colors.textPrimary,
   },
-  scrollContent: {
-    padding: 24,
-    paddingBottom: 100,
-  },
-  profileHeader: {
-    alignItems: "center",
-    marginBottom: 32,
-  },
-  profileImage: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    marginBottom: 16,
-  },
-  profileName: {
-    fontSize: 20,
-    fontFamily: "Roboto_700Bold",
-    color: "#000",
-    marginBottom: 4,
-  },
-  profileRole: {
-    fontSize: 14,
-    fontFamily: "Roboto_300Light",
-    color: "#666",
-  },
-  detailsSection: {
-    marginBottom: 32,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontFamily: "Roboto_700Bold",
-    color: "#02386A",
-    marginBottom: 16,
-  },
-  detailText: {
-    fontSize: 14,
-    fontFamily: "Roboto_300Light",
-    color: "#333",
-    marginBottom: 8,
-    lineHeight: 20,
-  },
-  detailLabel: {
-    fontFamily: "Roboto_700Bold",
-    color: "#02386A",
-  },
-  boldText: {
-    fontFamily: "Roboto_700Bold",
-    color: "#000",
-  },
-  messagesSection: {
-    marginBottom: 16,
-  },
-  semesterDropdown: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  semesterText: {
-    fontSize: 14,
-    fontFamily: "Roboto_500Medium",
-    color: "#5A9BD6",
-    marginRight: 4,
-  },
-  messageCard: {
-    borderWidth: 1,
-    borderColor: "#5A9BD6",
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-    backgroundColor: "#fff",
-  },
-  messageHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  messageAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    marginRight: 12,
-  },
-  messageSenderName: {
-    fontSize: 16,
-    fontFamily: "Roboto_700Bold",
-    color: "#02386A",
-  },
-  messageSenderRole: {
-    fontSize: 12,
-    fontFamily: "Roboto_300Light",
-    color: "#5A9BD6",
-  },
-  messageBody: {
-    marginBottom: 8,
-  },
-  messageDetail: {
-    fontSize: 14,
-    fontFamily: "Roboto_300Light",
-    color: "#000",
-    marginBottom: 8,
-    lineHeight: 20,
-  },
-  messageText: {
-    fontSize: 14,
-    fontFamily: "Roboto_300Light",
-    color: "#000",
-    lineHeight: 20,
-  },
-  messageDate: {
-    fontSize: 10,
-    fontFamily: "Roboto_300Light",
-    color: "#5A9BD6",
-    textAlign: "right",
-    marginTop: 8,
+  headerSubtitle: {
+    ...typography.caption,
+    color: colors.textSecondary,
+    marginTop: 2,
   },
   logoutBtn: {
-    padding: 8,
+    minWidth: 44,
+    minHeight: 44,
+    borderRadius: radius.sm,
+    backgroundColor: colors.errorSurface,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  todoText: {
-    color: '#CC0000',
-    fontSize: 10,
-    marginBottom: 8,
-    fontFamily: 'Roboto_300Light',
+  scrollContent: {
+    padding: spacing.lg,
+    paddingBottom: spacing.xxxl * 2,
+    gap: spacing.md,
+  },
+  profileCard: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.lg,
+    alignItems: 'center',
+    ...shadows.card,
+  },
+  avatarContainer: {
+    position: 'relative',
+    marginBottom: spacing.md,
+  },
+  profileImage: {
+    width: 96,
+    height: 96,
+    borderRadius: radius.full,
+    borderWidth: 2,
+    borderColor: colors.primary,
+  },
+  cameraBadge: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    backgroundColor: colors.primary,
+    width: 30,
+    height: 30,
+    borderRadius: radius.full,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: colors.surface,
+  },
+  profileName: {
+    ...typography.h2,
+    color: colors.textPrimary,
+    marginBottom: spacing.xs,
+    textAlign: 'center',
+  },
+  roleBadge: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.full,
+  },
+  roleText: {
+    fontSize: 12,
+    fontFamily: 'Roboto_700Bold',
+    fontWeight: '700',
+  },
+  sectionCard: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.lg,
+    ...shadows.card,
+  },
+  sectionTitle: {
+    ...typography.h3,
+    color: colors.textPrimary,
+    marginBottom: spacing.md,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.divider,
+  },
+  infoIcon: {
+    marginRight: spacing.md,
+  },
+  infoLabel: {
+    ...typography.caption,
+    color: colors.textSecondary,
+  },
+  infoValue: {
+    ...typography.bodyMedium,
+    color: colors.textPrimary,
+    marginTop: 1,
   },
   actionBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
-    marginTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
+    paddingTop: spacing.md,
+    minHeight: 48,
   },
-  actionBtnText: {
-    marginLeft: 8,
-    fontSize: 14,
-    color: '#02386A',
-    fontFamily: 'Roboto_500Medium',
+  actionTitle: {
+    ...typography.bodyMedium,
+    color: colors.primary,
+    fontWeight: '600',
+  },
+  actionSubtitle: {
+    ...typography.caption,
+    color: colors.textMuted,
+    marginTop: 1,
+  },
+  messagesList: {
+    gap: spacing.md,
+  },
+  messageCard: {
+    backgroundColor: colors.background,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.md,
+  },
+  messageHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.sm,
+  },
+  messageAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: radius.full,
+    marginRight: spacing.sm,
+  },
+  messageSenderName: {
+    ...typography.captionBold,
+    color: colors.textPrimary,
+  },
+  messageSenderRole: {
+    ...typography.caption,
+    color: colors.textMuted,
+  },
+  gradeBadge: {
+    backgroundColor: colors.secondarySurface,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+    borderRadius: radius.full,
+  },
+  gradeText: {
+    fontSize: 11,
+    fontFamily: 'Roboto_700Bold',
+    color: colors.secondary,
+  },
+  messageBody: {
+    marginBottom: spacing.xs,
+  },
+  aspectTitle: {
+    ...typography.captionBold,
+    color: colors.primary,
+    marginBottom: 2,
+  },
+  messageText: {
+    ...typography.body,
+    color: colors.textSecondary,
+    fontSize: 13,
+    lineHeight: 19,
+  },
+  messageDate: {
+    ...typography.caption,
+    color: colors.textMuted,
+    textAlign: 'right',
+    marginTop: spacing.xs,
   },
 });

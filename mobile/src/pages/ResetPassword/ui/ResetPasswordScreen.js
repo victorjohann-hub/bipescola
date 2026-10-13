@@ -1,18 +1,57 @@
-import React from 'react';
-import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, Image } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, Image, TouchableOpacity, Alert } from 'react-native';
 import { ResponsiveContainer } from '@shared/ui/ResponsiveContainer/ResponsiveContainer';
+import { Feather } from '@expo/vector-icons';
 import { Input } from '@shared/ui/Input/Input';
 import { Button } from '@shared/ui/Button/Button';
+import { colors, radius, shadows, spacing, typography } from '@shared/theme';
 
-export const ResetPasswordScreen = () => {
+export const ResetPasswordScreen = ({ navigation }) => {
+  const [email, setEmail] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleReset = () => {
+    if (!email) {
+      Alert.alert('Atenção', 'Informe o e-mail cadastrado na instituição.');
+      return;
+    }
+    if (newPassword && newPassword !== confirmPassword) {
+      Alert.alert('Erro', 'As senhas informadas não coincidem.');
+      return;
+    }
+
+    setSubmitting(true);
+    setTimeout(() => {
+      setSubmitting(false);
+      Alert.alert(
+        'Solicitação Enviada',
+        'Se o e-mail existir no sistema, você receberá as instruções para redefinição de acesso.',
+        [{ text: 'Voltar ao Login', onPress: () => navigation.goBack() }]
+      );
+    }, 600);
+  };
+
   return (
     <ResponsiveContainer style={styles.safeArea}>
       <KeyboardAvoidingView 
         style={styles.container}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
+        <View style={styles.header}>
+          <TouchableOpacity 
+            style={styles.backButton}
+            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+            onPress={() => navigation.goBack()}
+          >
+            <Feather name="arrow-left" size={24} color={colors.textPrimary} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Recuperação de Acesso</Text>
+          <View style={{ width: 24 }} />
+        </View>
+
         <View style={styles.content}>
-          {/* Logo Section */}
           <View style={styles.logoContainer}>
             <Image 
               source={require('../../../../assets/logo.png')} 
@@ -21,22 +60,46 @@ export const ResetPasswordScreen = () => {
             />
           </View>
 
-          {/* Form Section */}
-          <View style={styles.formContainer}>
+          <View style={styles.formCard}>
             <View style={styles.headerTextContainer}>
-              <Text style={styles.title}>Redefinir senha</Text>
-              <Text style={styles.subtitle}>Adicione a nova senha para continuar o login</Text>
+              <Text style={styles.title}>Redefinir Senha</Text>
+              <Text style={styles.subtitle}>
+                Insira o seu e-mail institucional para redefinir as credenciais de acesso
+              </Text>
             </View>
 
             <View style={styles.inputsContainer}>
-              <Input label="Nova senha" placeholder="********" isPassword />
-              <Input label="Repetir nova senha" placeholder="********" isPassword />
+              <Input 
+                label="E-mail Institucional" 
+                placeholder="seu.email@bipescola.com" 
+                keyboardType="email-address"
+                autoCapitalize="none"
+                value={email}
+                onChangeText={setEmail}
+              />
+              <Input 
+                label="Nova Senha" 
+                placeholder="Mínimo de 6 caracteres" 
+                isPassword 
+                value={newPassword}
+                onChangeText={setNewPassword}
+              />
+              <Input 
+                label="Confirmação da Nova Senha" 
+                placeholder="Repita a nova senha" 
+                isPassword 
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+              />
             </View>
-          </View>
 
-          {/* Button Section */}
-          <View style={styles.buttonContainer}>
-            <Button title="Redefinir senha" onPress={() => console.log('Reset password pressed')} />
+            <View style={styles.buttonContainer}>
+              <Button 
+                title="Confirmar Nova Senha" 
+                loading={submitting}
+                onPress={handleReset} 
+              />
+            </View>
           </View>
         </View>
       </KeyboardAvoidingView>
@@ -47,51 +110,75 @@ export const ResetPasswordScreen = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.background,
   },
   container: {
     flex: 1,
   },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.sm,
+  },
+  backButton: {
+    minWidth: 44,
+    minHeight: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headerTitle: {
+    ...typography.h3,
+    color: colors.textPrimary,
+  },
   content: {
     flex: 1,
-    paddingHorizontal: 24,
+    paddingHorizontal: spacing.lg,
     justifyContent: 'center',
     alignItems: 'center',
   },
   logoContainer: {
+    marginBottom: spacing.lg,
     alignItems: 'center',
-    marginBottom: 64,
   },
   logoImage: {
-    width: 200,
-    height: 80,
+    width: 180,
+    height: 55,
   },
-  formContainer: {
+  formCard: {
     width: '100%',
-    marginBottom: 48,
+    maxWidth: 440,
+    backgroundColor: colors.surface,
+    padding: spacing.xl,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    ...shadows.card,
   },
   headerTextContainer: {
-    marginBottom: 32,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
-    paddingBottom: 16,
+    marginBottom: spacing.lg,
+    alignItems: 'center',
   },
   title: {
-    fontSize: 20,
-    fontFamily: 'Roboto_700Bold',
-    color: '#000000',
-    marginBottom: 8,
+    ...typography.h2,
+    color: colors.primary,
+    textAlign: 'center',
+    marginBottom: 4,
   },
   subtitle: {
-    fontSize: 14,
-    fontFamily: 'Roboto_300Light',
-    color: '#000000',
+    ...typography.caption,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 18,
   },
   inputsContainer: {
     width: '100%',
+    marginBottom: spacing.sm,
   },
   buttonContainer: {
-    alignItems: 'center',
     width: '100%',
+    marginTop: spacing.sm,
   },
 });
