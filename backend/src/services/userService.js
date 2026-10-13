@@ -30,17 +30,17 @@ export async function loginUser({ email, senha }) {
   const user = await userModel.findByEmail(email);
 
   if (!user) {
-    throw new Error("Email ou senha inv�lidos");
+    throw new Error("Email ou senha inválidos");
   }
 
   const passwordMatch = await bcrypt.compare(senha, user.senha);
 
   if (!passwordMatch) {
-    throw new Error("Email ou senha inv�lidos");
+    throw new Error("Email ou senha inválidos");
   }
 
   if (!process.env.JWT_SECRET) {
-    throw new Error("JWT_SECRET n�o configurado");
+    throw new Error("JWT_SECRET não configurado");
   }
 
   const token = jwt.sign(
@@ -88,7 +88,7 @@ export async function changePassword(id, senhaAtual, novaSenha) {
   );
 
   if (!user) {
-    throw new Error("Usu�rio n�o encontrado");
+    throw new Error("Usuário não encontrado");
   }
 
   const passwordMatch = await bcrypt.compare(senhaAtual, user.senha);
@@ -101,7 +101,7 @@ export async function changePassword(id, senhaAtual, novaSenha) {
   const updated = await userModel.updatePassword(id, senhaHash);
 
   if (!updated) {
-    throw new Error("N�o foi poss�vel atualizar a senha");
+    throw new Error("Não foi possível atualizar a senha");
   }
 
   return true;
@@ -156,14 +156,14 @@ export async function resetPassword(email, token, novaSenha) {
   const user = await userModel.findByResetToken(email, token);
 
   if (!user) {
-    throw new Error("Token inv�lido ou expirado");
+    throw new Error("Token inválido ou expirado");
   }
 
   const senhaHash = await bcrypt.hash(novaSenha, 10);
   const updated = await userModel.updatePassword(user.id, senhaHash);
 
   if (!updated) {
-    throw new Error("N�o foi poss�vel redefinir a senha");
+    throw new Error("Não foi possível redefinir a senha");
   }
 
   return true;
@@ -173,7 +173,7 @@ export async function updateUserPhoto(id, foto) {
   const updated = await userModel.updatePhoto(id, foto);
 
   if (!updated) {
-    throw new Error("Usu�rio n�o encontrado ou foto n�o atualizada");
+    throw new Error("Usuário não encontrado ou foto não atualizada");
   }
 
   return await userModel.findById(id);
