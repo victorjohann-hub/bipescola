@@ -14,3 +14,11 @@ export const deleteParentAPI = async (id) => apiClient(`/parents/${id}`, { metho
 export const listStudentsAPI = async () => apiClient('/students', { method: 'GET' });
 export const deleteStudentAPI = async (id) => apiClient(`/students/${id}`, { method: 'DELETE' });
 export const updateStudentAPI = async (id, data) => apiClient(`/students/${id}`, { method: 'PUT', body: data });
+
+// ==========================================
+// TURMAS / CLASSES API
+// ==========================================
+export const listClassesAPI = async () => apiClient('/class', { method: 'GET' });
+export const getClassByIdAPI = async (id) => apiClient(`/class/${id}`, { method: 'GET' });
+export const createClassAPI = async (data) => apiClient('/class', { method: 'POST', body: data });
+export const deleteClassAPI = async (id) => apiClient(`/class/${id}`, { method: 'DELETE' });
