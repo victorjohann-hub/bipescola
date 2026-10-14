@@ -159,3 +159,25 @@ export async function deleteAttendance(req, res) {
     });
   }
 }
+
+export async function getAttendanceHistory(req, res) {
+  try {
+    const { data, data_inicio, data_fim, aluno_id, turma_id, presente } = req.query;
+
+    const result = await attendanceService.getAttendanceHistory({
+      data,
+      data_inicio,
+      data_fim,
+      aluno_id,
+      turma_id,
+      presente
+    });
+
+    return res.status(200).json(result);
+  } catch (error) {
+    console.error("Erro ao buscar histórico de presenças:", error);
+    return res.status(500).json({
+      error: "Erro ao buscar histórico de presenças"
+    });
+  }
+}

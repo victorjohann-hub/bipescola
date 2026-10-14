@@ -23,3 +23,24 @@ export async function updateAttendance(id, data) {
 export async function deleteAttendance(id) {
   return await attendanceModel.deleteAttendance(id);
 }
+
+export async function getAttendanceHistory(filters) {
+  const records = await attendanceModel.findByFilters(filters);
+
+  const totalRegistros = records.length;
+  const totalPresentes = records.filter(r => r.presente === 1 || r.presente === true).length;
+  const totalFaltas = totalRegistros - totalPresentes;
+  const taxaComparecimento = totalRegistros > 0
+    ? `${Math.round((totalPresentes / totalRegistros) * 100)}%`
+    : '0%';
+
+  return {
+    resumo: {
+      totalRegistros,
+      totalPresentes,
+      totalFaltas,
+      taxaComparecimento
+    },
+    registros: records
+  };
+}
