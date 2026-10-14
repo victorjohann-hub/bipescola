@@ -143,28 +143,7 @@ export const ProfileScreen = () => {
     }
   };
 
-  const messages = [
-    {
-      id: 1,
-      senderName: "Profa. Sara Soares",
-      senderRole: "Língua Portuguesa",
-      avatar: "https://ui-avatars.com/api/?name=Sara+Soares&background=2E7D32&color=fff",
-      aspect: "Expressão Verbal & Leitura",
-      grade: "5/5",
-      comment: "Excelente dedicação nas leituras em grupo durante as últimas semanas.",
-      date: "12 de out. 2026",
-    },
-    {
-      id: 2,
-      senderName: "Profa. Larissa Sato",
-      senderRole: "Artes",
-      avatar: "https://ui-avatars.com/api/?name=Larissa+Sato&background=0B3B60&color=fff",
-      aspect: "Criatividade & Participação",
-      grade: "5/5",
-      comment: "Trabalhos manuais executados com capricho e atenção aos detalhes.",
-      date: "08 de out. 2026",
-    },
-  ];
+
 
   const getRoleLabel = (role) => {
     switch (role) {
@@ -189,7 +168,7 @@ export const ProfileScreen = () => {
       <View style={styles.header}>
         <View>
           <Text style={styles.headerTitle}>Meu Perfil</Text>
-          <Text style={styles.headerSubtitle}>Dados cadastrais e apontamentos</Text>
+          <Text style={styles.headerSubtitle}>Dados cadastrais e credenciais de acesso</Text>
         </View>
 
         <TouchableOpacity 
@@ -253,42 +232,6 @@ export const ProfileScreen = () => {
             </View>
             <Feather name="chevron-right" size={18} color={colors.textMuted} />
           </TouchableOpacity>
-        </View>
-
-        {/* Seção de Comunicações Recentes */}
-        <View style={styles.sectionCard}>
-          <Text style={styles.sectionTitle}>
-            {userData.role === "PARENT"
-              ? "Observações do Aluno"
-              : "Apontamentos Recentes"}
-          </Text>
-
-          <View style={styles.messagesList}>
-            {messages.map((msg) => (
-              <View key={msg.id} style={styles.messageCard}>
-                <View style={styles.messageHeader}>
-                  <Image
-                    source={{ uri: msg.avatar }}
-                    style={styles.messageAvatar}
-                  />
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.messageSenderName}>{msg.senderName}</Text>
-                    <Text style={styles.messageSenderRole}>{msg.senderRole}</Text>
-                  </View>
-                  <View style={styles.gradeBadge}>
-                    <Text style={styles.gradeText}>{msg.grade}</Text>
-                  </View>
-                </View>
-
-                <View style={styles.messageBody}>
-                  <Text style={styles.aspectTitle}>{msg.aspect}</Text>
-                  <Text style={styles.messageText}>{msg.comment}</Text>
-                </View>
-
-                <Text style={styles.messageDate}>{msg.date}</Text>
-              </View>
-            ))}
-          </View>
         </View>
       </ScrollView>
 
@@ -536,66 +479,6 @@ const styles = StyleSheet.create({
     ...typography.caption,
     color: colors.textMuted,
     marginTop: 1,
-  },
-  messagesList: {
-    gap: spacing.md,
-  },
-  messageCard: {
-    backgroundColor: colors.background,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: spacing.md,
-  },
-  messageHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: spacing.sm,
-  },
-  messageAvatar: {
-    width: 36,
-    height: 36,
-    borderRadius: radius.full,
-    marginRight: spacing.sm,
-  },
-  messageSenderName: {
-    ...typography.captionBold,
-    color: colors.textPrimary,
-  },
-  messageSenderRole: {
-    ...typography.caption,
-    color: colors.textMuted,
-  },
-  gradeBadge: {
-    backgroundColor: colors.secondarySurface,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 2,
-    borderRadius: radius.full,
-  },
-  gradeText: {
-    fontSize: 11,
-    fontFamily: 'Roboto_700Bold',
-    color: colors.secondary,
-  },
-  messageBody: {
-    marginBottom: spacing.xs,
-  },
-  aspectTitle: {
-    ...typography.captionBold,
-    color: colors.primary,
-    marginBottom: 2,
-  },
-  messageText: {
-    ...typography.body,
-    color: colors.textSecondary,
-    fontSize: 13,
-    lineHeight: 19,
-  },
-  messageDate: {
-    ...typography.caption,
-    color: colors.textMuted,
-    textAlign: 'right',
-    marginTop: spacing.xs,
   },
   // Modais
   modalOverlay: {

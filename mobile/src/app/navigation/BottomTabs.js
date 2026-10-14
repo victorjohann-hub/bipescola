@@ -9,8 +9,8 @@ import { colors, radius, shadows, spacing } from "@shared/theme";
 import { PresenceNavigator } from "@pages/Presence";
 import { ProfileScreen } from "@pages/Profile";
 import { NoticesNavigator } from "@pages/Notices";
-import { EvaluationNavigator } from "@pages/Evaluation";
 import { AdminNavigator } from "@pages/Admin";
+import { AttendanceHistoryScreen } from "@pages/AttendanceHistory";
 
 const Tab = createBottomTabNavigator();
 
@@ -46,8 +46,8 @@ export function BottomTabs() {
   // Regras de negócio de visibilidade
   const canSeeNotices = ['ADM', 'PROF', 'PARENT'].includes(role);
   const canSeeAdmin = ['ADM'].includes(role);
-  const canSeeEvaluation = ['ADM', 'PROF', 'PARENT'].includes(role);
   const canSeePresence = ['ADM', 'PROF', 'PARENT', 'PORTEIRO'].includes(role);
+  const canSeeAttendanceHistory = ['ADM', 'PROF', 'PORTEIRO'].includes(role);
 
   return (
     <Tab.Navigator
@@ -96,6 +96,21 @@ export function BottomTabs() {
         />
       )}
 
+      {canSeeAttendanceHistory && (
+        <Tab.Screen
+          name="Frequência"
+          component={AttendanceHistoryScreen}
+          options={{
+            tabBarIcon: ({ focused }) => (
+              <View style={[styles.iconContainer, focused && { backgroundColor: colors.primarySurface }]}>
+                <Feather name="calendar" size={22} color={focused ? colors.primary : colors.textMuted} />
+                <Text style={[styles.iconText, focused && { color: colors.primary, fontWeight: '700' }]}>Frequência</Text>
+              </View>
+            ),
+          }}
+        />
+      )}
+
       {canSeeAdmin && (
         <Tab.Screen
           name="Admin"
@@ -105,21 +120,6 @@ export function BottomTabs() {
               <View style={[styles.iconContainer, focused && { backgroundColor: colors.highlightSurface }]}>
                 <Feather name="briefcase" size={22} color={focused ? colors.highlight : colors.textMuted} />
                 <Text style={[styles.iconText, focused && { color: colors.highlight, fontWeight: '700' }]}>Painel ADM</Text>
-              </View>
-            ),
-          }}
-        />
-      )}
-
-      {canSeeEvaluation && (
-        <Tab.Screen
-          name="Evaluation"
-          component={EvaluationNavigator}
-          options={{
-            tabBarIcon: ({ focused }) => (
-              <View style={[styles.iconContainer, focused && { backgroundColor: colors.accentSurface }]}>
-                <Feather name="clipboard" size={22} color={focused ? colors.accent : colors.textMuted} />
-                <Text style={[styles.iconText, focused && { color: colors.accent, fontWeight: '700' }]}>Avaliação</Text>
               </View>
             ),
           }}
