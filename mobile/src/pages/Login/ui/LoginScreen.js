@@ -2,18 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, KeyboardAvoidingView, Platform, Image, Alert, ActivityIndicator } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ResponsiveContainer } from '@shared/ui/ResponsiveContainer/ResponsiveContainer';
-import { Feather } from '@expo/vector-icons';
 import { Input } from '@shared/ui/Input/Input';
 import { Button } from '@shared/ui/Button/Button';
 import { loginUserAPI } from '@shared/api/userApi';
+import { colors, radius, shadows, spacing, typography } from '@shared/theme';
 
 export const LoginScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(true);
 
   useEffect(() => {
-    // Check auto-login
     const checkLogin = async () => {
       try {
         const token = await AsyncStorage.getItem('@bipescola_token');
@@ -21,7 +21,7 @@ export const LoginScreen = ({ navigation }) => {
           navigation.navigate('Main');
         }
       } catch (e) {}
-      setLoading(false);
+      setCheckingAuth(false);
     };
     checkLogin();
   }, []);
@@ -47,11 +47,19 @@ export const LoginScreen = ({ navigation }) => {
     }
   };
 
+  if (checkingAuth) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
+
   return (
     <ResponsiveContainer style={styles.safeArea}>
       <KeyboardAvoidingView 
         style={styles.container}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <View style={styles.content}>
           {/* Logo Section */}
@@ -63,43 +71,47 @@ export const LoginScreen = ({ navigation }) => {
             />
           </View>
 
-          {/* Form Section */}
-          <View style={styles.formContainer}>
+          {/* Form Card */}
+          <View style={styles.formCard}>
             <View style={styles.headerTextContainer}>
-              <Text style={styles.title}>Fazer Login</Text>
-              <Text style={styles.subtitle}>Faça login para obter acesso ao aplicativo</Text>
+              <Text style={styles.title}>Acesso ao BIP Escola</Text>
+              <Text style={styles.subtitle}>Digite suas credenciais institucionais para continuar</Text>
             </View>
 
             <View style={styles.inputsContainer}>
               <Input 
-                label="Email" 
-                placeholder="exemplo@email.com" 
+                label="E-mail" 
+                placeholder="seu.email@bipescola.com" 
                 keyboardType="email-address" 
                 value={email}
                 onChangeText={setEmail}
                 autoCapitalize="none"
               />
               <Input 
-                label="Senha" 
-                placeholder="******" 
+                label="Senha de Acesso" 
+                placeholder="••••••••" 
                 isPassword 
                 value={senha}
                 onChangeText={setSenha}
               />
             </View>
 
-            <TouchableOpacity style={styles.forgotPasswordContainer}>
+            <TouchableOpacity 
+              style={styles.forgotPasswordContainer}
+              activeOpacity={0.7}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              onPress={() => navigation.navigate('ResetPassword')}
+            >
               <Text style={styles.forgotPasswordText}>Esqueceu sua senha?</Text>
             </TouchableOpacity>
-          </View>
 
-          {/* Button Section */}
-          <View style={styles.buttonContainer}>
-            {loading ? (
-              <ActivityIndicator size="large" color="#02386A" />
-            ) : (
-              <Button title="Fazer login" onPress={handleLogin} />
-            )}
+            <View style={styles.buttonContainer}>
+              <Button 
+                title="Entrar no Sistema" 
+                loading={loading}
+                onPress={handleLogin} 
+              />
+            </View>
           </View>
         </View>
       </KeyboardAvoidingView>
@@ -110,60 +122,68 @@ export const LoginScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.background,
   },
   container: {
     flex: 1,
   },
   content: {
     flex: 1,
-    paddingHorizontal: 24,
+    paddingHorizontal: spacing.lg,
     justifyContent: 'center',
     alignItems: 'center',
   },
   logoContainer: {
+    marginBottom: spacing.xl,
     alignItems: 'center',
-    marginBottom: 64,
   },
   logoImage: {
-    width: 200,
-    height: 80,
+    width: 220,
+    height: 70,
   },
-  formContainer: {
+  formCard: {
     width: '100%',
-    marginBottom: 48,
+    maxWidth: 440,
+    backgroundColor: colors.surface,
+    padding: spacing.xl,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    ...shadows.card,
   },
   headerTextContainer: {
-    marginBottom: 32,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
-    paddingBottom: 16,
+    marginBottom: spacing.lg,
+    alignItems: 'center',
   },
   title: {
-    fontSize: 20,
-    fontFamily: 'Roboto_700Bold',
-    color: '#000000',
-    marginBottom: 8,
+    ...typography.h2,
+    color: colors.primary,
+    textAlign: 'center',
+    marginBottom: 4,
   },
   subtitle: {
-    fontSize: 14,
-    fontFamily: 'Roboto_300Light',
-    color: '#000000',
+    ...typography.caption,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 18,
   },
   inputsContainer: {
     width: '100%',
-    marginBottom: 16,
+    marginBottom: spacing.xs,
   },
   forgotPasswordContainer: {
     alignSelf: 'flex-end',
+    marginBottom: spacing.lg,
+    minHeight: 24,
+    justifyContent: 'center',
   },
   forgotPasswordText: {
-    color: '#02386A',
-    fontSize: 14,
-    fontFamily: 'Inter_300Light',
+    fontSize: 13,
+    fontFamily: 'Roboto_500Medium',
+    color: colors.primary,
+    fontWeight: '600',
   },
   buttonContainer: {
-    alignItems: 'center',
     width: '100%',
   },
 });

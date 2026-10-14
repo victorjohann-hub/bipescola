@@ -1,71 +1,87 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, SafeAreaView, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { EvaluationScale } from '../components/EvaluationScale';
 import { EvaluationTable } from '../components/EvaluationTable';
 import { EvaluationCard } from '../components/EvaluationCard';
+import { colors, radius, shadows, spacing, typography } from '@shared/theme';
 
 const MOCK_EVALUATIONS = [
   {
     id: '1',
-    authorName: 'Rodrigo Costa',
-    authorRole: 'Professor',
-    avatarUrl: 'https://randomuser.me/api/portraits/men/32.jpg',
-    aspect: 'Aspecto X',
+    authorName: 'Prof. Rodrigo Costa',
+    authorRole: 'Matemática e Raciocínio',
+    avatarUrl: 'https://ui-avatars.com/api/?name=Rodrigo+Costa&background=C25E00&color=fff',
+    aspect: 'Participação & Engajamento',
     grade: 5,
-    comment: 'Feedback inicial que serve para orientar o desenvolvimento futuro e identificar pontos fracos.',
-    date: '12 de dez. 2026',
+    comment: 'Demonstra grande curiosidade durante os exercícios em grupo e colabora com os colegas.',
+    date: '12 de out. 2026',
   },
   {
     id: '2',
-    authorName: 'Sara Soares',
-    authorRole: 'Professora',
-    avatarUrl: 'https://randomuser.me/api/portraits/women/44.jpg',
-    aspect: 'Aspecto Y',
-    grade: 5,
-    comment: 'Feedback inicial que serve para orientar o desenvolvimento futuro e identificar pontos fracos.',
-    date: '12 de dez. 2026',
+    authorName: 'Profa. Sara Soares',
+    authorRole: 'Língua Portuguesa',
+    avatarUrl: 'https://ui-avatars.com/api/?name=Sara+Soares&background=2E7D32&color=fff',
+    aspect: 'Expressão Verbal & Leitura',
+    grade: 4,
+    comment: 'Boa interpretação de texto, com excelente leitura em voz alta. Estimular escrita criativa.',
+    date: '10 de out. 2026',
   },
   {
     id: '3',
-    authorName: 'Larissa Sato',
-    authorRole: 'Professora',
-    avatarUrl: 'https://randomuser.me/api/portraits/women/68.jpg',
-    aspect: 'Aspecto Z',
+    authorName: 'Profa. Larissa Sato',
+    authorRole: 'Artes & Socialização',
+    avatarUrl: 'https://ui-avatars.com/api/?name=Larissa+Sato&background=0B3B60&color=fff',
+    aspect: 'Trabalho em Equipe',
     grade: 5,
-    comment: 'Feedback inicial que serve para orientar o desenvolvimento futuro e identificar pontos fracos.',
-    date: '12 de dez. 2026',
+    comment: 'Participativo e atento às orientações da turma nas atividades manuais.',
+    date: '05 de out. 2026',
   },
 ];
 
-const MOCK_CLASSES = [
-  'nome', 'nome', 'nome', 'nome', 'nome', 'nome', 'nome', 'nome', 'nome', 'nome'
+const REAL_CLASSES = [
+  '1º Ano A - Matutino',
+  '1º Ano B - Vespertino',
+  '2º Ano A - Matutino',
+  '3º Ano A - Matutino',
 ];
 
 export const EvaluationListScreen = () => {
   const navigation = useNavigation();
-  // Role mock: clique no título para alternar entre PARENT e TEACHER
   const [role, setRole] = useState('PARENT');
-  const [selectedClassIndex, setSelectedClassIndex] = useState(2); // Mock seleção
+  const [selectedClassIndex, setSelectedClassIndex] = useState(0);
 
   const renderParentView = () => (
     <View style={styles.contentPadding}>
+      <View style={styles.infoBanner}>
+        <Feather name="info" size={18} color={colors.accent} />
+        <Text style={styles.infoBannerText}>
+          Boletim pedagógico descritivo do estudante
+        </Text>
+      </View>
+
       <EvaluationScale />
       <EvaluationTable />
       
       <View style={styles.filtersContainer}>
-        <TouchableOpacity style={styles.dropdown}>
-          <Text style={styles.dropdownText}>Aluno X</Text>
-          <Feather name="chevron-down" size={16} color="#8B7500" />
+        <TouchableOpacity style={styles.dropdown} activeOpacity={0.7}>
+          <Feather name="user" size={16} color={colors.accent} style={{ marginRight: 6 }} />
+          <Text style={styles.dropdownText}>Aluno: João Silva</Text>
+          <Feather name="chevron-down" size={16} color={colors.textMuted} />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.dropdown}>
-          <Text style={styles.dropdownText}>Semestre X</Text>
-          <Feather name="chevron-down" size={16} color="#8B7500" />
+
+        <TouchableOpacity style={styles.dropdown} activeOpacity={0.7}>
+          <Feather name="calendar" size={16} color={colors.accent} style={{ marginRight: 6 }} />
+          <Text style={styles.dropdownText}>2º Semestre Letivo</Text>
+          <Feather name="chevron-down" size={16} color={colors.textMuted} />
         </TouchableOpacity>
       </View>
 
-      {MOCK_EVALUATIONS.map(evalItem => (
+      <Text style={styles.sectionHeader}>Pareceres dos Professores</Text>
+
+      {MOCK_EVALUATIONS.map((evalItem) => (
         <EvaluationCard key={evalItem.id} evaluation={evalItem} />
       ))}
     </View>
@@ -75,33 +91,43 @@ export const EvaluationListScreen = () => {
     <View style={styles.contentPadding}>
       <TouchableOpacity 
         style={styles.createButton} 
+        activeOpacity={0.75}
         onPress={() => navigation.navigate('EvaluationCreate')}
       >
-        <Text style={styles.createButtonText}>Criar nova Avaliação</Text>
-        <Feather name="plus" size={20} color="#8B7500" />
+        <Feather name="plus-circle" size={20} color={colors.accent} />
+        <Text style={styles.createButtonText}>Lançar Nova Avaliação</Text>
       </TouchableOpacity>
 
       <View style={styles.teacherHeader}>
-        <Text style={styles.teacherTitle}>Professor</Text>
-        <Text style={styles.teacherName}>Professor X</Text>
+        <Text style={styles.teacherTitle}>Turmas sob Orientação</Text>
+        <Text style={styles.teacherSubtitle}>Selecione uma turma para consultar os alunos:</Text>
       </View>
 
-      <Text style={styles.classesTitle}>Turmas</Text>
-      <Text style={styles.classesSubtitle}>Selecione uma turma:</Text>
-
       <View style={styles.classesList}>
-        {MOCK_CLASSES.map((className, index) => (
-          <TouchableOpacity 
-            key={index.toString()} 
-            style={[
-              styles.classItem, 
-              selectedClassIndex === index && styles.classItemSelected
-            ]}
-            onPress={() => setSelectedClassIndex(index)}
-          >
-            <Text style={styles.classItemText}>{className}</Text>
-          </TouchableOpacity>
-        ))}
+        {REAL_CLASSES.map((className, index) => {
+          const isSelected = selectedClassIndex === index;
+          return (
+            <TouchableOpacity 
+              key={index.toString()} 
+              activeOpacity={0.7}
+              style={[
+                styles.classItem, 
+                isSelected && styles.classItemSelected
+              ]}
+              onPress={() => setSelectedClassIndex(index)}
+            >
+              <Feather 
+                name={isSelected ? "check-circle" : "circle"} 
+                size={18} 
+                color={isSelected ? colors.accent : colors.textMuted} 
+                style={{ marginRight: 10 }}
+              />
+              <Text style={[styles.classItemText, isSelected && styles.classItemTextSelected]}>
+                {className}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
       </View>
     </View>
   );
@@ -109,12 +135,26 @@ export const EvaluationListScreen = () => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => setRole(role === 'PARENT' ? 'TEACHER' : 'PARENT')}>
+        <View>
           <Text style={styles.headerTitle}>Avaliações do Aluno</Text>
+          <Text style={styles.headerSubtitle}>Acompanhamento de desenvolvimento</Text>
+        </View>
+
+        {/* Alternador de visualização rápida */}
+        <TouchableOpacity 
+          style={styles.roleToggle}
+          onPress={() => setRole(role === 'PARENT' ? 'TEACHER' : 'PARENT')}
+        >
+          <Text style={styles.roleToggleText}>
+            {role === 'PARENT' ? 'Visão: Pais' : 'Visão: Prof'}
+          </Text>
         </TouchableOpacity>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        contentContainerStyle={styles.scrollContent} 
+        showsVerticalScrollIndicator={false}
+      >
         {role === 'PARENT' ? renderParentView() : renderTeacherView()}
       </ScrollView>
     </SafeAreaView>
@@ -124,92 +164,141 @@ export const EvaluationListScreen = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingVertical: 16,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: colors.border,
+    backgroundColor: colors.surface,
   },
   headerTitle: {
-    fontSize: 20,
-    fontFamily: 'Roboto_700Bold',
-    fontWeight: 'bold',
-    color: '#8B7500', // Dourado escuro
+    ...typography.h2,
+    color: colors.textPrimary,
+  },
+  headerSubtitle: {
+    ...typography.caption,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
+  roleToggle: {
+    backgroundColor: colors.accentSurface,
+    paddingHorizontal: spacing.sm + 2,
+    paddingVertical: spacing.xs + 2,
+    borderRadius: radius.full,
+    borderWidth: 1,
+    borderColor: colors.accentLight,
+  },
+  roleToggleText: {
+    fontSize: 12,
+    fontFamily: 'Roboto_500Medium',
+    color: colors.accent,
+    fontWeight: '600',
   },
   scrollContent: {
-    paddingBottom: 100, // Espaço para BottomTabs
+    paddingBottom: spacing.xxxl * 2,
   },
   contentPadding: {
-    padding: 24,
+    padding: spacing.lg,
+    gap: spacing.md,
+  },
+  infoBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.accentSurface,
+    padding: spacing.md,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.accentLight,
+    gap: spacing.sm,
+  },
+  infoBannerText: {
+    ...typography.body,
+    color: colors.accent,
+    fontWeight: '500',
+    flex: 1,
   },
   filtersContainer: {
-    marginBottom: 24,
+    gap: spacing.sm,
+    marginTop: spacing.xs,
   },
   dropdown: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    backgroundColor: colors.surface,
+    paddingHorizontal: spacing.md,
+    minHeight: 48,
+    borderRadius: radius.sm,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    justifyContent: 'space-between',
   },
   dropdownText: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#8B7500',
-    marginRight: 4,
+    ...typography.bodyMedium,
+    color: colors.textPrimary,
+    flex: 1,
   },
-  // Teacher View Styles
+  sectionHeader: {
+    ...typography.h3,
+    color: colors.textPrimary,
+    marginTop: spacing.sm,
+  },
   createButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 24,
+    backgroundColor: colors.surface,
+    padding: spacing.md,
+    borderRadius: radius.md,
+    borderWidth: 1.5,
+    borderColor: colors.accent,
+    gap: spacing.sm,
+    minHeight: 48,
+    ...shadows.subtle,
   },
   createButtonText: {
-    fontSize: 16,
-    color: '#8B7500',
-    fontWeight: 'bold',
-    marginRight: 8,
+    ...typography.bodyMedium,
+    color: colors.accent,
+    fontWeight: '700',
   },
   teacherHeader: {
-    marginBottom: 24,
+    marginTop: spacing.sm,
   },
   teacherTitle: {
-    fontSize: 18,
-    fontFamily: 'Roboto_700Bold',
-    fontWeight: 'bold',
-    color: '#8B7500',
-    marginBottom: 8,
+    ...typography.h3,
+    color: colors.textPrimary,
   },
-  teacherName: {
-    fontSize: 14,
-    color: '#8B7500',
-  },
-  classesTitle: {
-    fontSize: 18,
-    fontFamily: 'Roboto_700Bold',
-    fontWeight: 'bold',
-    color: '#8B7500',
-    marginBottom: 4,
-  },
-  classesSubtitle: {
-    fontSize: 12,
-    color: '#B8860B',
-    marginBottom: 16,
+  teacherSubtitle: {
+    ...typography.caption,
+    color: colors.textSecondary,
+    marginTop: 2,
   },
   classesList: {
-    marginTop: 8,
+    gap: spacing.sm,
   },
   classItem: {
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    minHeight: 48,
+    paddingHorizontal: spacing.md,
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   classItemSelected: {
-    backgroundColor: '#FDE68A', // Background amarelo claro do item selecionado
+    backgroundColor: colors.accentSurface,
+    borderColor: colors.accent,
   },
   classItemText: {
-    fontSize: 14,
-    color: '#8B7500',
+    ...typography.body,
+    color: colors.textPrimary,
+  },
+  classItemTextSelected: {
+    fontWeight: '700',
+    color: colors.accent,
   },
 });

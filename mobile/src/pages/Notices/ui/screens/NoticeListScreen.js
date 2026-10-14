@@ -6,6 +6,7 @@ import { useNavigation, useIsFocused } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NoticeCard } from '../components/NoticeCard';
 import { listPostsAPI } from '@shared/api/schoolApi';
+import { colors, radius, shadows, spacing, typography } from '@shared/theme';
 
 export const NoticeListScreen = () => {
   const navigation = useNavigation();
@@ -43,28 +44,34 @@ export const NoticeListScreen = () => {
       {role !== 'PARENT' && (
         <TouchableOpacity 
           style={styles.createButton} 
+          activeOpacity={0.75}
           onPress={() => navigation.navigate('NoticeCreate')}
         >
-          <Text style={styles.createButtonText}>Criar aviso</Text>
-          <Feather name="plus" size={20} color="#F06292" />
+          <Feather name="plus-circle" size={20} color={colors.notice} />
+          <Text style={styles.createButtonText}>Criar Novo Aviso</Text>
         </TouchableOpacity>
       )}
 
-      <TouchableOpacity style={styles.semesterFilter}>
-        <Text style={styles.semesterText}>Recentes</Text>
-        <Feather name="chevron-down" size={16} color="#F06292" />
-      </TouchableOpacity>
+      <View style={styles.filterRow}>
+        <View style={styles.filterChip}>
+          <Feather name="clock" size={14} color={colors.notice} />
+          <Text style={styles.filterChipText}>Publicações Recentes</Text>
+        </View>
+      </View>
     </View>
   );
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Mural de Avisos</Text>
+        <View>
+          <Text style={styles.headerTitle}>Mural de Avisos</Text>
+          <Text style={styles.headerSubtitle}>Comunicados e informações da escola</Text>
+        </View>
       </View>
 
       {loading ? (
-        <ActivityIndicator size="large" color="#F06292" style={{ marginTop: 20 }} />
+        <ActivityIndicator size="large" color={colors.notice} style={{ marginTop: spacing.xl }} />
       ) : (
         <FlatList
           data={posts}
@@ -72,18 +79,23 @@ export const NoticeListScreen = () => {
           renderItem={({ item }) => (
             <NoticeCard notice={{
               id: item.id.toString(),
-              authorName: item.autor_nome || 'Escola',
-              authorRole: 'Comunicação', 
-              avatarUrl: 'https://ui-avatars.com/api/?name=' + (item.autor_nome || 'A'),
+              authorName: item.autor_nome || 'Coordenação Escolar',
+              authorRole: 'Comunicado Oficial', 
+              avatarUrl: 'https://ui-avatars.com/api/?name=' + encodeURIComponent(item.autor_nome || 'BIP Escola') + '&background=C2185B&color=fff',
               subject: item.titulo,
               content: item.conteudo,
-              date: new Date(item.data_criacao).toLocaleDateString('pt-BR')
+              date: item.data_criacao ? new Date(item.data_criacao).toLocaleDateString('pt-BR') : 'Hoje'
             }} />
           )}
           contentContainerStyle={styles.listContent}
           ListHeaderComponent={renderHeader}
           showsVerticalScrollIndicator={false}
-          ListEmptyComponent={<Text style={{textAlign: 'center', marginTop: 20}}>Nenhum aviso encontrado.</Text>}
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Feather name="bell-off" size={40} color={colors.textMuted} style={{ marginBottom: spacing.sm }} />
+              <Text style={styles.emptyText}>Nenhum comunicado publicado no momento.</Text>
+            </View>
+          }
         />
       )}
     </SafeAreaView>
@@ -93,49 +105,80 @@ export const NoticeListScreen = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingVertical: 16,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: colors.border,
+    backgroundColor: colors.surface,
   },
   headerTitle: {
-    fontSize: 20,
-    fontFamily: 'Roboto_700Bold',
-    fontWeight: 'bold',
-    color: '#8B1A1A',
+    ...typography.h2,
+    color: colors.textPrimary,
+  },
+  headerSubtitle: {
+    ...typography.caption,
+    color: colors.textSecondary,
+    marginTop: 2,
   },
   listContent: {
-    padding: 24,
-    paddingBottom: 100, 
+    padding: spacing.lg,
+    paddingBottom: spacing.xxxl * 2,
   },
   listHeader: {
-    marginBottom: 16,
+    marginBottom: spacing.md,
+    gap: spacing.sm,
   },
   createButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 24,
+    backgroundColor: colors.surface,
+    padding: spacing.md,
+    borderRadius: radius.md,
+    borderWidth: 1.5,
+    borderColor: colors.notice,
+    gap: spacing.sm,
+    minHeight: 48,
+    ...shadows.subtle,
   },
   createButtonText: {
-    fontSize: 16,
-    color: '#F06292',
-    fontWeight: 'bold',
-    marginRight: 8,
+    ...typography.bodyMedium,
+    color: colors.notice,
+    fontWeight: '700',
   },
-  semesterFilter: {
+  filterRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginTop: spacing.xs,
   },
-  semesterText: {
-    fontSize: 14,
-    color: '#F06292',
-    fontWeight: 'bold',
-    marginRight: 4,
+  filterChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.noticeSurface,
+    paddingHorizontal: spacing.sm + 4,
+    paddingVertical: spacing.xs + 2,
+    borderRadius: radius.full,
+    gap: 6,
+  },
+  filterChipText: {
+    fontSize: 12,
+    fontFamily: 'Roboto_500Medium',
+    color: colors.notice,
+    fontWeight: '600',
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.xxxl,
+  },
+  emptyText: {
+    ...typography.body,
+    color: colors.textMuted,
+    textAlign: 'center',
   },
 });

@@ -1,12 +1,35 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  FlatList, 
+  TouchableOpacity, 
+  Alert, 
+  ActivityIndicator,
+  Modal,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform
+} from 'react-native';
 import { ResponsiveContainer } from '@shared/ui/ResponsiveContainer/ResponsiveContainer';
 import { Feather } from '@expo/vector-icons';
-import { listUsersAPI, deleteUserAPI } from '@shared/api/adminApi';
+import { listUsersAPI, deleteUserAPI, updateUserAPI } from '@shared/api/adminApi';
+import { Input } from '@shared/ui/Input/Input';
+import { Button } from '@shared/ui/Button/Button';
+import { colors, radius, shadows, spacing, typography } from '@shared/theme';
 
 export const UserManagementScreen = ({ navigation }) => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Estado de Edição Real
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [editingUser, setEditingUser] = useState(null);
+  const [editNome, setEditNome] = useState('');
+  const [editEmail, setEditEmail] = useState('');
+  const [editRole, setEditRole] = useState('PARENT');
+  const [savingEdit, setSavingEdit] = useState(false);
 
   const fetchUsers = async () => {
     try {
@@ -23,6 +46,36 @@ export const UserManagementScreen = ({ navigation }) => {
   useEffect(() => {
     fetchUsers();
   }, []);
+
+  const openEditModal = (user) => {
+    setEditingUser(user);
+    setEditNome(user.nome || '');
+    setEditEmail(user.email || '');
+    setEditRole(user.role || 'PARENT');
+    setEditModalVisible(true);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editNome || !editEmail) {
+      Alert.alert('Atenção', 'Nome e email são obrigatórios.');
+      return;
+    }
+    try {
+      setSavingEdit(true);
+      await updateUserAPI(editingUser.id, {
+        nome: editNome,
+        email: editEmail,
+        role: editRole,
+      });
+      Alert.alert('Sucesso', 'Usuário atualizado com sucesso!');
+      setEditModalVisible(false);
+      fetchUsers();
+    } catch (error) {
+      Alert.alert('Erro', error.message || 'Falha ao atualizar usuário');
+    } finally {
+      setSavingEdit(false);
+    }
+  };
 
   const handleDelete = (id, nome) => {
     Alert.alert('Atenção', `Deseja realmente excluir ${nome}?`, [
@@ -43,29 +96,65 @@ export const UserManagementScreen = ({ navigation }) => {
     ]);
   };
 
-  const renderItem = ({ item }) => (
-    <View style={styles.card}>
-      <View style={styles.cardInfo}>
-        <Text style={styles.name}>{item.nome}</Text>
-        <Text style={styles.email}>{item.email}</Text>
-        <Text style={styles.role}>Perfil: {item.role}</Text>
+  const getRoleBadge = (role) => {
+    switch (role) {
+      case 'ADM':
+        return { label: 'Administrador', bg: colors.highlightSurface, text: colors.highlight };
+      case 'PROF':
+        return { label: 'Professor', bg: colors.secondarySurface, text: colors.secondary };
+      case 'PARENT':
+        return { label: 'Responsável', bg: colors.primarySurface, text: colors.primary };
+      default:
+        return { label: role || 'Usuário', bg: colors.surface, text: colors.textSecondary };
+    }
+  };
+
+  const renderItem = ({ item }) => {
+    const badge = getRoleBadge(item.role);
+
+    return (
+      <View style={styles.card}>
+        <View style={styles.cardInfo}>
+          <Text style={styles.name}>{item.nome}</Text>
+          <Text style={styles.email}>{item.email}</Text>
+          
+          <View style={[styles.roleBadge, { backgroundColor: badge.bg }]}>
+            <Text style={[styles.roleText, { color: badge.text }]}>{badge.label}</Text>
+          </View>
+        </View>
+
+        <View style={styles.actions}>
+          <TouchableOpacity 
+            style={styles.actionBtn} 
+            activeOpacity={0.7}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            onPress={() => openEditModal(item)}
+          >
+            <Feather name="edit-2" size={18} color={colors.primary} />
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={[styles.actionBtn, styles.deleteBtn]} 
+            activeOpacity={0.7}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            onPress={() => handleDelete(item.id, item.nome)}
+          >
+            <Feather name="trash-2" size={18} color={colors.error} />
+          </TouchableOpacity>
+        </View>
       </View>
-      <View style={styles.actions}>
-        <TouchableOpacity style={styles.actionBtn} onPress={() => Alert.alert('Aviso', 'Edição em construção')}>
-          <Feather name="edit-2" size={20} color="#000" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.actionBtn} onPress={() => handleDelete(item.id, item.nome)}>
-          <Feather name="trash-2" size={20} color="#CC0000" />
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
+    );
+  };
 
   return (
     <ResponsiveContainer style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Feather name="arrow-left" size={24} color="#000" />
+        <TouchableOpacity 
+          onPress={() => navigation.goBack()} 
+          style={styles.backBtn}
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+        >
+          <Feather name="arrow-left" size={24} color={colors.textPrimary} />
         </TouchableOpacity>
         <View>
           <Text style={styles.headerTitle}>Gerenciar Usuários</Text>
@@ -74,15 +163,86 @@ export const UserManagementScreen = ({ navigation }) => {
       </View>
       
       {loading ? (
-        <ActivityIndicator size="large" color="#000" style={{ marginTop: 50 }} />
+        <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: spacing.xl }} />
       ) : (
         <FlatList 
           data={users}
           keyExtractor={(item) => item.id.toString()}
           renderItem={renderItem}
           contentContainerStyle={styles.listContainer}
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={
+            <Text style={styles.emptyText}>Nenhum usuário cadastrado.</Text>
+          }
         />
       )}
+
+      {/* Modal de Edição Real */}
+      <Modal visible={editModalVisible} transparent animationType="fade">
+        <KeyboardAvoidingView 
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined} 
+          style={styles.modalOverlay}
+        >
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Editar Usuário</Text>
+              <TouchableOpacity 
+                onPress={() => setEditModalVisible(false)}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <Feather name="x" size={22} color={colors.textSecondary} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false}>
+              <Input
+                label="Nome Completo"
+                value={editNome}
+                onChangeText={setEditNome}
+                placeholder="Nome do usuário"
+              />
+
+              <Input
+                label="Email"
+                value={editEmail}
+                onChangeText={setEditEmail}
+                placeholder="email@escola.com"
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
+
+              <Text style={styles.rolePickerLabel}>Perfil de Acesso</Text>
+              <View style={styles.rolePickerContainer}>
+                {['ADM', 'PROF', 'PARENT'].map((r) => (
+                  <TouchableOpacity
+                    key={r}
+                    style={[
+                      styles.roleOption,
+                      editRole === r && styles.roleOptionSelected
+                    ]}
+                    onPress={() => setEditRole(r)}
+                  >
+                    <Text style={[
+                      styles.roleOptionText,
+                      editRole === r && styles.roleOptionTextSelected
+                    ]}>
+                      {r === 'ADM' ? 'Admin' : r === 'PROF' ? 'Professor' : 'Responsável'}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              <View style={styles.modalActions}>
+                <Button
+                  title="Salvar Alterações"
+                  loading={savingEdit}
+                  onPress={handleSaveEdit}
+                />
+              </View>
+            </ScrollView>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </ResponsiveContainer>
   );
 };
@@ -90,68 +250,153 @@ export const UserManagementScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingTop: 32,
-    paddingBottom: 16,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.xl,
+    paddingBottom: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    backgroundColor: colors.surface,
   },
   backBtn: {
-    marginRight: 16,
+    minWidth: 44,
+    minHeight: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing.sm,
   },
   headerTitle: {
-    fontSize: 20,
-    fontFamily: 'Roboto_700Bold',
-    color: '#000',
+    ...typography.h2,
+    color: colors.textPrimary,
   },
   headerSubtitle: {
-    fontSize: 12,
-    fontFamily: 'Roboto_300Light',
-    color: '#555',
+    ...typography.caption,
+    color: colors.textSecondary,
+    marginTop: 2,
   },
   listContainer: {
-    padding: 24,
-    paddingTop: 8,
+    padding: spacing.lg,
+    gap: spacing.md,
   },
   card: {
-    backgroundColor: '#F5F5F5',
-    padding: 16,
-    borderRadius: 8,
-    marginBottom: 12,
+    backgroundColor: colors.surface,
+    padding: spacing.md,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
+    ...shadows.card,
   },
   cardInfo: {
     flex: 1,
   },
   name: {
-    fontSize: 14,
-    fontFamily: 'Roboto_700Bold',
-    color: '#000',
+    ...typography.h3,
+    color: colors.textPrimary,
   },
   email: {
-    fontSize: 12,
-    fontFamily: 'Roboto_300Light',
-    color: '#555',
+    ...typography.caption,
+    color: colors.textSecondary,
     marginTop: 2,
   },
-  role: {
-    fontSize: 10,
+  roleBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 3,
+    borderRadius: radius.full,
+    marginTop: spacing.sm,
+  },
+  roleText: {
+    fontSize: 11,
     fontFamily: 'Roboto_500Medium',
-    color: '#000',
-    marginTop: 4,
+    fontWeight: '600',
   },
   actions: {
     flexDirection: 'row',
+    gap: spacing.xs,
   },
   actionBtn: {
-    padding: 8,
-    marginLeft: 8,
+    minWidth: 44,
+    minHeight: 44,
+    borderRadius: radius.sm,
+    backgroundColor: colors.primarySurface,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  deleteBtn: {
+    backgroundColor: colors.errorSurface,
+  },
+  emptyText: {
+    ...typography.body,
+    textAlign: 'center',
+    marginTop: spacing.xl,
+  },
+  // Modal de Edição
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 23, 42, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.lg,
+  },
+  modalContent: {
+    width: '100%',
+    maxWidth: 480,
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    padding: spacing.lg,
+    ...shadows.modal,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.lg,
+  },
+  modalTitle: {
+    ...typography.h2,
+    color: colors.textPrimary,
+  },
+  rolePickerLabel: {
+    ...typography.captionBold,
+    color: colors.textSecondary,
+    marginBottom: spacing.sm,
+  },
+  rolePickerContainer: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginBottom: spacing.lg,
+  },
+  roleOption: {
+    flex: 1,
+    minHeight: 44,
+    borderRadius: radius.sm,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+  },
+  roleOptionSelected: {
+    borderColor: colors.primary,
+    backgroundColor: colors.primarySurface,
+  },
+  roleOptionText: {
+    fontSize: 12,
+    fontFamily: 'Roboto_500Medium',
+    color: colors.textSecondary,
+  },
+  roleOptionTextSelected: {
+    color: colors.primary,
+    fontWeight: '700',
+  },
+  modalActions: {
+    marginTop: spacing.md,
   },
 });
