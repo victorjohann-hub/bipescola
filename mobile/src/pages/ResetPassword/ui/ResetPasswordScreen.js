@@ -1,36 +1,76 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, Image, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, Image, TouchableOpacity, Alert, ScrollView } from 'react-native';
 import { ResponsiveContainer } from '@shared/ui/ResponsiveContainer/ResponsiveContainer';
 import { Feather } from '@expo/vector-icons';
 import { Input } from '@shared/ui/Input/Input';
 import { Button } from '@shared/ui/Button/Button';
 import { colors, radius, shadows, spacing, typography } from '@shared/theme';
+import { forgotPasswordAPI, resetPasswordAPI } from '@shared/api/userApi';
 
 export const ResetPasswordScreen = ({ navigation }) => {
+  // 'request' (solicitar token) ou 'reset' (aplicar token + nova senha)
+  const [step, setStep] = useState('request');
   const [email, setEmail] = useState('');
+  const [token, setToken] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [submitting, setSubmitting] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleReset = () => {
-    if (!email) {
-      Alert.alert('Atenção', 'Informe o e-mail cadastrado na instituição.');
-      return;
-    }
-    if (newPassword && newPassword !== confirmPassword) {
-      Alert.alert('Erro', 'As senhas informadas não coincidem.');
+  const handleRequestToken = async () => {
+    if (!email.trim()) {
+      Alert.alert('Atenção', 'Informe o seu e-mail cadastrado na instituição.');
       return;
     }
 
-    setSubmitting(true);
-    setTimeout(() => {
-      setSubmitting(false);
+    try {
+      setLoading(true);
+      await forgotPasswordAPI({ email: email.trim() });
       Alert.alert(
         'Solicitação Enviada',
-        'Se o e-mail existir no sistema, você receberá as instruções para redefinição de acesso.',
-        [{ text: 'Voltar ao Login', onPress: () => navigation.goBack() }]
+        'Se o e-mail estiver cadastrado, o token de recuperação foi gerado. Insira o código recebido abaixo.',
+        [{ text: 'Avançar', onPress: () => setStep('reset') }]
       );
-    }, 600);
+    } catch (error) {
+      Alert.alert('Erro', error.message || 'Falha ao solicitar código.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResetPassword = async () => {
+    if (!email.trim() || !token.trim() || !newPassword.trim()) {
+      Alert.alert('Atenção', 'Preencha o e-mail, o código de recuperação e a nova senha.');
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      Alert.alert('Atenção', 'A nova senha deve possuir pelo menos 8 caracteres.');
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      Alert.alert('Erro', 'As senhas digitadas não coincidem.');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      await resetPasswordAPI({
+        email: email.trim(),
+        token: token.trim(),
+        novaSenha: newPassword
+      });
+
+      Alert.alert(
+        'Sucesso!',
+        'Sua senha foi redefinida com sucesso. Faça login com as novas credenciais.',
+        [{ text: 'Fazer Login', onPress: () => navigation.navigate('Login') }]
+      );
+    } catch (error) {
+      Alert.alert('Erro na Redefinição', error.message || 'Token inválido ou expirado.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -51,7 +91,7 @@ export const ResetPasswordScreen = ({ navigation }) => {
           <View style={{ width: 24 }} />
         </View>
 
-        <View style={styles.content}>
+        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
           <View style={styles.logoContainer}>
             <Image 
               source={require('../../../../assets/logo.png')} 
@@ -61,47 +101,100 @@ export const ResetPasswordScreen = ({ navigation }) => {
           </View>
 
           <View style={styles.formCard}>
-            <View style={styles.headerTextContainer}>
-              <Text style={styles.title}>Redefinir Senha</Text>
-              <Text style={styles.subtitle}>
-                Insira o seu e-mail institucional para redefinir as credenciais de acesso
-              </Text>
-            </View>
+            {step === 'request' ? (
+              <>
+                <View style={styles.headerTextContainer}>
+                  <Text style={styles.title}>Esqueceu sua senha?</Text>
+                  <Text style={styles.subtitle}>
+                    Digite seu e-mail institucional. Enviaremos o código de redefinição para validação.
+                  </Text>
+                </View>
 
-            <View style={styles.inputsContainer}>
-              <Input 
-                label="E-mail Institucional" 
-                placeholder="seu.email@bipescola.com" 
-                keyboardType="email-address"
-                autoCapitalize="none"
-                value={email}
-                onChangeText={setEmail}
-              />
-              <Input 
-                label="Nova Senha" 
-                placeholder="Mínimo de 6 caracteres" 
-                isPassword 
-                value={newPassword}
-                onChangeText={setNewPassword}
-              />
-              <Input 
-                label="Confirmação da Nova Senha" 
-                placeholder="Repita a nova senha" 
-                isPassword 
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
-              />
-            </View>
+                <View style={styles.inputsContainer}>
+                  <Input 
+                    label="E-mail Institucional" 
+                    placeholder="seu.email@bipescola.com" 
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    value={email}
+                    onChangeText={setEmail}
+                  />
+                </View>
 
-            <View style={styles.buttonContainer}>
-              <Button 
-                title="Confirmar Nova Senha" 
-                loading={submitting}
-                onPress={handleReset} 
-              />
-            </View>
+                <View style={styles.buttonContainer}>
+                  <Button 
+                    title="Enviar Código de Recuperação" 
+                    loading={loading}
+                    onPress={handleRequestToken} 
+                  />
+                </View>
+
+                <TouchableOpacity 
+                  style={styles.switchStepBtn}
+                  onPress={() => setStep('reset')}
+                >
+                  <Text style={styles.switchStepText}>Já possui um código? Clique aqui</Text>
+                </TouchableOpacity>
+              </>
+            ) : (
+              <>
+                <View style={styles.headerTextContainer}>
+                  <Text style={styles.title}>Definir Nova Senha</Text>
+                  <Text style={styles.subtitle}>
+                    Informe o código de recuperação e cadastre uma nova senha com no mínimo 8 dígitos.
+                  </Text>
+                </View>
+
+                <View style={styles.inputsContainer}>
+                  <Input 
+                    label="E-mail" 
+                    placeholder="seu.email@bipescola.com" 
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    value={email}
+                    onChangeText={setEmail}
+                  />
+                  <Input 
+                    label="Código / Token de Recuperação" 
+                    placeholder="Cole o código aqui" 
+                    value={token}
+                    onChangeText={setToken}
+                    autoCapitalize="none"
+                  />
+                  <Input 
+                    label="Nova Senha (Mínimo 8 caracteres)" 
+                    placeholder="••••••••" 
+                    isPassword 
+                    value={newPassword}
+                    onChangeText={setNewPassword}
+                  />
+                  <Input 
+                    label="Confirmar Nova Senha" 
+                    placeholder="••••••••" 
+                    isPassword 
+                    value={confirmPassword}
+                    onChangeText={setConfirmPassword}
+                  />
+                </View>
+
+                <View style={styles.buttonContainer}>
+                  <Button 
+                    title="Confirmar Nova Senha" 
+                    loading={loading}
+                    onPress={handleResetPassword} 
+                  />
+                </View>
+
+                <TouchableOpacity 
+                  style={styles.switchStepBtn}
+                  onPress={() => setStep('request')}
+                >
+                  <Text style={styles.switchStepText}>Não tem código? Solicitar novamente</Text>
+                </TouchableOpacity>
+              </>
+            )}
           </View>
-        </View>
+        </ScrollView>
       </KeyboardAvoidingView>
     </ResponsiveContainer>
   );
@@ -134,8 +227,8 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
   },
   content: {
-    flex: 1,
     paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -180,5 +273,16 @@ const styles = StyleSheet.create({
   buttonContainer: {
     width: '100%',
     marginTop: spacing.sm,
+  },
+  switchStepBtn: {
+    marginTop: spacing.md,
+    alignItems: 'center',
+    paddingVertical: spacing.xs,
+  },
+  switchStepText: {
+    fontSize: 13,
+    fontFamily: 'Roboto_500Medium',
+    color: colors.primary,
+    fontWeight: '600',
   },
 });

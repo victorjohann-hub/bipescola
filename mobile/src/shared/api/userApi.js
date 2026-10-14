@@ -27,3 +27,31 @@ export const loginUserAPI = async (credentials) => {
     body: credentials,
   });
 };
+
+export const changePasswordAPI = async ({ senhaAtual, novaSenha }) => {
+  return apiClient('/users/change-password', {
+    method: 'PUT',
+    body: { senhaAtual, novaSenha },
+  });
+};
+
+export const forgotPasswordAPI = async ({ email }) => {
+  return apiClient('/users/forgot-password', {
+    method: 'POST',
+    body: { email },
+  });
+};
+
+export const resetPasswordAPI = async ({ email, token, novaSenha }) => {
+  return apiClient('/users/reset-password', {
+    method: 'POST',
+    body: { email, token, novaSenha },
+  });
+};
+
+export const updateUserPhotoAPI = async (userId, foto) => {
+  return apiClient(`/users/${userId}/photo`, {
+    method: 'PUT',
+    body: { foto },
+  });
+};

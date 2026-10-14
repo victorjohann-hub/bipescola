@@ -1,4 +1,4 @@
-﻿import { query } from '../database/db.js';
+import { query } from '../database/db.js';
 
 export async function create({ nome, email, senha, firstLogin }) {
   const sql = `
@@ -25,6 +25,7 @@ export async function findAll() {
       nome,
       email,
       role,
+      foto,
       firstLogin,
       aniversario,
       data_criacao,
@@ -51,6 +52,7 @@ export async function findById(id) {
       nome,
       email,
       role,
+      foto,
       firstLogin,
       aniversario,
       data_criacao,
@@ -72,6 +74,7 @@ export async function findByRole(role) {
       nome,
       email,
       role,
+      foto,
       firstLogin,
       aniversario,
       data_criacao,

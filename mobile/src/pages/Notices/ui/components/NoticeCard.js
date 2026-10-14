@@ -16,10 +16,19 @@ export const NoticeCard = ({ notice }) => {
           <Text style={styles.role}>{notice.authorRole || 'Comunicado Oficial'}</Text>
         </View>
 
-        <View style={styles.badge}>
-          <Feather name="bell" size={12} color={colors.notice} />
-          <Text style={styles.badgeText}>Aviso</Text>
-        </View>
+        {notice.destinatario_nome ? (
+          <View style={[styles.badge, styles.individualBadge]}>
+            <Feather name="user-check" size={12} color={colors.accent} />
+            <Text style={[styles.badgeText, { color: colors.accent }]}>
+              {notice.destinatario_nome}
+            </Text>
+          </View>
+        ) : (
+          <View style={styles.badge}>
+            <Feather name="globe" size={12} color={colors.notice} />
+            <Text style={styles.badgeText}>Geral</Text>
+          </View>
+        )}
       </View>
       
       <View style={styles.bodyContainer}>
@@ -80,6 +89,9 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xs,
     borderRadius: radius.full,
     gap: 4,
+  },
+  individualBadge: {
+    backgroundColor: colors.accentSurface,
   },
   badgeText: {
     fontSize: 11,

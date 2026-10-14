@@ -84,6 +84,7 @@ export const NoticeListScreen = () => {
               avatarUrl: 'https://ui-avatars.com/api/?name=' + encodeURIComponent(item.autor_nome || 'BIP Escola') + '&background=C2185B&color=fff',
               subject: item.titulo,
               content: item.conteudo,
+              destinatario_nome: item.destinatario_nome,
               date: item.data_criacao ? new Date(item.data_criacao).toLocaleDateString('pt-BR') : 'Hoje'
             }} />
           )}
