@@ -4,8 +4,8 @@ export async function createPost(data) {
   return await postModel.createPost(data);
 }
 
-export async function getPosts() {
-  return await postModel.findAll();
+export async function getPosts(options) {
+  return await postModel.findAll(options);
 }
 
 export async function getPostById(id) {

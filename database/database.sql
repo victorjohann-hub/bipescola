@@ -29,6 +29,7 @@ CREATE TABLE turmas (
 --   - PROF: Professor/Coordenacao
 --   - ADM: Admin (acesso total)
 --   - PARENT: Pais/responsaveis (veem apenas seus filhos)
+--   - PORTEIRO: Porteiro/seguranca (registra presenca na portaria)
 -- ============================================================================
 CREATE TABLE users (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -36,8 +37,11 @@ CREATE TABLE users (
     senha VARCHAR(255) NOT NULL,
     nome VARCHAR(255) NOT NULL,
     aniversario DATE,
-    role ENUM('PROF', 'ADM', 'PARENT') NOT NULL DEFAULT 'PARENT',
+    role ENUM('PROF', 'ADM', 'PARENT', 'PORTEIRO') NOT NULL DEFAULT 'PARENT',
     firstLogin BOOLEAN DEFAULT true,
+    reset_token VARCHAR(255) NULL,
+    reset_token_expires DATETIME NULL,
+    foto VARCHAR(255) NULL,
     data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     data_atualizacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     ativo ENUM('sim', 'nao') DEFAULT 'sim',
@@ -147,18 +151,22 @@ CREATE TABLE presencas (
 -- ============================================================================
 -- TABELA: POSTS
 -- Descricao: Comunicados/avisos publicados por professores e administradores
+-- destinatario_id: NULL = aviso geral; preenchido = aviso direcionado a um usuario
 -- ============================================================================
 CREATE TABLE posts (
     id INT AUTO_INCREMENT PRIMARY KEY,
     titulo VARCHAR(255) NOT NULL,
     conteudo TEXT NOT NULL,
     autor_id INT NOT NULL,
+    destinatario_id INT NULL,
     data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     data_atualizacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
     FOREIGN KEY (autor_id) REFERENCES users(id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    FOREIGN KEY (destinatario_id) REFERENCES users(id) ON DELETE SET NULL ON UPDATE CASCADE,
 
     INDEX idx_autor_id (autor_id),
+    INDEX idx_destinatario_id (destinatario_id),
     INDEX idx_data_criacao (data_criacao)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
