@@ -7,6 +7,7 @@ import professorRoutes from './src/routes/professorRoutes.js';
 import studentRoutes from './src/routes/studentRoutes.js';
 import attendanceRoutes from './src/routes/attendanceRoutes.js';
 import postRoutes from './src/routes/postRoutes.js';
+import classRoutes from './src/routes/classRoutes.js';
 
 const app = express();
 app.use(cors());
@@ -19,6 +20,7 @@ app.use('/api/professors', professorRoutes);
 app.use('/api/students', studentRoutes);
 app.use('/api/attendances', attendanceRoutes);
 app.use('/api/posts', postRoutes);
+app.use('/api/class', classRoutes);
 
 app.get('/', (req, res) => {
     res.status(200).json({ msg: "Bem-vindo" });
