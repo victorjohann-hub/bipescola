@@ -1,20 +1,22 @@
-﻿import { query } from "../database/db.js";
+import { query } from "../database/db.js";
 
 export async function findAll() {
   const sql = `
     SELECT
-      id,
-      matricula,
-      nome,
-      aniversario,
-      turma_id,
-      id_pai,
-      faltas,
-      data_criacao,
-      data_atualizacao,
-      status
-    FROM alunos
-    ORDER BY id
+      a.id,
+      a.matricula,
+      a.nome,
+      a.aniversario,
+      a.turma_id,
+      t.nome AS turma_nome,
+      a.id_pai,
+      a.faltas,
+      a.data_criacao,
+      a.data_atualizacao,
+      a.status
+    FROM alunos a
+    LEFT JOIN turmas t ON t.id = a.turma_id
+    ORDER BY a.nome ASC
   `;
 
   return await query(sql);
@@ -23,18 +25,20 @@ export async function findAll() {
 export async function findById(id) {
   const sql = `
     SELECT
-      id,
-      matricula,
-      nome,
-      aniversario,
-      turma_id,
-      id_pai,
-      faltas,
-      data_criacao,
-      data_atualizacao,
-      status
-    FROM alunos
-    WHERE id = ?
+      a.id,
+      a.matricula,
+      a.nome,
+      a.aniversario,
+      a.turma_id,
+      t.nome AS turma_nome,
+      a.id_pai,
+      a.faltas,
+      a.data_criacao,
+      a.data_atualizacao,
+      a.status
+    FROM alunos a
+    LEFT JOIN turmas t ON t.id = a.turma_id
+    WHERE a.id = ?
   `;
 
   const results = await query(sql, [id]);
@@ -45,19 +49,21 @@ export async function findById(id) {
 export async function findByParentId(parentId) {
   const sql = `
     SELECT
-      id,
-      matricula,
-      nome,
-      aniversario,
-      turma_id,
-      id_pai,
-      faltas,
-      data_criacao,
-      data_atualizacao,
-      status
-    FROM alunos
-    WHERE id_pai = ?
-    ORDER BY id
+      a.id,
+      a.matricula,
+      a.nome,
+      a.aniversario,
+      a.turma_id,
+      t.nome AS turma_nome,
+      a.id_pai,
+      a.faltas,
+      a.data_criacao,
+      a.data_atualizacao,
+      a.status
+    FROM alunos a
+    LEFT JOIN turmas t ON t.id = a.turma_id
+    WHERE a.id_pai = ?
+    ORDER BY a.nome ASC
   `;
 
   return await query(sql, [parentId]);
@@ -66,19 +72,21 @@ export async function findByParentId(parentId) {
 export async function findByTurmaId(turmaId) {
   const sql = `
     SELECT
-      id,
-      matricula,
-      nome,
-      aniversario,
-      turma_id,
-      id_pai,
-      faltas,
-      data_criacao,
-      data_atualizacao,
-      status
-    FROM alunos
-    WHERE turma_id = ?
-    ORDER BY id
+      a.id,
+      a.matricula,
+      a.nome,
+      a.aniversario,
+      a.turma_id,
+      t.nome AS turma_nome,
+      a.id_pai,
+      a.faltas,
+      a.data_criacao,
+      a.data_atualizacao,
+      a.status
+    FROM alunos a
+    LEFT JOIN turmas t ON t.id = a.turma_id
+    WHERE a.turma_id = ?
+    ORDER BY a.nome ASC
   `;
 
   return await query(sql, [turmaId]);

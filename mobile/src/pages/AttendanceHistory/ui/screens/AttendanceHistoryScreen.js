@@ -4,6 +4,7 @@ import {
   Text,
   StyleSheet,
   FlatList,
+  ScrollView,
   TouchableOpacity,
   ActivityIndicator,
   RefreshControl,
@@ -14,6 +15,7 @@ import { Feather } from '@expo/vector-icons';
 import { ResponsiveContainer } from '@shared/ui/ResponsiveContainer/ResponsiveContainer';
 import { colors, radius, shadows, spacing, typography } from '@shared/theme';
 import { getAttendanceHistoryAPI, updatePostAPI } from '@shared/api/schoolApi';
+import { listClassesAPI } from '@shared/api/adminApi';
 import { apiClient } from '@shared/api/apiClient';
 
 const PERIODS = [
@@ -25,6 +27,8 @@ const PERIODS = [
 
 export const AttendanceHistoryScreen = () => {
   const [selectedPeriod, setSelectedPeriod] = useState('today');
+  const [selectedTurmaId, setSelectedTurmaId] = useState('ALL');
+  const [classes, setClasses] = useState([]);
   const [statusFilter, setStatusFilter] = useState('ALL'); // 'ALL' | 'PRESENT' | 'ABSENT'
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
@@ -75,10 +79,25 @@ export const AttendanceHistoryScreen = () => {
     return { data: formatDate(today) };
   }, []);
 
+  useEffect(() => {
+    const fetchClasses = async () => {
+      try {
+        const res = await listClassesAPI();
+        setClasses(res?.data || (Array.isArray(res) ? res : []));
+      } catch (e) {
+        // fallback
+      }
+    };
+    fetchClasses();
+  }, []);
+
   const loadAttendanceHistory = useCallback(async () => {
     try {
       setLoading(true);
       const params = getDateParams(selectedPeriod);
+      if (selectedTurmaId !== 'ALL') {
+        params.turma_id = selectedTurmaId;
+      }
       const res = await getAttendanceHistoryAPI(params);
       setData(res || { resumo: { totalRegistros: 0, totalPresentes: 0, totalFaltas: 0, taxaComparecimento: '0%' }, registros: [] });
     } catch (error) {
@@ -87,7 +106,7 @@ export const AttendanceHistoryScreen = () => {
     } finally {
       setLoading(false);
     }
-  }, [selectedPeriod, getDateParams]);
+  }, [selectedPeriod, selectedTurmaId, getDateParams]);
 
   useEffect(() => {
     loadAttendanceHistory();
@@ -189,6 +208,52 @@ export const AttendanceHistoryScreen = () => {
           );
         })}
       </View>
+
+      {/* Seletor de Turma */}
+      {classes.length > 0 && (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ gap: spacing.xs, marginBottom: spacing.md }}
+        >
+          <TouchableOpacity
+            style={[
+              styles.statusTab,
+              selectedTurmaId === 'ALL' && styles.statusTabActive,
+            ]}
+            onPress={() => setSelectedTurmaId('ALL')}
+          >
+            <Text
+              style={[
+                styles.statusTabText,
+                selectedTurmaId === 'ALL' && styles.statusTabTextActive,
+              ]}
+            >
+              Todas as Turmas
+            </Text>
+          </TouchableOpacity>
+
+          {classes.map((c) => {
+            const isSelected = String(selectedTurmaId) === String(c.id);
+            return (
+              <TouchableOpacity
+                key={c.id}
+                style={[styles.statusTab, isSelected && styles.statusTabActive]}
+                onPress={() => setSelectedTurmaId(c.id)}
+              >
+                <Text
+                  style={[
+                    styles.statusTabText,
+                    isSelected && styles.statusTabTextActive,
+                  ]}
+                >
+                  {c.nome}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      )}
 
       {/* Cards de Métricas */}
       <View style={styles.metricsGrid}>
@@ -325,6 +390,9 @@ export const AttendanceHistoryScreen = () => {
             <View style={styles.metaRow}>
               {item.aluno_matricula ? (
                 <Text style={styles.metaMatricula}>Matrícula: {item.aluno_matricula}</Text>
+              ) : null}
+              {item.turma_nome ? (
+                <Text style={styles.metaMatricula}> • {item.turma_nome}</Text>
               ) : null}
               {selectedPeriod !== 'today' && selectedPeriod !== 'yesterday' ? (
                 <Text style={styles.metaDate}> • {dateFormatted}</Text>

@@ -64,6 +64,22 @@ export const AdminMenuScreen = ({ navigation }) => {
           </View>
           <Feather name="chevron-right" size={20} color={colors.textMuted} />
         </TouchableOpacity>
+
+        {/* Card: Gerenciar Turmas */}
+        <TouchableOpacity 
+          style={styles.card} 
+          activeOpacity={0.75}
+          onPress={() => navigation.navigate('ClassManagement')}
+        >
+          <View style={[styles.iconCircle, { backgroundColor: colors.accentSurface }]}>
+            <Feather name="layers" size={24} color={colors.accent} />
+          </View>
+          <View style={styles.cardBody}>
+            <Text style={styles.cardTitle}>Gerenciar Turmas</Text>
+            <Text style={styles.cardDesc}>Crie, edite e organize as turmas da instituição</Text>
+          </View>
+          <Feather name="chevron-right" size={20} color={colors.textMuted} />
+        </TouchableOpacity>
       </ScrollView>
     </ResponsiveContainer>
   );

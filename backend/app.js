@@ -21,6 +21,8 @@ app.use('/api/students', studentRoutes);
 app.use('/api/attendances', attendanceRoutes);
 app.use('/api/posts', postRoutes);
 app.use('/api/class', classRoutes);
+app.use('/api/classes', classRoutes);
+app.use('/api/turmas', classRoutes);
 
 app.get('/', (req, res) => {
     res.status(200).json({ msg: "Bem-vindo" });

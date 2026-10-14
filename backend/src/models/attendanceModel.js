@@ -101,6 +101,7 @@ export async function findByFilters({
       a.nome AS aluno_nome,
       a.matricula AS aluno_matricula,
       a.turma_id,
+      t.nome AS turma_nome,
       p.data,
       p.presente,
       p.registrado_por,
@@ -108,6 +109,7 @@ export async function findByFilters({
       p.data_registro
     FROM presencas p
     INNER JOIN alunos a ON a.id = p.aluno_id
+    LEFT JOIN turmas t ON t.id = a.turma_id
     INNER JOIN users u ON u.id = p.registrado_por
     WHERE 1=1
   `;

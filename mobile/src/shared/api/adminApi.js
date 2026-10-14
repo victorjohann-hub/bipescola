@@ -21,4 +21,5 @@ export const updateStudentAPI = async (id, data) => apiClient(`/students/${id}`,
 export const listClassesAPI = async () => apiClient('/class', { method: 'GET' });
 export const getClassByIdAPI = async (id) => apiClient(`/class/${id}`, { method: 'GET' });
 export const createClassAPI = async (data) => apiClient('/class', { method: 'POST', body: data });
+export const updateClassAPI = async (id, data) => apiClient(`/class/${id}`, { method: 'PUT', body: data });
 export const deleteClassAPI = async (id) => apiClient(`/class/${id}`, { method: 'DELETE' });
