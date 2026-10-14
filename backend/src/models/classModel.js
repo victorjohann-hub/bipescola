@@ -12,7 +12,7 @@
 
 import { query } from "../database/db.js";
 
-export async function findAllClasses() {
+export async function getClasses() {
   const sql = `
     SELECT
       id,
@@ -50,7 +50,7 @@ export async function findByTurmaId(turmaId) {
       nome,
       data_criacao,
       status
-    FROM alunos
+    FROM turma
     WHERE turma_id = ?
     ORDER BY id
   `;
@@ -68,6 +68,24 @@ export async function createClass({ nome }) {
 
   return await findById(result.insertId);
 }
+
+
+export async function deleteById(id) {
+  const turma = await findById(id);
+
+  if (!turma) {
+    return null;
+  }
+
+  const sql = `
+    DELETE FROM turmas
+    WHERE id = ?
+  `;
+
+  const result = await query(sql, [id]);
+
+  return result.affectedRows > 0 ? turma : null;
+};
 
 /* export async function updateClassById(id, nome {
   id,
