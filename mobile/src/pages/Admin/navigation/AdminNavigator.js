@@ -3,6 +3,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { AdminMenuScreen } from '../ui/AdminMenuScreen';
 import { UserManagementScreen } from '../ui/UserManagementScreen';
 import { StudentManagementScreen } from '../ui/StudentManagementScreen';
+import { ClassManagementScreen } from '../ui/ClassManagementScreen';
 import { RegisterScreen } from '@pages/Register';
 
 const Stack = createNativeStackNavigator();
@@ -13,6 +14,7 @@ export const AdminNavigator = () => {
       <Stack.Screen name="AdminMenu" component={AdminMenuScreen} />
       <Stack.Screen name="UserManagement" component={UserManagementScreen} />
       <Stack.Screen name="StudentManagement" component={StudentManagementScreen} />
+      <Stack.Screen name="ClassManagement" component={ClassManagementScreen} />
       <Stack.Screen name="Register" component={RegisterScreen} />
     </Stack.Navigator>
   );

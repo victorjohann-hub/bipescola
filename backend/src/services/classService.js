@@ -20,3 +20,7 @@ export async function getClassById (id){
 export async function deleteClassById(id) {
     return await classModel.deleteById(id);
 }
+
+export async function updateClassById(id, data) {
+    return await classModel.updateClassById(id, data);
+}

@@ -72,40 +72,15 @@ export async function deleteById(id) {
   return result.affectedRows > 0 ? turma : null;
 };
 
-/* export async function updateClassById(id, nome {
-  id,
-  nome,
-  data_criacao,
-  status
-}) {
+export async function updateClassById(id, { nome, status }) {
   const sql = `
     UPDATE turmas
     SET
-      id = ?,
-      nome = ?,
-      data_criacao = ?,
-      status = ?
+      nome = COALESCE(?, nome),
+      status = COALESCE(?, status)
     WHERE id = ?
   `;
 
-  await query(sql, [
-    id,
-    nome,
-    data_criacao || null,
-    status || "ativo"
-  ]);
-
+  await query(sql, [nome || null, status || null, id]);
   return await findById(id);
 }
-
-export async function deleteById(id) {
-  const sql = `
-    DELETE FROM turmas
-    WHERE id = ?
-  `;
-
-  const result = await query(sql, [id]);
-
-  return result.affectedRows > 0;
-}
- */

@@ -86,6 +86,69 @@ export async function findByDate(data) {
   return await query(sql, [data]);
 }
 
+export async function findByFilters({
+  data,
+  data_inicio,
+  data_fim,
+  aluno_id,
+  turma_id,
+  presente
+} = {}) {
+  let sql = `
+    SELECT
+      p.id,
+      p.aluno_id,
+      a.nome AS aluno_nome,
+      a.matricula AS aluno_matricula,
+      a.turma_id,
+      t.nome AS turma_nome,
+      p.data,
+      p.presente,
+      p.registrado_por,
+      u.nome AS registrado_por_nome,
+      p.data_registro
+    FROM presencas p
+    INNER JOIN alunos a ON a.id = p.aluno_id
+    LEFT JOIN turmas t ON t.id = a.turma_id
+    INNER JOIN users u ON u.id = p.registrado_por
+    WHERE 1=1
+  `;
+  const params = [];
+
+  if (data) {
+    sql += ` AND p.data = ?`;
+    params.push(data);
+  } else if (data_inicio && data_fim) {
+    sql += ` AND p.data BETWEEN ? AND ?`;
+    params.push(data_inicio, data_fim);
+  } else if (data_inicio) {
+    sql += ` AND p.data >= ?`;
+    params.push(data_inicio);
+  } else if (data_fim) {
+    sql += ` AND p.data <= ?`;
+    params.push(data_fim);
+  }
+
+  if (aluno_id) {
+    sql += ` AND p.aluno_id = ?`;
+    params.push(aluno_id);
+  }
+
+  if (turma_id) {
+    sql += ` AND a.turma_id = ?`;
+    params.push(turma_id);
+  }
+
+  if (presente !== undefined && presente !== null && presente !== '') {
+    sql += ` AND p.presente = ?`;
+    params.push(presente === 'true' || presente === true || presente === 1 ? 1 : 0);
+  }
+
+  sql += ` ORDER BY p.data DESC, a.nome ASC`;
+
+  return await query(sql, params);
+}
+
 export async function updateAttendance(id, { data, presente }) {
   const sql = `
     UPDATE presencas

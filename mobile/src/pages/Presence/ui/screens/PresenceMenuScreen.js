@@ -119,6 +119,26 @@ export const PresenceMenuScreen = ({ navigation }) => {
           </TouchableOpacity>
         )}
 
+        {/* Ações da Equipe: Histórico e Frequência */}
+        {isStaff && (
+          <TouchableOpacity
+            style={styles.actionCard}
+            activeOpacity={0.75}
+            onPress={() => navigation.navigate("AttendanceHistory")}
+          >
+            <View style={[styles.iconBox, { backgroundColor: colors.accentSurface }]}>
+              <Feather name="calendar" size={28} color={colors.accent} />
+            </View>
+            <View style={styles.cardContent}>
+              <Text style={styles.cardTitle}>Histórico & Frequência</Text>
+              <Text style={styles.cardDesc}>
+                Consulte a assiduidade diária, semanal e métricas de comparecimento
+              </Text>
+            </View>
+            <Feather name="chevron-right" size={20} color={colors.textMuted} />
+          </TouchableOpacity>
+        )}
+
         {/* Opção secundária para Admin/Prof ver gerador se necessário */}
         {!isParent && !isPorteiro && (
           <TouchableOpacity

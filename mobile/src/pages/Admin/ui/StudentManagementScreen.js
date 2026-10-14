@@ -10,17 +10,20 @@ import {
   Modal,
   ScrollView,
   KeyboardAvoidingView,
-  Platform
+  Platform,
+  TextInput
 } from 'react-native';
 import { ResponsiveContainer } from '@shared/ui/ResponsiveContainer/ResponsiveContainer';
 import { Feather } from '@expo/vector-icons';
-import { listStudentsAPI, deleteStudentAPI, updateStudentAPI } from '@shared/api/adminApi';
+import { listStudentsAPI, deleteStudentAPI, updateStudentAPI, listClassesAPI } from '@shared/api/adminApi';
 import { Input } from '@shared/ui/Input/Input';
 import { Button } from '@shared/ui/Button/Button';
 import { colors, radius, shadows, spacing, typography } from '@shared/theme';
 
 export const StudentManagementScreen = ({ navigation }) => {
   const [students, setStudents] = useState([]);
+  const [classes, setClasses] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
 
   // Estado de Edição Real
@@ -28,14 +31,19 @@ export const StudentManagementScreen = ({ navigation }) => {
   const [editingStudent, setEditingStudent] = useState(null);
   const [editNome, setEditNome] = useState('');
   const [editMatricula, setEditMatricula] = useState('');
+  const [editTurmaId, setEditTurmaId] = useState(null);
   const [editStatus, setEditStatus] = useState('ativo');
   const [savingEdit, setSavingEdit] = useState(false);
 
   const fetchStudents = async () => {
     try {
       setLoading(true);
-      const res = await listStudentsAPI();
-      setStudents(res.data || []);
+      const [resStudents, resClasses] = await Promise.all([
+        listStudentsAPI(),
+        listClassesAPI().catch(() => ({ data: [] })),
+      ]);
+      setStudents(resStudents?.data || (Array.isArray(resStudents) ? resStudents : []));
+      setClasses(resClasses?.data || (Array.isArray(resClasses) ? resClasses : []));
     } catch (error) {
       Alert.alert('Erro', 'Falha ao buscar alunos');
     } finally {
@@ -51,6 +59,7 @@ export const StudentManagementScreen = ({ navigation }) => {
     setEditingStudent(student);
     setEditNome(student.nome || '');
     setEditMatricula(student.matricula || '');
+    setEditTurmaId(student.turma_id || null);
     setEditStatus(student.status || 'ativo');
     setEditModalVisible(true);
   };
@@ -66,7 +75,7 @@ export const StudentManagementScreen = ({ navigation }) => {
         nome: editNome,
         matricula: editMatricula,
         status: editStatus,
-        turma_id: editingStudent.turma_id || 1,
+        turma_id: editTurmaId || editingStudent.turma_id || 1,
       });
       Alert.alert('Sucesso', 'Aluno atualizado com sucesso!');
       setEditModalVisible(false);
@@ -110,6 +119,12 @@ export const StudentManagementScreen = ({ navigation }) => {
     }
   };
 
+  const filteredStudents = students.filter((s) => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    return s.nome?.toLowerCase().includes(q) || s.matricula?.toLowerCase().includes(q);
+  });
+
   const renderItem = ({ item }) => {
     const badge = getStatusBadge(item.status);
 
@@ -117,7 +132,16 @@ export const StudentManagementScreen = ({ navigation }) => {
       <View style={styles.card}>
         <View style={styles.cardInfo}>
           <Text style={styles.name}>{item.nome}</Text>
-          <Text style={styles.details}>Matrícula: {item.matricula}</Text>
+          <View style={styles.metaRow}>
+            <Text style={styles.details}>Matrícula: {item.matricula}</Text>
+            {item.turma_nome ? (
+              <View style={[styles.statusBadge, { backgroundColor: colors.accentSurface }]}>
+                <Text style={[styles.statusText, { color: colors.accent }]}>
+                  {item.turma_nome}
+                </Text>
+              </View>
+            ) : null}
+          </View>
           
           <View style={[styles.statusBadge, { backgroundColor: badge.bg }]}>
             <Text style={[styles.statusText, { color: badge.text }]}>{badge.label}</Text>
@@ -162,18 +186,36 @@ export const StudentManagementScreen = ({ navigation }) => {
           <Text style={styles.headerSubtitle}>Lista de Estudantes Matriculados</Text>
         </View>
       </View>
+
+      <View style={styles.searchContainer}>
+        <Feather name="search" size={18} color={colors.textMuted} style={{ marginRight: spacing.sm }} />
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Buscar aluno por nome ou matrícula..."
+          placeholderTextColor={colors.textMuted}
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+        />
+        {searchQuery.length > 0 && (
+          <TouchableOpacity onPress={() => setSearchQuery('')}>
+            <Feather name="x" size={16} color={colors.textMuted} />
+          </TouchableOpacity>
+        )}
+      </View>
       
       {loading ? (
         <ActivityIndicator size="large" color={colors.secondary} style={{ marginTop: spacing.xl }} />
       ) : (
         <FlatList 
-          data={students}
+          data={filteredStudents}
           keyExtractor={(item) => item.id.toString()}
           renderItem={renderItem}
           contentContainerStyle={styles.listContainer}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={
-            <Text style={styles.emptyText}>Nenhum aluno encontrado.</Text>
+            <Text style={styles.emptyText}>
+              {searchQuery ? 'Nenhum estudante corresponde à pesquisa.' : 'Nenhum aluno encontrado.'}
+            </Text>
           }
         />
       )}
@@ -209,6 +251,31 @@ export const StudentManagementScreen = ({ navigation }) => {
                 onChangeText={setEditMatricula}
                 placeholder="Ex: MAT2026-001"
               />
+
+              {classes.length > 0 && (
+                <View style={{ marginBottom: spacing.md }}>
+                  <Text style={styles.statusPickerLabel}>Turma do Aluno</Text>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 6 }}>
+                    {classes.map((c) => (
+                      <TouchableOpacity
+                        key={c.id}
+                        style={[
+                          styles.statusOption,
+                          editTurmaId === c.id && styles.statusOptionSelected
+                        ]}
+                        onPress={() => setEditTurmaId(c.id)}
+                      >
+                        <Text style={[
+                          styles.statusOptionText,
+                          editTurmaId === c.id && styles.statusOptionTextSelected
+                        ]}>
+                          {c.nome}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                </View>
+              )}
 
               <Text style={styles.statusPickerLabel}>Status do Aluno</Text>
               <View style={styles.statusPickerContainer}>
@@ -277,6 +344,31 @@ const styles = StyleSheet.create({
     ...typography.caption,
     color: colors.textSecondary,
     marginTop: 2,
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: spacing.md,
+    height: 44,
+    marginHorizontal: spacing.lg,
+    marginTop: spacing.md,
+  },
+  searchInput: {
+    flex: 1,
+    ...typography.body,
+    color: colors.textPrimary,
+    height: '100%',
+  },
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginTop: 2,
+    marginBottom: spacing.xs,
   },
   listContainer: {
     padding: spacing.lg,

@@ -4,6 +4,7 @@ import {
   createAttendance,
   listAttendanceByStudent,
   listAttendanceByDate,
+  getAttendanceHistory,
   getAttendance,
   updateAttendance,
   deleteAttendance
@@ -19,6 +20,13 @@ router.post(
   authMiddleware,
   roleMiddleware("ADM", "PROF", "PORTEIRO"),
   createAttendance
+);
+
+router.get(
+  "/historico",
+  authMiddleware,
+  roleMiddleware("ADM", "PROF", "PORTEIRO"),
+  getAttendanceHistory
 );
 
 router.get(

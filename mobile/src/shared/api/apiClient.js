@@ -1,8 +1,8 @@
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Atualizado para usar o IP da máquina, o que resolve o erro de "Network Error" em celulares físicos e emuladores.
-const BASE_URL = 'http://192.168.1.30:3000/api';
+// Atualizado para o IP atual da máquina na rede local (192.168.1.50:3000)
+const BASE_URL = 'http://192.168.1.50:3000/api';
 
 export const apiClient = async (endpoint, options = {}) => {
   const url = `${BASE_URL}${endpoint}`;

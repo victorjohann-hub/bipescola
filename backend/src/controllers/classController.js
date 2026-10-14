@@ -84,3 +84,26 @@ export async function deleteClassById(req, res) {
         })
     };
 }
+
+export async function updateClassById(req, res) {
+    try {
+        const { nome, status } = req.body;
+        const turma = await classService.updateClassById(req.params.id, { nome, status });
+
+        if (!turma) {
+            return res.status(404).json({
+                message: "Turma não encontrada"
+            });
+        }
+
+        return res.status(200).json({
+            message: 'Turma atualizada com sucesso',
+            data: turma
+        });
+    } catch (error) {
+        return res.status(500).json({
+            message: 'Erro ao atualizar turma',
+            error: error.message
+        });
+    }
+}

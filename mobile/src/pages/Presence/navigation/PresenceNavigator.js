@@ -4,6 +4,7 @@ import { PresenceMenuScreen } from "../ui/screens/PresenceMenuScreen";
 import { QRCodeGeneratorScreen } from "../ui/screens/QRCodeGeneratorScreen";
 import { QRCodeScannerScreen } from "../ui/screens/QRCodeScannerScreen";
 import { ClassListScreen } from "../ui/screens/ClassListScreen";
+import { AttendanceHistoryScreen } from "@pages/AttendanceHistory";
 
 const Stack = createNativeStackNavigator();
 
@@ -14,6 +15,7 @@ export function PresenceNavigator() {
       <Stack.Screen name="QRCodeGenerator" component={QRCodeGeneratorScreen} />
       <Stack.Screen name="QRCodeScanner" component={QRCodeScannerScreen} />
       <Stack.Screen name="ClassList" component={ClassListScreen} />
+      <Stack.Screen name="AttendanceHistory" component={AttendanceHistoryScreen} />
     </Stack.Navigator>
   );
 }
