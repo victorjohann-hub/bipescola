@@ -10,19 +10,11 @@ export async function createClass ({ nome }) {
     };
 }
 export async function getClasses () {
-    const turmas = await classModel.getClasses();
-
-    return {
-        turmas
-    };
+    return await classModel.getClasses();
 }
 
 export async function getClassById (id){
-    const turma = await classModel.findById(id);
-
-    return {
-        turma
-    };
+    return await classModel.findById(id);
 }
 
 export async function deleteClassById(id) {

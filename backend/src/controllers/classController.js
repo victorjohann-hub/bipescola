@@ -22,7 +22,7 @@ export async function createClass(req, res) {
             },
         })
     }catch(error) {
-        return res.status(400).json({
+        return res.status(500).json({
             error: error.message
         });
     }
@@ -37,7 +37,7 @@ export async function getClasses (req, res) {
         });
 
     } catch(error) {
-        return res.status(400).json({
+        return res.status(500).json({
             error: error.message
         });
     }
@@ -56,7 +56,7 @@ export async function getClassById(req, res) {
             data: turma
         })
     } catch(error) {
-        return res.status(400).json({
+        return res.status(500).json({
             error: error.message
         })
     }
@@ -78,7 +78,7 @@ export async function deleteClassById(req, res) {
 
             })
     } catch(error){
-        return res.status(400).json({
+        return res.status(500).json({
             message:'Erro ao deletar turma',
             error: error.message
         })

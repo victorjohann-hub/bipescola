@@ -43,21 +43,6 @@ export async function findById(id) {
 }
 
 
-export async function findByTurmaId(turmaId) {
-  const sql = `
-    SELECT
-      id,
-      nome,
-      data_criacao,
-      status
-    FROM turma
-    WHERE turma_id = ?
-    ORDER BY id
-  `;
-
-  return await query(sql, [turmaId]);
-}
-
 export async function createClass({ nome }) {
   const sql = `
     INSERT INTO turmas (nome)
