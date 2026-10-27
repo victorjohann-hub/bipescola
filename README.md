@@ -17,6 +17,8 @@
 - [Visão Geral](#-visão-geral)
 - [Stack Tecnológico](#-stack-tecnológico)
 - [Como Executar](#-como-executar)
+- [🧪 Testes Automatizados & QA](#-testes-automatizados--qa)
+- [🏛️ Arquitetura & Especificação OpenAPI](#-arquitetura--especificação-openapi)
 - [Permissões por Perfil](#-permissões-por-perfil)
 - [Status de Desenvolvimento](#-status-de-desenvolvimento)
 - [Estrutura do Projeto](#-estrutura-do-projeto)
@@ -95,6 +97,41 @@ NODE_ENV=development
 npm start
 ```
 O servidor estará rodando em: `http://localhost:3000`
+
+---
+
+## 🧪 Testes Automatizados & QA
+
+O backend conta com uma suíte de testes unitários e de integração desenvolvida sob rigorosos padrões de confiabilidade de software (QA), com cobertura de testes superior a **96%** no core do sistema e **100% de aprovação (233 testes em 17 suítes)**.
+
+### Executando os Testes
+Acesse a pasta do backend e utilize os comandos:
+
+```bash
+cd backend
+
+# Executar todos os testes
+npm test
+
+# Executar todos os testes com relatório detalhado de cobertura (Coverage)
+npm run test:coverage
+
+# Executar testes em modo interativo contínuo (Watch)
+npm run test:watch
+```
+
+### Categorias de Testes
+- **Testes Unitários (`backend/tests/unit/`)**: Isolam middlewares (`authMiddleware`, `roleMiddleware`), services (`userService`, `attendanceService`, `classService`, `postService`, `studentService`, `roleServices`), models SQL e pool de conexões (`db.js`) utilizando mocks ESM determinísticos.
+- **Testes de Integração (`backend/tests/integration/`)**: Validam requisições HTTP reais de ponta a ponta via `supertest`, abrangendo caminhos felizes, validações de entrada inválida (400), falhas de autenticação (401), permissões RBAC negadas (403), recursos inexistentes (404), conflitos de duplicidade (409) e tolerância a falhas (500).
+
+---
+
+## 🏛️ Arquitetura & Especificação OpenAPI
+
+- 📘 **Documento de Arquitetura Completo**: Consulte o [ARCHITECTURE.md](ARCHITECTURE.md) para diagramas de fluxo de dados (Mermaid), detalhamento de camadas, regras de negócio e estratégia de resiliência.
+- 📄 **Especificação OpenAPI / Swagger**: A especificação OpenAPI 3.0 completa da API está disponível em [`docs/openapi.json`](docs/openapi.json), contendo todos os schemas de entrada, saída, parâmetros e autenticação Bearer JWT.
+
+---
 
 ### 📱 Executando o Frontend (Aplicativo Mobile)
 

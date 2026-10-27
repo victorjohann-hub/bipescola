@@ -82,11 +82,8 @@ export async function deleteUser(id) {
   return await userModel.deleteById(id);
 }
 
-
 export async function changePassword(id, senhaAtual, novaSenha) {
-  const user = await userModel.findByEmail(
-    (await userModel.findById(id))?.email
-  );
+  const user = await userModel.findPasswordById(id);
 
   if (!user) {
     throw new Error("Usuário não encontrado");
@@ -153,6 +150,7 @@ export async function forgotPassword(email) {
 
   return true;
 }
+
 export async function resetPassword(email, token, novaSenha) {
   const user = await userModel.findByResetToken(email, token);
 
@@ -179,6 +177,3 @@ export async function updateUserPhoto(id, foto) {
 
   return await userModel.findById(id);
 }
-
-
-

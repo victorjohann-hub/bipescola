@@ -28,4 +28,17 @@ app.get('/', (req, res) => {
     res.status(200).json({ msg: "Bem-vindo" });
 });
 
+// 404 handler para rotas não mapeadas
+app.use((req, res) => {
+    res.status(404).json({ error: 'Rota não encontrada' });
+});
+
+// Middleware centralizado de tratamento de erros
+app.use((err, req, res, next) => {
+    const status = err.status || (err.type === 'entity.parse.failed' ? 400 : 500);
+    res.status(status).json({
+        error: err.message || 'Erro interno do servidor'
+    });
+});
+
 export default app;

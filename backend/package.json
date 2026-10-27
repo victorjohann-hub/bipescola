@@ -1,7 +1,7 @@
 {
   "name": "bipescola",
   "version": "1.0.0",
-  "description": "",
+  "description": "BipEscola - Sistema de Controle de Presença Escolar",
   "homepage": "https://github.com/victorjohann-hub/bipescola#readme",
   "bugs": {
     "url": "https://github.com/victorjohann-hub/bipescola/issues"
@@ -13,9 +13,12 @@
   "license": "ISC",
   "author": "",
   "type": "module",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
-    "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest"
+    "start": "node server.js",
+    "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest",
+    "test:coverage": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --coverage",
+    "test:watch": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --watch"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",

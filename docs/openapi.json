@@ -1,0 +1,650 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "BipEscola API",
+    "description": "Especificação técnica OpenAPI/Swagger da API RESTful do BipEscola - Sistema de Controle de Entrada, Saída e Presença Escolar.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000",
+      "description": "Servidor de Desenvolvimento Local"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Informe o token JWT no cabeçalho Authorization: Bearer <token>"
+      }
+    },
+    "schemas": {
+      "StandardError": {
+        "type": "object",
+        "properties": {
+          "error": { "type": "string", "example": "Mensagem detalhada do erro" },
+          "details": { "type": "string", "example": "Informações adicionais opcionais" }
+        },
+        "required": ["error"]
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "example": 1 },
+          "nome": { "type": "string", "example": "Maria Silva Santos" },
+          "email": { "type": "string", "format": "email", "example": "maria@escola.com" },
+          "role": { "type": "string", "enum": ["ADM", "PROF", "PARENT", "PORTEIRO"], "example": "PARENT" },
+          "foto": { "type": "string", "nullable": true, "example": "https://cdn.escola.com/foto.jpg" },
+          "firstLogin": { "type": "boolean", "example": false },
+          "aniversario": { "type": "string", "format": "date", "nullable": true, "example": "1985-06-15" },
+          "ativo": { "type": "string", "enum": ["sim", "nao"], "example": "sim" },
+          "data_criacao": { "type": "string", "format": "date-time" },
+          "data_atualizacao": { "type": "string", "format": "date-time" }
+        }
+      },
+      "LoginRequest": {
+        "type": "object",
+        "required": ["email", "senha"],
+        "properties": {
+          "email": { "type": "string", "format": "email", "example": "admin@bipescola.com" },
+          "senha": { "type": "string", "example": "admin123" }
+        }
+      },
+      "LoginResponse": {
+        "type": "object",
+        "properties": {
+          "message": { "type": "string", "example": "Login realizado com sucesso" },
+          "token": { "type": "string", "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." },
+          "user": { "$ref": "#/components/schemas/User" }
+        }
+      },
+      "CreateUserRequest": {
+        "type": "object",
+        "required": ["nome", "email"],
+        "properties": {
+          "nome": { "type": "string", "example": "Carlos Alberto" },
+          "email": { "type": "string", "format": "email", "example": "carlos@escola.com" }
+        }
+      },
+      "CreateUserResponse": {
+        "type": "object",
+        "properties": {
+          "message": { "type": "string", "example": "Conta criada" },
+          "data": { "$ref": "#/components/schemas/User" },
+          "tempPassword": { "type": "string", "example": "9k2la10z" }
+        }
+      },
+      "ChangePasswordRequest": {
+        "type": "object",
+        "required": ["senhaAtual", "novaSenha"],
+        "properties": {
+          "senhaAtual": { "type": "string", "example": "senhaAntiga123" },
+          "novaSenha": { "type": "string", "minLength": 8, "example": "novaSenhaSegura456" }
+        }
+      },
+      "ForgotPasswordRequest": {
+        "type": "object",
+        "required": ["email"],
+        "properties": {
+          "email": { "type": "string", "format": "email", "example": "user@escola.com" }
+        }
+      },
+      "ResetPasswordRequest": {
+        "type": "object",
+        "required": ["email", "token", "novaSenha"],
+        "properties": {
+          "email": { "type": "string", "format": "email", "example": "user@escola.com" },
+          "token": { "type": "string", "example": "a4f8c3d901..." },
+          "novaSenha": { "type": "string", "minLength": 8, "example": "novaSenhaSegura456" }
+        }
+      },
+      "UpdatePhotoRequest": {
+        "type": "object",
+        "required": ["foto"],
+        "properties": {
+          "foto": { "type": "string", "example": "https://meubucket.s3.amazonaws.com/avatar.jpg" }
+        }
+      },
+      "Turma": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "example": 1 },
+          "nome": { "type": "string", "example": "1º Ano A" },
+          "status": { "type": "string", "enum": ["ativa", "inativa"], "example": "ativa" },
+          "data_criacao": { "type": "string", "format": "date-time" }
+        }
+      },
+      "CreateTurmaRequest": {
+        "type": "object",
+        "required": ["nome"],
+        "properties": {
+          "nome": { "type": "string", "example": "2º Ano B" }
+        }
+      },
+      "UpdateTurmaRequest": {
+        "type": "object",
+        "properties": {
+          "nome": { "type": "string", "example": "2º Ano B Atualizado" },
+          "status": { "type": "string", "enum": ["ativa", "inativa"], "example": "ativa" }
+        }
+      },
+      "Aluno": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "example": 1 },
+          "matricula": { "type": "string", "example": "MAT202601" },
+          "nome": { "type": "string", "example": "Lucas Silva" },
+          "aniversario": { "type": "string", "format": "date", "nullable": true, "example": "2018-05-12" },
+          "turma_id": { "type": "integer", "example": 1 },
+          "turma_nome": { "type": "string", "example": "1º Ano A" },
+          "id_pai": { "type": "integer", "nullable": true, "example": 10 },
+          "faltas": { "type": "integer", "example": 2 },
+          "status": { "type": "string", "enum": ["ativo", "inativo", "transferido", "evadido"], "example": "ativo" },
+          "data_criacao": { "type": "string", "format": "date-time" },
+          "data_atualizacao": { "type": "string", "format": "date-time" }
+        }
+      },
+      "CreateAlunoRequest": {
+        "type": "object",
+        "required": ["matricula", "nome", "turma_id"],
+        "properties": {
+          "matricula": { "type": "string", "example": "MAT202601" },
+          "nome": { "type": "string", "example": "Lucas Silva" },
+          "aniversario": { "type": "string", "format": "date", "example": "2018-05-12" },
+          "turma_id": { "type": "integer", "example": 1 },
+          "id_pai": { "type": "integer", "nullable": true, "example": 10 },
+          "faltas": { "type": "integer", "default": 0, "example": 0 },
+          "status": { "type": "string", "enum": ["ativo", "inativo", "transferido", "evadido"], "default": "ativo" }
+        }
+      },
+      "Presenca": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "example": 1 },
+          "aluno_id": { "type": "integer", "example": 1 },
+          "aluno_nome": { "type": "string", "example": "Lucas Silva" },
+          "data": { "type": "string", "format": "date", "example": "2026-10-27" },
+          "presente": { "type": "integer", "example": 1 },
+          "registrado_por": { "type": "integer", "example": 2 },
+          "registrado_por_nome": { "type": "string", "example": "Professora Rita" },
+          "data_registro": { "type": "string", "format": "date-time" }
+        }
+      },
+      "CreatePresencaRequest": {
+        "type": "object",
+        "required": ["aluno_id", "data", "presente"],
+        "properties": {
+          "aluno_id": { "type": "integer", "example": 1 },
+          "data": { "type": "string", "format": "date", "example": "2026-10-27" },
+          "presente": { "type": "boolean", "example": true }
+        }
+      },
+      "HistoricoPresencaResponse": {
+        "type": "object",
+        "properties": {
+          "resumo": {
+            "type": "object",
+            "properties": {
+              "totalRegistros": { "type": "integer", "example": 30 },
+              "totalPresentes": { "type": "integer", "example": 27 },
+              "totalFaltas": { "type": "integer", "example": 3 },
+              "taxaComparecimento": { "type": "string", "example": "90%" }
+            }
+          },
+          "registros": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Presenca" }
+          }
+        }
+      },
+      "Post": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "example": 1 },
+          "titulo": { "type": "string", "example": "Reunião de Pais e Mestres" },
+          "conteudo": { "type": "string", "example": "A reunião ocorrerá na sexta-feira às 18h." },
+          "autor_id": { "type": "integer", "example": 2 },
+          "autor_nome": { "type": "string", "example": "Coordenadora Ana" },
+          "destinatario_id": { "type": "integer", "nullable": true, "example": null },
+          "destinatario_nome": { "type": "string", "nullable": true, "example": null },
+          "data_criacao": { "type": "string", "format": "date-time" },
+          "data_atualizacao": { "type": "string", "format": "date-time" }
+        }
+      },
+      "CreatePostRequest": {
+        "type": "object",
+        "required": ["titulo", "conteudo"],
+        "properties": {
+          "titulo": { "type": "string", "example": "Aviso Importante" },
+          "conteudo": { "type": "string", "example": "Amanhã não haverá aula." },
+          "destinatario_id": { "type": "string", "nullable": true, "description": "null ou 'todos' para geral, ou id do responsável", "example": null }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/": {
+      "get": {
+        "summary": "Healthcheck e boas-vindas",
+        "responses": {
+          "200": {
+            "description": "API operante",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "msg": { "type": "string", "example": "Bem-vindo" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users/login": {
+      "post": {
+        "summary": "Autenticação de usuário",
+        "description": "Valida email e senha e retorna token JWT com duração de 8 horas e dados do perfil.",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/LoginRequest" } } }
+        },
+        "responses": {
+          "200": {
+            "description": "Login com sucesso",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/LoginResponse" } } }
+          },
+          "400": { "description": "Email ou senha ausentes", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/StandardError" } } } },
+          "401": { "description": "Credenciais inválidas", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/StandardError" } } } }
+        }
+      }
+    },
+    "/api/users": {
+      "get": {
+        "summary": "Listar todos os usuários",
+        "responses": {
+          "200": { "description": "Lista de usuários retornada", "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "type": "array", "items": { "$ref": "#/components/schemas/User" } } } } } } },
+          "500": { "description": "Erro interno", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/StandardError" } } } }
+        }
+      },
+      "post": {
+        "summary": "Cadastrar novo usuário (gera senha temporária)",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreateUserRequest" } } }
+        },
+        "responses": {
+          "201": { "description": "Usuário criado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreateUserResponse" } } } },
+          "400": { "description": "Dados inválidos ou duplicidade", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/StandardError" } } } }
+        }
+      }
+    },
+    "/api/users/{id}": {
+      "get": {
+        "summary": "Buscar usuário por ID",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": {
+          "200": { "description": "Usuário encontrado", "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/User" } } } } } },
+          "400": { "description": "ID inválido", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/StandardError" } } } },
+          "404": { "description": "Usuário não encontrado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/StandardError" } } } }
+        }
+      },
+      "put": {
+        "summary": "Atualizar dados do usuário (nome e email)",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreateUserRequest" } } }
+        },
+        "responses": {
+          "200": { "description": "Usuário atualizado com sucesso" },
+          "400": { "description": "Campos obrigatórios ausentes" },
+          "404": { "description": "Usuário não encontrado" }
+        }
+      },
+      "delete": {
+        "summary": "Excluir usuário (Restrito a ADM, proíbe auto-exclusão)",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": {
+          "200": { "description": "Usuário excluído com sucesso" },
+          "401": { "description": "Não autenticado" },
+          "403": { "description": "Acesso negado ou tentativa de auto-exclusão" },
+          "404": { "description": "Usuário não encontrado" }
+        }
+      }
+    },
+    "/api/users/change-password": {
+      "put": {
+        "summary": "Alterar senha do usuário autenticado",
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ChangePasswordRequest" } } }
+        },
+        "responses": {
+          "200": { "description": "Senha alterada com sucesso" },
+          "400": { "description": "Senha atual incorreta ou nova senha menor que 8 caracteres" },
+          "401": { "description": "Não autenticado" }
+        }
+      }
+    },
+    "/api/users/forgot-password": {
+      "post": {
+        "summary": "Solicitar recuperação de senha",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ForgotPasswordRequest" } } }
+        },
+        "responses": {
+          "200": { "description": "Instruções enviadas caso o email exista" },
+          "400": { "description": "Email obrigatório" }
+        }
+      }
+    },
+    "/api/users/reset-password": {
+      "post": {
+        "summary": "Redefinir senha com token de recuperação",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ResetPasswordRequest" } } }
+        },
+        "responses": {
+          "200": { "description": "Senha redefinida com sucesso" },
+          "400": { "description": "Token inválido, expirado ou senha menor que 8 caracteres" }
+        }
+      }
+    },
+    "/api/users/{id}/photo": {
+      "put": {
+        "summary": "Atualizar foto/avatar de perfil",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UpdatePhotoRequest" } } }
+        },
+        "responses": {
+          "200": { "description": "Foto atualizada com sucesso" },
+          "401": { "description": "Não autenticado" },
+          "403": { "description": "Tentativa de atualizar foto de outro usuário sem ser ADM" }
+        }
+      }
+    },
+    "/api/class": {
+      "get": {
+        "summary": "Listar turmas (Acessível por ADM, PROF, PORTEIRO; aliases /api/classes e /api/turmas)",
+        "security": [{ "BearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Lista de turmas", "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "type": "array", "items": { "$ref": "#/components/schemas/Turma" } } } } } } },
+          "403": { "description": "Acesso negado para PARENT" }
+        }
+      },
+      "post": {
+        "summary": "Criar nova turma (Exclusivo ADM)",
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreateTurmaRequest" } } }
+        },
+        "responses": {
+          "201": { "description": "Turma criada com sucesso" },
+          "400": { "description": "Nome da turma obrigatório" },
+          "403": { "description": "Restrito a ADM" }
+        }
+      }
+    },
+    "/api/class/{id}": {
+      "get": {
+        "summary": "Buscar turma por ID",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": {
+          "200": { "description": "Turma encontrada" },
+          "404": { "description": "Turma não encontrada" }
+        }
+      },
+      "put": {
+        "summary": "Atualizar turma (Exclusivo ADM)",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UpdateTurmaRequest" } } }
+        },
+        "responses": {
+          "200": { "description": "Turma atualizada com sucesso" },
+          "404": { "description": "Turma não encontrada" }
+        }
+      },
+      "delete": {
+        "summary": "Excluir turma (Exclusivo ADM)",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": {
+          "200": { "description": "Turma deletada com sucesso" },
+          "404": { "description": "Turma não encontrada" }
+        }
+      }
+    },
+    "/api/students": {
+      "get": {
+        "summary": "Listar todos os alunos",
+        "responses": {
+          "200": { "description": "Lista de alunos", "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "type": "array", "items": { "$ref": "#/components/schemas/Aluno" } } } } } } }
+        }
+      },
+      "post": {
+        "summary": "Cadastrar novo aluno",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreateAlunoRequest" } } }
+        },
+        "responses": {
+          "201": { "description": "Aluno cadastrado com sucesso" },
+          "400": { "description": "Validação de dados falhou ou matrícula duplicada" }
+        }
+      }
+    },
+    "/api/students/{id}": {
+      "get": {
+        "summary": "Buscar aluno por ID",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": {
+          "200": { "description": "Aluno encontrado" },
+          "404": { "description": "Aluno não encontrado" }
+        }
+      },
+      "put": {
+        "summary": "Atualizar aluno",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreateAlunoRequest" } } }
+        },
+        "responses": {
+          "200": { "description": "Aluno atualizado com sucesso" },
+          "404": { "description": "Aluno não encontrado" }
+        }
+      },
+      "delete": {
+        "summary": "Excluir aluno",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": {
+          "200": { "description": "Aluno excluído com sucesso" },
+          "404": { "description": "Aluno não encontrado" }
+        }
+      }
+    },
+    "/api/students/pai/{id}": {
+      "get": {
+        "summary": "Listar alunos vinculados a um responsável (pai)",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": {
+          "200": { "description": "Lista de filhos/alunos retornada com sucesso" }
+        }
+      }
+    },
+    "/api/students/turma/{id}": {
+      "get": {
+        "summary": "Listar alunos de uma determinada turma",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": {
+          "200": { "description": "Lista de alunos da turma" }
+        }
+      }
+    },
+    "/api/attendances": {
+      "post": {
+        "summary": "Registrar presença de aluno (ADM, PROF, PORTEIRO)",
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreatePresencaRequest" } } }
+        },
+        "responses": {
+          "201": { "description": "Presença registrada com sucesso" },
+          "400": { "description": "Campos obrigatórios ausentes" },
+          "403": { "description": "Acesso negado" },
+          "409": { "description": "Presença do aluno já registrada nesta data" }
+        }
+      }
+    },
+    "/api/attendances/historico": {
+      "get": {
+        "summary": "Consultar histórico de presenças com filtros e taxas consolidadas (ADM, PROF, PORTEIRO)",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          { "name": "data", "in": "query", "schema": { "type": "string", "format": "date" } },
+          { "name": "data_inicio", "in": "query", "schema": { "type": "string", "format": "date" } },
+          { "name": "data_fim", "in": "query", "schema": { "type": "string", "format": "date" } },
+          { "name": "aluno_id", "in": "query", "schema": { "type": "integer" } },
+          { "name": "turma_id", "in": "query", "schema": { "type": "integer" } },
+          { "name": "presente", "in": "query", "schema": { "type": "boolean" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Histórico consolidado com taxas de comparecimento",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/HistoricoPresencaResponse" } } }
+          }
+        }
+      }
+    },
+    "/api/attendances/aluno/{id}": {
+      "get": {
+        "summary": "Listar presenças de um aluno específico",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": {
+          "200": { "description": "Presenças do aluno" }
+        }
+      }
+    },
+    "/api/attendances/data/{data}": {
+      "get": {
+        "summary": "Listar presenças de uma data específica (YYYY-MM-DD)",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [{ "name": "data", "in": "path", "required": true, "schema": { "type": "string", "format": "date" } }],
+        "responses": {
+          "200": { "description": "Presenças da data" }
+        }
+      }
+    },
+    "/api/attendances/{id}": {
+      "get": {
+        "summary": "Buscar registro de presença por ID",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": {
+          "200": { "description": "Registro de presença encontrado" },
+          "404": { "description": "Registro de presença não encontrado" }
+        }
+      },
+      "put": {
+        "summary": "Atualizar registro de presença (Exclusivo ADM e PROF)",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "required": ["data", "presente"], "properties": { "data": { "type": "string", "format": "date" }, "presente": { "type": "boolean" } } } } }
+        },
+        "responses": {
+          "200": { "description": "Presença atualizada com sucesso" },
+          "403": { "description": "Acesso negado para PORTEIRO/PARENT" },
+          "404": { "description": "Registro não encontrado" }
+        }
+      },
+      "delete": {
+        "summary": "Excluir registro de presença (Exclusivo ADM)",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": {
+          "200": { "description": "Presença excluída com sucesso" },
+          "403": { "description": "Apenas ADM pode excluir presença" },
+          "404": { "description": "Registro não encontrado" }
+        }
+      }
+    },
+    "/api/posts": {
+      "get": {
+        "summary": "Listar comunicados/avisos (PARENT visualiza apenas gerais ou direcionados a si)",
+        "security": [{ "BearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Lista de comunicados", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Post" } } } } }
+        }
+      },
+      "post": {
+        "summary": "Criar novo comunicado (ADM e PROF)",
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreatePostRequest" } } }
+        },
+        "responses": {
+          "201": { "description": "Post criado com sucesso" },
+          "400": { "description": "Campos obrigatórios ausentes ou destinatario_id inválido" },
+          "403": { "description": "Acesso negado" }
+        }
+      }
+    },
+    "/api/posts/{id}": {
+      "get": {
+        "summary": "Buscar comunicado por ID (PARENT tem restrição de visualização)",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": {
+          "200": { "description": "Comunicado encontrado" },
+          "404": { "description": "Post não encontrado ou acesso não permitido ao responsável" }
+        }
+      },
+      "put": {
+        "summary": "Atualizar comunicado (Apenas o autor original ou ADM)",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreatePostRequest" } } }
+        },
+        "responses": {
+          "200": { "description": "Post atualizado com sucesso" },
+          "403": { "description": "Não é o autor do post nem ADM" },
+          "404": { "description": "Post não encontrado" }
+        }
+      },
+      "delete": {
+        "summary": "Excluir comunicado (Apenas o autor original ou ADM)",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": {
+          "200": { "description": "Post excluído com sucesso" },
+          "403": { "description": "Não é o autor nem ADM" },
+          "404": { "description": "Post não encontrado" }
+        }
+      }
+    }
+  }
+}

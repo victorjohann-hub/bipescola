@@ -30,7 +30,7 @@ function canView(user, post) {
 
 export async function createPost(req, res) {
   try {
-    const { titulo, conteudo } = req.body;
+    const { titulo, conteudo } = req.body ?? {};
 
     if (!titulo || !conteudo) {
       return res.status(400).json({
@@ -38,7 +38,7 @@ export async function createPost(req, res) {
       });
     }
 
-    const dest = await resolveDestinatario(req.body.destinatario_id);
+    const dest = await resolveDestinatario(req.body?.destinatario_id);
     if (dest.error) {
       return res.status(400).json({ error: dest.error });
     }
@@ -55,8 +55,6 @@ export async function createPost(req, res) {
       data: post
     });
   } catch (error) {
-    console.error(error);
-
     return res.status(500).json({
       error: "Erro ao criar post"
     });
@@ -71,8 +69,6 @@ export async function listPosts(req, res) {
 
     return res.status(200).json(posts);
   } catch (error) {
-    console.error(error);
-
     return res.status(500).json({
       error: "Erro ao buscar posts"
     });
@@ -81,7 +77,13 @@ export async function listPosts(req, res) {
 
 export async function getPost(req, res) {
   try {
-    const { id } = req.params;
+    const id = Number(req.params.id);
+
+    if (!Number.isInteger(id)) {
+      return res.status(400).json({
+        error: "ID do post inválido"
+      });
+    }
 
     const post = await postService.getPostById(id);
 
@@ -93,8 +95,6 @@ export async function getPost(req, res) {
 
     return res.status(200).json(post);
   } catch (error) {
-    console.error(error);
-
     return res.status(500).json({
       error: "Erro ao buscar post"
     });
@@ -103,8 +103,15 @@ export async function getPost(req, res) {
 
 export async function updatePost(req, res) {
   try {
-    const { id } = req.params;
-    const { titulo, conteudo } = req.body;
+    const id = Number(req.params.id);
+
+    if (!Number.isInteger(id)) {
+      return res.status(400).json({
+        error: "ID do post inválido"
+      });
+    }
+
+    const { titulo, conteudo } = req.body ?? {};
 
     if (!titulo || !conteudo) {
       return res.status(400).json({
@@ -129,7 +136,7 @@ export async function updatePost(req, res) {
       });
     }
 
-    const dest = await resolveDestinatario(req.body.destinatario_id);
+    const dest = await resolveDestinatario(req.body?.destinatario_id);
     if (dest.error) {
       return res.status(400).json({ error: dest.error });
     }
@@ -145,8 +152,6 @@ export async function updatePost(req, res) {
       data: updatedPost
     });
   } catch (error) {
-    console.error(error);
-
     return res.status(500).json({
       error: "Erro ao atualizar post"
     });
@@ -155,7 +160,13 @@ export async function updatePost(req, res) {
 
 export async function deletePost(req, res) {
   try {
-    const { id } = req.params;
+    const id = Number(req.params.id);
+
+    if (!Number.isInteger(id)) {
+      return res.status(400).json({
+        error: "ID do post inválido"
+      });
+    }
 
     const post = await postService.getPostById(id);
 
@@ -180,8 +191,6 @@ export async function deletePost(req, res) {
       message: "Post excluído com sucesso"
     });
   } catch (error) {
-    console.error(error);
-
     return res.status(500).json({
       error: "Erro ao excluir post"
     });

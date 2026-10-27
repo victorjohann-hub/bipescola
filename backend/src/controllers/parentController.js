@@ -1,11 +1,11 @@
-﻿import * as parentService from "../services/parentService.js";
+import * as parentService from "../services/parentService.js";
 
 export async function createParent(req, res) {
   try {
     const { nome, email } = req.body ?? {};
 
     if (!nome || !email) {
-      return res.status(400).json({ error: 'nome e email sÃ£o obrigatÃ³rios' });
+      return res.status(400).json({ error: "nome e email são obrigatórios" });
     }
 
     const result = await parentService.createParent({ nome, email });
@@ -23,7 +23,7 @@ export async function createParent(req, res) {
 
   } catch (error) {
     return res.status(500).json({
-      error: 'NÃ£o foi possÃ­vel criar o Parent'
+      error: "Não foi possível criar o Parent"
     });
   }
 }
@@ -54,13 +54,21 @@ export async function updateParent(req, res) {
 
     if (!Number.isInteger(parentId)) {
       return res.status(400).json({
-        error: "ID do Parent invÃ¡lido"
+        error: "ID do Parent inválido"
       });
     }
 
     if (!nome || !email) {
       return res.status(400).json({
-        error: "nome e email sÃ£o obrigatÃ³rios"
+        error: "nome e email são obrigatórios"
+      });
+    }
+
+    const existingParents = await parentService.getParents();
+    const existing = existingParents.find(p => Number(p.id) === parentId);
+    if (!existing) {
+      return res.status(404).json({
+        error: "Parent não encontrado"
       });
     }
 
@@ -76,7 +84,7 @@ export async function updateParent(req, res) {
 
   } catch (error) {
     return res.status(500).json({
-      error: "NÃ£o foi possÃ­vel atualizar o Parent",
+      error: "Não foi possível atualizar o Parent",
       details: error.message
     });
   }
@@ -90,19 +98,33 @@ export async function deleteParent(req, res) {
 
     if (!Number.isInteger(parentId)) {
       return res.status(400).json({
-        error: "ID do Parent invÃ¡lido"
+        error: "ID do Parent inválido"
       });
     }
 
-    await parentService.deleteParent(parentId);
+    const existingParents = await parentService.getParents();
+    const existing = existingParents.find(p => Number(p.id) === parentId);
+    if (!existing) {
+      return res.status(404).json({
+        error: "Parent não encontrado"
+      });
+    }
+
+    const deleted = await parentService.deleteParent(parentId);
+
+    if (!deleted) {
+      return res.status(404).json({
+        error: "Parent não encontrado"
+      });
+    }
 
     return res.status(200).json({
-      message: "Parent excluÃ­do com sucesso"
+      message: "Parent excluído com sucesso"
     });
 
   } catch (error) {
     return res.status(500).json({
-      error: "NÃ£o foi possÃ­vel excluir o Parent",
+      error: "Não foi possível excluir o Parent",
       details: error.message
     });
   }
