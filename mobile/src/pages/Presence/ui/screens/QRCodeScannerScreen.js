@@ -16,6 +16,7 @@ import { useIsFocused } from "@react-navigation/native";
 import { markAttendanceAPI } from "@shared/api/schoolApi";
 import { colors, radius, shadows, spacing, typography } from "@shared/theme";
 import { useResponsiveLayout } from "@shared/hooks/useResponsiveLayout";
+import { playCheckinBeep } from "@shared/utils/soundPlayer";
 
 export const QRCodeScannerScreen = ({ navigation }) => {
   const { isTablet } = useResponsiveLayout();
@@ -66,6 +67,7 @@ export const QRCodeScannerScreen = ({ navigation }) => {
   const handleBarCodeScanned = ({ data }) => {
     setScanned(true);
     setScannedData(data);
+    playCheckinBeep();
   };
 
   const toggleCameraFacing = () => {
@@ -88,6 +90,7 @@ export const QRCodeScannerScreen = ({ navigation }) => {
     try {
       setSubmitting(true);
       await markAttendanceAPI({ aluno_id, data: dataAtual, presente: true });
+      await playCheckinBeep();
 
       setRecentScans((prev) => [
         {
@@ -215,11 +218,10 @@ export const QRCodeScannerScreen = ({ navigation }) => {
               />
               <TextInput
                 style={styles.input}
-                placeholder="Aguardando leitura do QR Code..."
+                placeholder="Aguardando leitura (ex: aluno_1)..."
                 placeholderTextColor={colors.textMuted}
                 value={scannedData}
                 onChangeText={setScannedData}
-                editable={false}
               />
             </View>
 

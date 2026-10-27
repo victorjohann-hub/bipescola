@@ -16,6 +16,7 @@ import { listStudentsAPI, listClassesAPI } from "@shared/api/adminApi";
 import { markAttendanceAPI } from "@shared/api/schoolApi";
 import { colors, radius, shadows, spacing, typography } from "@shared/theme";
 import { useResponsiveLayout } from "@shared/hooks/useResponsiveLayout";
+import { playCheckinBeep } from "@shared/utils/soundPlayer";
 
 export const ClassListScreen = ({ navigation }) => {
   const { isTablet } = useResponsiveLayout();
@@ -66,6 +67,9 @@ export const ClassListScreen = ({ navigation }) => {
     setSessionMarks((prev) => ({ ...prev, [aluno_id]: "saving" }));
     try {
       await markAttendanceAPI({ aluno_id, data: today, presente });
+      if (presente) {
+        playCheckinBeep();
+      }
       setSessionMarks((prev) => ({
         ...prev,
         [aluno_id]: presente ? "presente" : "falta",
