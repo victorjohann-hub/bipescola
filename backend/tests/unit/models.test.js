@@ -144,6 +144,14 @@ describe('Models Unit Tests (db queries)', () => {
       expect(await classModel.deleteById(2)).toEqual({ id: 2, nome: 'Turma C' });
     });
 
+    it('countStudentsByTurmaId deve retornar contagem de alunos', async () => {
+      mockQuery.mockResolvedValueOnce([{ total: 4 }]);
+      expect(await classModel.countStudentsByTurmaId(1)).toBe(4);
+
+      mockQuery.mockResolvedValueOnce([]);
+      expect(await classModel.countStudentsByTurmaId(99)).toBe(0);
+    });
+
     it('updateClassById deve atualizar e retornar findById', async () => {
       mockQuery.mockResolvedValueOnce({ affectedRows: 1 });
       mockQuery.mockResolvedValueOnce([{ id: 2, nome: 'Turma C2', status: 'inativa' }]);
@@ -236,8 +244,9 @@ describe('Models Unit Tests (db queries)', () => {
     });
 
     it('updateById deve atualizar e retornar findById', async () => {
-      mockQuery.mockResolvedValueOnce({ affectedRows: 1 });
-      mockQuery.mockResolvedValueOnce([{ id: 10, matricula: 'M10', nome: 'Nome Novo' }]);
+      mockQuery.mockResolvedValueOnce([{ id: 10, matricula: 'M10', nome: 'Antigo' }]); // existing
+      mockQuery.mockResolvedValueOnce({ affectedRows: 1 }); // UPDATE
+      mockQuery.mockResolvedValueOnce([{ id: 10, matricula: 'M10', nome: 'Nome Novo' }]); // findById
 
       const res = await studentModel.updateById(10, {
         matricula: 'M10',
@@ -245,6 +254,12 @@ describe('Models Unit Tests (db queries)', () => {
         turma_id: 1,
       });
       expect(res).toEqual({ id: 10, matricula: 'M10', nome: 'Nome Novo' });
+    });
+
+    it('updateById deve retornar null se aluno não existir', async () => {
+      mockQuery.mockResolvedValueOnce([]); // existing null
+      const res = await studentModel.updateById(99, { nome: 'Inexistente' });
+      expect(res).toBeNull();
     });
 
     it('deleteById deve retornar se deletou', async () => {

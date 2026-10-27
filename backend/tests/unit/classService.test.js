@@ -4,6 +4,7 @@ const mockClassModel = {
   createClass: jest.fn(),
   getClasses: jest.fn(),
   findById: jest.fn(),
+  countStudentsByTurmaId: jest.fn(),
   deleteById: jest.fn(),
   updateClassById: jest.fn(),
 };
@@ -37,11 +38,17 @@ describe('classService Unit Tests', () => {
     expect(mockClassModel.findById).toHaveBeenCalledWith(2);
   });
 
-  it('deleteClassById deve deletar por id', async () => {
+  it('deleteClassById deve deletar por id quando não houver alunos', async () => {
+    mockClassModel.countStudentsByTurmaId.mockResolvedValueOnce(0);
     mockClassModel.deleteById.mockResolvedValueOnce({ id: 2, nome: '2A' });
     const result = await classService.deleteClassById(2);
     expect(result).toEqual({ id: 2, nome: '2A' });
     expect(mockClassModel.deleteById).toHaveBeenCalledWith(2);
+  });
+
+  it('deleteClassById deve lançar erro se houver alunos vinculados', async () => {
+    mockClassModel.countStudentsByTurmaId.mockResolvedValueOnce(3);
+    await expect(classService.deleteClassById(2)).rejects.toThrow('Não é possível excluir uma turma com alunos vinculados');
   });
 
   it('updateClassById deve atualizar por id', async () => {

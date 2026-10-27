@@ -61,6 +61,30 @@ describe('userService Unit Tests', () => {
       expect(result.tempPassword.length).toBeGreaterThan(0);
       expect(result.user.id).toBe(1);
     });
+
+    it('deve atualizar o papel se role for diferente de PARENT', async () => {
+      mockUserModel.create.mockResolvedValueOnce({
+        id: 2,
+        nome: 'Porteiro',
+        email: 'port@teste.com',
+        role: 'PARENT',
+      });
+      mockUserModel.updateRoleById.mockResolvedValueOnce({
+        id: 2,
+        nome: 'Porteiro',
+        email: 'port@teste.com',
+        role: 'PORTEIRO',
+      });
+
+      const res = await userService.createUser({
+        nome: 'Porteiro',
+        email: 'port@teste.com',
+        role: 'PORTEIRO',
+      });
+
+      expect(res.user.role).toBe('PORTEIRO');
+      expect(mockUserModel.updateRoleById).toHaveBeenCalledWith(2, 'PORTEIRO');
+    });
   });
 
   describe('loginUser', () => {

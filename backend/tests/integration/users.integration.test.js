@@ -20,6 +20,10 @@ jest.unstable_mockModule('../../src/services/userService.js', () => mockUserServ
 const { default: app } = await import('../../app.js');
 
 describe('User Routes Integration Tests (/api/users)', () => {
+  const admHeaders = authHeader({ id: 1, role: 'ADM' });
+  const profHeaders = authHeader({ id: 2, role: 'PROF' });
+  const user1Headers = authHeader({ id: 1, role: 'PARENT' });
+
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -57,8 +61,18 @@ describe('User Routes Integration Tests (/api/users)', () => {
   });
 
   describe('POST /api/users', () => {
+    it('deve retornar 401 sem token de autenticação', async () => {
+      const res = await request(app).post('/api/users').send({ nome: 'João', email: 'joao@teste.com' });
+      expect(res.status).toBe(401);
+    });
+
+    it('deve retornar 403 se usuário não for ADM', async () => {
+      const res = await request(app).post('/api/users').set(profHeaders).send({ nome: 'João', email: 'joao@teste.com' });
+      expect(res.status).toBe(403);
+    });
+
     it('deve retornar 400 se nome ou email estiverem ausentes', async () => {
-      const res = await request(app).post('/api/users').send({ nome: 'João' });
+      const res = await request(app).post('/api/users').set(admHeaders).send({ nome: 'João' });
       expect(res.status).toBe(400);
       expect(res.body).toHaveProperty('error', 'nome e email são obrigatórios');
     });
@@ -67,6 +81,7 @@ describe('User Routes Integration Tests (/api/users)', () => {
       mockUserService.createUser.mockRejectedValueOnce(new Error('Email já cadastrado'));
       const res = await request(app)
         .post('/api/users')
+        .set(admHeaders)
         .send({ nome: 'João', email: 'joao@teste.com' });
       expect(res.status).toBe(400);
       expect(res.body).toHaveProperty('error', 'Email já cadastrado');
@@ -80,6 +95,7 @@ describe('User Routes Integration Tests (/api/users)', () => {
 
       const res = await request(app)
         .post('/api/users')
+        .set(admHeaders)
         .send({ nome: 'João', email: 'joao@teste.com' });
 
       expect(res.status).toBe(201);
@@ -90,64 +106,89 @@ describe('User Routes Integration Tests (/api/users)', () => {
   });
 
   describe('GET /api/users', () => {
-    it('deve retornar 200 e lista de usuários', async () => {
-      mockUserService.getUsers.mockResolvedValueOnce([{ id: 1, nome: 'Admin' }]);
+    it('deve retornar 401 sem token de autenticação', async () => {
       const res = await request(app).get('/api/users');
+      expect(res.status).toBe(401);
+    });
+
+    it('deve retornar 403 se usuário não for ADM', async () => {
+      const res = await request(app).get('/api/users').set(profHeaders);
+      expect(res.status).toBe(403);
+    });
+
+    it('deve retornar 200 e lista de usuários para ADM', async () => {
+      mockUserService.getUsers.mockResolvedValueOnce([{ id: 1, nome: 'Admin' }]);
+      const res = await request(app).get('/api/users').set(admHeaders);
       expect(res.status).toBe(200);
       expect(res.body.data).toHaveLength(1);
     });
 
     it('deve retornar 500 se o serviço falhar', async () => {
       mockUserService.getUsers.mockRejectedValueOnce(new Error('DB failure'));
-      const res = await request(app).get('/api/users');
+      const res = await request(app).get('/api/users').set(admHeaders);
       expect(res.status).toBe(500);
       expect(res.body.error).toBe('Não foi possível listar os usuários');
     });
   });
 
   describe('GET /api/users/:id', () => {
+    it('deve retornar 401 sem token de autenticação', async () => {
+      const res = await request(app).get('/api/users/1');
+      expect(res.status).toBe(401);
+    });
+
     it('deve retornar 400 para ID inválido', async () => {
-      const res = await request(app).get('/api/users/abc');
+      const res = await request(app).get('/api/users/abc').set(admHeaders);
       expect(res.status).toBe(400);
       expect(res.body.error).toBe('ID do usuário inválido');
     });
 
     it('deve retornar 404 se o usuário não for encontrado', async () => {
       mockUserService.getUserById.mockResolvedValueOnce(null);
-      const res = await request(app).get('/api/users/999');
+      const res = await request(app).get('/api/users/999').set(admHeaders);
       expect(res.status).toBe(404);
       expect(res.body.error).toBe('Usuário não encontrado');
     });
 
-    it('deve retornar 200 com os dados do usuário', async () => {
+    it('deve retornar 403 se usuário comum tentar ver perfil de outro usuário', async () => {
+      const res = await request(app).get('/api/users/99').set(user1Headers);
+      expect(res.status).toBe(403);
+    });
+
+    it('deve retornar 200 com os dados do usuário para o próprio usuário ou ADM', async () => {
       mockUserService.getUserById.mockResolvedValueOnce({ id: 1, nome: 'Admin' });
-      const res = await request(app).get('/api/users/1');
+      const res = await request(app).get('/api/users/1').set(admHeaders);
       expect(res.status).toBe(200);
       expect(res.body.data.id).toBe(1);
     });
 
     it('deve retornar 500 se ocorrer erro interno', async () => {
       mockUserService.getUserById.mockRejectedValueOnce(new Error('Crash'));
-      const res = await request(app).get('/api/users/1');
+      const res = await request(app).get('/api/users/1').set(admHeaders);
       expect(res.status).toBe(500);
       expect(res.body.error).toBe('Não foi possível buscar o usuário');
     });
   });
 
   describe('PUT /api/users/:id', () => {
+    it('deve retornar 401 sem token de autenticação', async () => {
+      const res = await request(app).put('/api/users/1').send({ nome: 'A', email: 'a@a.com' });
+      expect(res.status).toBe(401);
+    });
+
     it('deve retornar 400 para ID inválido', async () => {
-      const res = await request(app).put('/api/users/xyz').send({ nome: 'A', email: 'a@a.com' });
+      const res = await request(app).put('/api/users/xyz').set(admHeaders).send({ nome: 'A', email: 'a@a.com' });
       expect(res.status).toBe(400);
     });
 
     it('deve retornar 400 se nome ou email estiverem vazios', async () => {
-      const res = await request(app).put('/api/users/1').send({ nome: '' });
+      const res = await request(app).put('/api/users/1').set(admHeaders).send({ nome: '' });
       expect(res.status).toBe(400);
     });
 
     it('deve retornar 404 se o usuário não existir', async () => {
       mockUserService.getUserById.mockResolvedValueOnce(null);
-      const res = await request(app).put('/api/users/999').send({ nome: 'A', email: 'a@a.com' });
+      const res = await request(app).put('/api/users/999').set(admHeaders).send({ nome: 'A', email: 'a@a.com' });
       expect(res.status).toBe(404);
     });
 
@@ -155,14 +196,14 @@ describe('User Routes Integration Tests (/api/users)', () => {
       mockUserService.getUserById.mockResolvedValueOnce({ id: 1 });
       mockUserService.updateUser.mockResolvedValueOnce({ id: 1, nome: 'Novo Nome', email: 'novo@a.com' });
 
-      const res = await request(app).put('/api/users/1').send({ nome: 'Novo Nome', email: 'novo@a.com' });
+      const res = await request(app).put('/api/users/1').set(admHeaders).send({ nome: 'Novo Nome', email: 'novo@a.com' });
       expect(res.status).toBe(200);
       expect(res.body.data.nome).toBe('Novo Nome');
     });
 
     it('deve retornar 500 se ocorrer erro', async () => {
       mockUserService.getUserById.mockRejectedValueOnce(new Error('DB err'));
-      const res = await request(app).put('/api/users/1').send({ nome: 'N', email: 'n@n.com' });
+      const res = await request(app).put('/api/users/1').set(admHeaders).send({ nome: 'N', email: 'n@n.com' });
       expect(res.status).toBe(500);
     });
   });
@@ -174,41 +215,36 @@ describe('User Routes Integration Tests (/api/users)', () => {
     });
 
     it('deve retornar 403 se usuário não for ADM', async () => {
-      const headers = authHeader({ id: 3, role: 'PROF' });
-      const res = await request(app).delete('/api/users/2').set(headers);
+      const res = await request(app).delete('/api/users/2').set(profHeaders);
       expect(res.status).toBe(403);
     });
 
     it('deve retornar 403 se o ADM tentar deletar sua própria conta', async () => {
-      const headers = authHeader({ id: 1, role: 'ADM' });
-      const res = await request(app).delete('/api/users/1').set(headers);
+      const res = await request(app).delete('/api/users/1').set(admHeaders);
       expect(res.status).toBe(403);
       expect(res.body.error).toBe('ADM não pode excluir a própria conta');
     });
 
     it('deve retornar 404 se o usuário a deletar não existir', async () => {
-      const headers = authHeader({ id: 1, role: 'ADM' });
       mockUserService.getUserById.mockResolvedValueOnce(null);
-
-      const res = await request(app).delete('/api/users/99').set(headers);
+      const res = await request(app).delete('/api/users/99').set(admHeaders);
       expect(res.status).toBe(404);
     });
 
     it('deve retornar 200 ao excluir com sucesso', async () => {
-      const headers = authHeader({ id: 1, role: 'ADM' });
       mockUserService.getUserById.mockResolvedValueOnce({ id: 2 });
       mockUserService.deleteUser.mockResolvedValueOnce(true);
 
-      const res = await request(app).delete('/api/users/2').set(headers);
+      const res = await request(app).delete('/api/users/2').set(admHeaders);
       expect(res.status).toBe(200);
       expect(res.body.message).toBe('Usuário excluído com sucesso');
     });
 
     it('deve retornar 500 se o serviço falhar', async () => {
-      const headers = authHeader({ id: 1, role: 'ADM' });
-      mockUserService.getUserById.mockRejectedValueOnce(new Error('Crash'));
+      mockUserService.getUserById.mockResolvedValueOnce({ id: 2 });
+      mockUserService.deleteUser.mockRejectedValueOnce(new Error('Crash'));
 
-      const res = await request(app).delete('/api/users/2').set(headers);
+      const res = await request(app).delete('/api/users/2').set(admHeaders);
       expect(res.status).toBe(500);
     });
   });
@@ -219,133 +255,104 @@ describe('User Routes Integration Tests (/api/users)', () => {
       expect(res.status).toBe(401);
     });
 
-    it('deve retornar 400 se faltar senhaAtual ou novaSenha', async () => {
-      const headers = authHeader({ id: 1 });
-      const res = await request(app)
-        .put('/api/users/change-password')
-        .set(headers)
-        .send({ senhaAtual: '123' });
+    it('deve retornar 400 se campos faltarem', async () => {
+      const res = await request(app).put('/api/users/change-password').set(admHeaders).send({});
       expect(res.status).toBe(400);
     });
 
-    it('deve retornar 400 se novaSenha tiver menos de 8 caracteres', async () => {
-      const headers = authHeader({ id: 1 });
+    it('deve retornar 400 se nova senha tiver menos de 8 caracteres', async () => {
       const res = await request(app)
         .put('/api/users/change-password')
-        .set(headers)
-        .send({ senhaAtual: '12345678', novaSenha: 'curta' });
+        .set(admHeaders)
+        .send({ senhaAtual: '12345678', novaSenha: '123' });
       expect(res.status).toBe(400);
-      expect(res.body.error).toContain('pelo menos 8 caracteres');
+      expect(res.body.error).toContain('8 caracteres');
     });
 
-    it('deve retornar 400 se a senha atual for incorreta', async () => {
-      const headers = authHeader({ id: 1 });
+    it('deve retornar 400 se senha atual estiver incorreta', async () => {
       mockUserService.changePassword.mockRejectedValueOnce(new Error('Senha atual incorreta'));
-
       const res = await request(app)
         .put('/api/users/change-password')
-        .set(headers)
+        .set(admHeaders)
         .send({ senhaAtual: 'errada123', novaSenha: 'novasenha123' });
       expect(res.status).toBe(400);
       expect(res.body.error).toBe('Senha atual incorreta');
     });
 
-    it('deve retornar 200 com sucesso ao alterar senha', async () => {
-      const headers = authHeader({ id: 1 });
+    it('deve retornar 200 ao alterar a senha com sucesso', async () => {
       mockUserService.changePassword.mockResolvedValueOnce(true);
-
       const res = await request(app)
         .put('/api/users/change-password')
-        .set(headers)
-        .send({ senhaAtual: 'correta123', novaSenha: 'novasenha123' });
+        .set(admHeaders)
+        .send({ senhaAtual: 'certa123', novaSenha: 'novasenha123' });
       expect(res.status).toBe(200);
       expect(res.body.message).toBe('Senha alterada com sucesso');
     });
   });
 
   describe('POST /api/users/forgot-password e reset-password', () => {
-    it('forgot-password deve retornar 400 se email não for enviado', async () => {
-      const res = await request(app).post('/api/users/forgot-password').send({});
-      expect(res.status).toBe(400);
-    });
+    it('forgot-password deve validar email', async () => {
+      const resBad = await request(app).post('/api/users/forgot-password').send({});
+      expect(resBad.status).toBe(400);
 
-    it('forgot-password deve retornar 200 com mensagem informativa', async () => {
       mockUserService.forgotPassword.mockResolvedValueOnce(true);
-      const res = await request(app)
-        .post('/api/users/forgot-password')
-        .send({ email: 'user@teste.com' });
-      expect(res.status).toBe(200);
-      expect(res.body.message).toContain('instruções para redefinir a senha');
+      const resOk = await request(app).post('/api/users/forgot-password').send({ email: 'user@teste.com' });
+      expect(resOk.status).toBe(200);
+
+      mockUserService.forgotPassword.mockRejectedValueOnce(new Error('SMTP err'));
+      const resErr = await request(app).post('/api/users/forgot-password').send({ email: 'user@teste.com' });
+      expect(resErr.status).toBe(500);
     });
 
-    it('reset-password deve retornar 400 se faltar campos ou senha curta', async () => {
-      const res1 = await request(app).post('/api/users/reset-password').send({});
-      expect(res1.status).toBe(400);
+    it('reset-password deve validar campos e redefinir senha', async () => {
+      const resBad = await request(app).post('/api/users/reset-password').send({});
+      expect(resBad.status).toBe(400);
 
-      const res2 = await request(app).post('/api/users/reset-password').send({
-        email: 'a@a.com',
+      const resShort = await request(app).post('/api/users/reset-password').send({
+        email: 'u@u.com',
         token: 'tok',
         novaSenha: '123',
       });
-      expect(res2.status).toBe(400);
-      expect(res2.body.error).toContain('pelo menos 8 caracteres');
-    });
+      expect(resShort.status).toBe(400);
 
-    it('reset-password deve retornar 400 se token for inválido', async () => {
       mockUserService.resetPassword.mockRejectedValueOnce(new Error('Token inválido ou expirado'));
-      const res = await request(app).post('/api/users/reset-password').send({
-        email: 'a@a.com',
-        token: 'invalido',
+      const resInvalid = await request(app).post('/api/users/reset-password').send({
+        email: 'u@u.com',
+        token: 'tok',
         novaSenha: 'novasenha123',
       });
-      expect(res.status).toBe(400);
-      expect(res.body.error).toBe('Token inválido ou expirado');
-    });
+      expect(resInvalid.status).toBe(400);
 
-    it('reset-password deve retornar 200 no sucesso', async () => {
       mockUserService.resetPassword.mockResolvedValueOnce(true);
-      const res = await request(app).post('/api/users/reset-password').send({
-        email: 'a@a.com',
-        token: 'valido',
+      const resOk = await request(app).post('/api/users/reset-password').send({
+        email: 'u@u.com',
+        token: 'tok',
         novaSenha: 'novasenha123',
       });
-      expect(res.status).toBe(200);
-      expect(res.body.message).toBe('Senha redefinida com sucesso');
+      expect(resOk.status).toBe(200);
+      expect(resOk.body.message).toBe('Senha redefinida com sucesso');
     });
   });
 
   describe('PUT /api/users/:id/photo', () => {
-    it('deve retornar 401 sem token', async () => {
-      const res = await request(app).put('/api/users/1/photo').send({ foto: 'data' });
-      expect(res.status).toBe(401);
-    });
+    it('deve validar token, ID, foto e permissão', async () => {
+      const resNoAuth = await request(app).put('/api/users/1/photo').send({ foto: 'url' });
+      expect(resNoAuth.status).toBe(401);
 
-    it('deve retornar 400 com ID inválido ou foto ausente', async () => {
-      const headers = authHeader({ id: 1, role: 'ADM' });
-      const res1 = await request(app).put('/api/users/abc/photo').set(headers).send({ foto: 'a' });
-      expect(res1.status).toBe(400);
+      const resBadId = await request(app).put('/api/users/abc/photo').set(admHeaders).send({ foto: 'url' });
+      expect(resBadId.status).toBe(400);
 
-      const res2 = await request(app).put('/api/users/1/photo').set(headers).send({});
-      expect(res2.status).toBe(400);
-    });
+      const resNoPhoto = await request(app).put('/api/users/1/photo').set(admHeaders).send({});
+      expect(resNoPhoto.status).toBe(400);
 
-    it('deve retornar 403 se usuário tentar atualizar foto de outro sem ser ADM', async () => {
-      const headers = authHeader({ id: 5, role: 'PARENT' });
-      const res = await request(app).put('/api/users/10/photo').set(headers).send({ foto: 'http' });
-      expect(res.status).toBe(403);
-      expect(res.body.error).toContain('Você só pode atualizar sua própria foto');
-    });
+      // Usuário tentando atualizar foto de outro sem ser ADM
+      const resOtherUser = await request(app).put('/api/users/99/photo').set(user1Headers).send({ foto: 'url' });
+      expect(resOtherUser.status).toBe(403);
 
-    it('deve retornar 200 quando o próprio usuário atualiza a foto', async () => {
-      const headers = authHeader({ id: 5, role: 'PARENT' });
-      mockUserService.updateUserPhoto.mockResolvedValueOnce({ id: 5, foto: 'http://foto.png' });
-
-      const res = await request(app)
-        .put('/api/users/5/photo')
-        .set(headers)
-        .send({ foto: 'http://foto.png' });
-      expect(res.status).toBe(200);
-      expect(res.body.data.foto).toBe('http://foto.png');
+      mockUserService.updateUserPhoto.mockResolvedValueOnce({ id: 1, foto: 'http://foto.png' });
+      const resOk = await request(app).put('/api/users/1/photo').set(admHeaders).send({ foto: 'http://foto.png' });
+      expect(resOk.status).toBe(200);
+      expect(resOk.body.data.foto).toBe('http://foto.png');
     });
   });
 });

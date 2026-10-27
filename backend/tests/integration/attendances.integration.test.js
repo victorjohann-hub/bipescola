@@ -12,13 +12,19 @@ const mockAttendanceService = {
   getAttendanceHistory: jest.fn(),
 };
 
+const mockStudentService = {
+  getStudentById: jest.fn(),
+};
+
 jest.unstable_mockModule('../../src/services/attendanceService.js', () => mockAttendanceService);
+jest.unstable_mockModule('../../src/services/studentService.js', () => mockStudentService);
 
 const { default: app } = await import('../../app.js');
 
 describe('Attendance Routes Integration Tests (/api/attendances)', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockStudentService.getStudentById.mockResolvedValue({ id: 1, id_pai: 1 });
   });
 
   describe('POST /api/attendances', () => {
@@ -153,6 +159,20 @@ describe('Attendance Routes Integration Tests (/api/attendances)', () => {
       expect(res.body).toHaveLength(1);
     });
 
+    it('deve retornar 403 se o PARENT tentar consultar presenças de filho de outro', async () => {
+      const headers = authHeader({ id: 99, role: 'PARENT' });
+      mockStudentService.getStudentById.mockResolvedValueOnce({ id: 1, id_pai: 1 });
+
+      const res = await request(app).get('/api/attendances/aluno/1').set(headers);
+      expect(res.status).toBe(403);
+    });
+
+    it('deve retornar 403 se PARENT tentar consultar /data/:data', async () => {
+      const headers = authHeader({ role: 'PARENT' });
+      const res = await request(app).get('/api/attendances/data/2026-10-27').set(headers);
+      expect(res.status).toBe(403);
+    });
+
     it('deve retornar 200 com presenças da data', async () => {
       const headers = authHeader({ role: 'PROF' });
       mockAttendanceService.getAttendanceByDate.mockResolvedValueOnce([{ id: 1, data: '2026-10-27' }]);
@@ -196,6 +216,15 @@ describe('Attendance Routes Integration Tests (/api/attendances)', () => {
       const res = await request(app).get('/api/attendances/1').set(headers);
       expect(res.status).toBe(200);
       expect(res.body.id).toBe(1);
+    });
+
+    it('deve retornar 403 se PARENT tentar obter registro de presença de outro aluno', async () => {
+      const headers = authHeader({ id: 99, role: 'PARENT' });
+      mockAttendanceService.getAttendanceById.mockResolvedValueOnce({ id: 1, aluno_id: 1, presente: 1 });
+      mockStudentService.getStudentById.mockResolvedValueOnce({ id: 1, id_pai: 1 });
+
+      const res = await request(app).get('/api/attendances/1').set(headers);
+      expect(res.status).toBe(403);
     });
   });
 
