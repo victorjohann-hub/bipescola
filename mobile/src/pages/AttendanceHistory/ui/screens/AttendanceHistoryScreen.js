@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   View,
   Text,
@@ -10,27 +10,29 @@ import {
   RefreshControl,
   TextInput,
   Alert,
-} from 'react-native';
-import { Feather } from '@expo/vector-icons';
-import { ResponsiveContainer } from '@shared/ui/ResponsiveContainer/ResponsiveContainer';
-import { colors, radius, shadows, spacing, typography } from '@shared/theme';
-import { getAttendanceHistoryAPI, updatePostAPI } from '@shared/api/schoolApi';
-import { listClassesAPI } from '@shared/api/adminApi';
-import { apiClient } from '@shared/api/apiClient';
+} from "react-native";
+import { Feather } from "@expo/vector-icons";
+import { ResponsiveContainer } from "@shared/ui/ResponsiveContainer/ResponsiveContainer";
+import { colors, radius, shadows, spacing, typography } from "@shared/theme";
+import { getAttendanceHistoryAPI } from "@shared/api/schoolApi";
+import { listClassesAPI } from "@shared/api/adminApi";
+import { apiClient } from "@shared/api/apiClient";
+import { useResponsiveLayout } from "@shared/hooks/useResponsiveLayout";
 
 const PERIODS = [
-  { id: 'today', label: 'Hoje' },
-  { id: 'yesterday', label: 'Ontem' },
-  { id: 'week', label: 'Últimos 7 dias' },
-  { id: 'month', label: 'Últimos 30 dias' },
+  { id: "today", label: "Hoje" },
+  { id: "yesterday", label: "Ontem" },
+  { id: "week", label: "Últimos 7 dias" },
+  { id: "month", label: "Últimos 30 dias" },
 ];
 
 export const AttendanceHistoryScreen = () => {
-  const [selectedPeriod, setSelectedPeriod] = useState('today');
-  const [selectedTurmaId, setSelectedTurmaId] = useState('ALL');
+  const { isTablet, listColumns } = useResponsiveLayout();
+  const [selectedPeriod, setSelectedPeriod] = useState("today");
+  const [selectedTurmaId, setSelectedTurmaId] = useState("ALL");
   const [classes, setClasses] = useState([]);
-  const [statusFilter, setStatusFilter] = useState('ALL'); // 'ALL' | 'PRESENT' | 'ABSENT'
-  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState("ALL"); // 'ALL' | 'PRESENT' | 'ABSENT'
+  const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [data, setData] = useState({
@@ -38,27 +40,26 @@ export const AttendanceHistoryScreen = () => {
       totalRegistros: 0,
       totalPresentes: 0,
       totalFaltas: 0,
-      taxaComparecimento: '0%',
+      taxaComparecimento: "0%",
     },
     registros: [],
   });
 
-  // Calcula parâmetros de data baseado no chip selecionado
   const getDateParams = useCallback((periodId) => {
     const today = new Date();
-    const formatDate = (d) => d.toISOString().split('T')[0];
+    const formatDate = (d) => d.toISOString().split("T")[0];
 
-    if (periodId === 'today') {
+    if (periodId === "today") {
       return { data: formatDate(today) };
     }
 
-    if (periodId === 'yesterday') {
+    if (periodId === "yesterday") {
       const yesterday = new Date();
       yesterday.setDate(today.getDate() - 1);
       return { data: formatDate(yesterday) };
     }
 
-    if (periodId === 'week') {
+    if (periodId === "week") {
       const pastWeek = new Date();
       pastWeek.setDate(today.getDate() - 6);
       return {
@@ -67,7 +68,7 @@ export const AttendanceHistoryScreen = () => {
       };
     }
 
-    if (periodId === 'month') {
+    if (periodId === "month") {
       const pastMonth = new Date();
       pastMonth.setDate(today.getDate() - 29);
       return {
@@ -95,14 +96,27 @@ export const AttendanceHistoryScreen = () => {
     try {
       setLoading(true);
       const params = getDateParams(selectedPeriod);
-      if (selectedTurmaId !== 'ALL') {
+      if (selectedTurmaId !== "ALL") {
         params.turma_id = selectedTurmaId;
       }
       const res = await getAttendanceHistoryAPI(params);
-      setData(res || { resumo: { totalRegistros: 0, totalPresentes: 0, totalFaltas: 0, taxaComparecimento: '0%' }, registros: [] });
+      setData(
+        res || {
+          resumo: {
+            totalRegistros: 0,
+            totalPresentes: 0,
+            totalFaltas: 0,
+            taxaComparecimento: "0%",
+          },
+          registros: [],
+        }
+      );
     } catch (error) {
-      console.error('Erro ao carregar histórico de presenças:', error);
-      Alert.alert('Erro', error.message || 'Falha ao buscar histórico de presença.');
+      console.error("Erro ao carregar histórico de presenças:", error);
+      Alert.alert(
+        "Erro",
+        error.message || "Falha ao buscar histórico de presença."
+      );
     } finally {
       setLoading(false);
     }
@@ -118,30 +132,32 @@ export const AttendanceHistoryScreen = () => {
     setRefreshing(false);
   };
 
-  // Alterna o status da presença de um aluno
   const handleToggleStatus = (item) => {
     const novoStatus = !item.presente;
-    const acao = novoStatus ? 'Marcar como Presente' : 'Lançar Falta';
+    const acao = novoStatus ? "Marcar como Presente" : "Lançar Falta";
 
     Alert.alert(
-      'Alterar Registro',
+      "Alterar Registro",
       `Deseja ${acao} para o aluno ${item.aluno_nome}?`,
       [
-        { text: 'Cancelar', style: 'cancel' },
+        { text: "Cancelar", style: "cancel" },
         {
-          text: 'Confirmar',
+          text: "Confirmar",
           onPress: async () => {
             try {
               await apiClient(`/attendances/${item.id}`, {
-                method: 'PUT',
+                method: "PUT",
                 body: {
-                  data: item.data.split('T')[0],
+                  data: item.data.split("T")[0],
                   presente: novoStatus,
                 },
               });
               loadAttendanceHistory();
             } catch (err) {
-              Alert.alert('Erro ao atualizar', err.message || 'Falha ao conectar com o servidor.');
+              Alert.alert(
+                "Erro ao atualizar",
+                err.message || "Falha ao conectar com o servidor."
+              );
             }
           },
         },
@@ -149,7 +165,6 @@ export const AttendanceHistoryScreen = () => {
     );
   };
 
-  // Filtragem local por texto de busca e status
   const filteredRecords = useMemo(() => {
     return (data.registros || []).filter((item) => {
       const matchesSearch =
@@ -158,17 +173,17 @@ export const AttendanceHistoryScreen = () => {
 
       const isPresent = item.presente === 1 || item.presente === true;
       const matchesStatus =
-        statusFilter === 'ALL' ||
-        (statusFilter === 'PRESENT' && isPresent) ||
-        (statusFilter === 'ABSENT' && !isPresent);
+        statusFilter === "ALL" ||
+        (statusFilter === "PRESENT" && isPresent) ||
+        (statusFilter === "ABSENT" && !isPresent);
 
       return matchesSearch && matchesStatus;
     });
   }, [data.registros, searchQuery, statusFilter]);
 
   const formatRecordDate = (dateStr) => {
-    if (!dateStr) return '';
-    const parts = dateStr.split('T')[0].split('-');
+    if (!dateStr) return "";
+    const parts = dateStr.split("T")[0].split("-");
     if (parts.length === 3) {
       return `${parts[2]}/${parts[1]}`;
     }
@@ -176,16 +191,19 @@ export const AttendanceHistoryScreen = () => {
   };
 
   const formatRecordTime = (timeStr) => {
-    if (!timeStr) return '';
+    if (!timeStr) return "";
     try {
       const date = new Date(timeStr);
       if (!isNaN(date.getTime())) {
-        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        return date.toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
       }
     } catch {
       // fallback
     }
-    return '';
+    return "";
   };
 
   const renderHeader = () => (
@@ -197,11 +215,19 @@ export const AttendanceHistoryScreen = () => {
           return (
             <TouchableOpacity
               key={period.id}
-              style={[styles.periodChip, isSelected && styles.periodChipActive]}
+              style={[
+                styles.periodChip,
+                isSelected && styles.periodChipActive,
+              ]}
               onPress={() => setSelectedPeriod(period.id)}
               activeOpacity={0.7}
             >
-              <Text style={[styles.periodChipText, isSelected && styles.periodChipTextActive]}>
+              <Text
+                style={[
+                  styles.periodChipText,
+                  isSelected && styles.periodChipTextActive,
+                ]}
+              >
                 {period.label}
               </Text>
             </TouchableOpacity>
@@ -219,14 +245,14 @@ export const AttendanceHistoryScreen = () => {
           <TouchableOpacity
             style={[
               styles.statusTab,
-              selectedTurmaId === 'ALL' && styles.statusTabActive,
+              selectedTurmaId === "ALL" && styles.statusTabActive,
             ]}
-            onPress={() => setSelectedTurmaId('ALL')}
+            onPress={() => setSelectedTurmaId("ALL")}
           >
             <Text
               style={[
                 styles.statusTabText,
-                selectedTurmaId === 'ALL' && styles.statusTabTextActive,
+                selectedTurmaId === "ALL" && styles.statusTabTextActive,
               ]}
             >
               Todas as Turmas
@@ -255,88 +281,174 @@ export const AttendanceHistoryScreen = () => {
         </ScrollView>
       )}
 
-      {/* Cards de Métricas */}
-      <View style={styles.metricsGrid}>
-        <View style={[styles.metricCard, { borderLeftColor: colors.primary }]}>
+      {/* Cards de Métricas (4 Colunas alinhadas) */}
+      <View style={[styles.metricsGrid, isTablet && styles.metricsGridTablet]}>
+        <View
+          style={[
+            styles.metricCard,
+            isTablet && styles.metricCardTablet,
+            { borderLeftColor: colors.primary },
+          ]}
+        >
           <Text style={styles.metricLabel}>Total</Text>
-          <Text style={[styles.metricValue, { color: colors.primary }]}>
+          <Text
+            style={[
+              styles.metricValue,
+              isTablet && styles.metricValueTablet,
+              { color: colors.primary },
+            ]}
+          >
             {data.resumo.totalRegistros}
           </Text>
           <Text style={styles.metricSub}>Registrados</Text>
         </View>
 
-        <View style={[styles.metricCard, { borderLeftColor: colors.secondary }]}>
+        <View
+          style={[
+            styles.metricCard,
+            isTablet && styles.metricCardTablet,
+            { borderLeftColor: colors.secondary },
+          ]}
+        >
           <Text style={styles.metricLabel}>Presentes</Text>
-          <Text style={[styles.metricValue, { color: colors.secondary }]}>
+          <Text
+            style={[
+              styles.metricValue,
+              isTablet && styles.metricValueTablet,
+              { color: colors.secondary },
+            ]}
+          >
             {data.resumo.totalPresentes}
           </Text>
           <Text style={styles.metricSub}>Em sala</Text>
         </View>
 
-        <View style={[styles.metricCard, { borderLeftColor: colors.error }]}>
+        <View
+          style={[
+            styles.metricCard,
+            isTablet && styles.metricCardTablet,
+            { borderLeftColor: colors.error },
+          ]}
+        >
           <Text style={styles.metricLabel}>Faltas</Text>
-          <Text style={[styles.metricValue, { color: colors.error }]}>
+          <Text
+            style={[
+              styles.metricValue,
+              isTablet && styles.metricValueTablet,
+              { color: colors.error },
+            ]}
+          >
             {data.resumo.totalFaltas}
           </Text>
           <Text style={styles.metricSub}>Ausentes</Text>
         </View>
 
-        <View style={[styles.metricCard, { borderLeftColor: colors.accent || colors.highlight }]}>
+        <View
+          style={[
+            styles.metricCard,
+            isTablet && styles.metricCardTablet,
+            { borderLeftColor: colors.accent || colors.highlight },
+          ]}
+        >
           <Text style={styles.metricLabel}>Taxa</Text>
-          <Text style={[styles.metricValue, { color: colors.accent || colors.highlight }]}>
+          <Text
+            style={[
+              styles.metricValue,
+              isTablet && styles.metricValueTablet,
+              { color: colors.accent || colors.highlight },
+            ]}
+          >
             {data.resumo.taxaComparecimento}
           </Text>
           <Text style={styles.metricSub}>Frequência</Text>
         </View>
       </View>
 
-      {/* Barra de Busca */}
-      <View style={styles.searchBar}>
-        <Feather name="search" size={18} color={colors.textMuted} style={styles.searchIcon} />
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Buscar por nome ou matrícula..."
-          placeholderTextColor={colors.textMuted}
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-        />
-        {searchQuery.length > 0 && (
-          <TouchableOpacity onPress={() => setSearchQuery('')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <Feather name="x" size={16} color={colors.textMuted} />
+      {/* Barra de Busca + Filtros de Status (Lado a lado no Tablet) */}
+      <View
+        style={[
+          styles.searchAndStatusWrap,
+          isTablet && styles.searchAndStatusWrapTablet,
+        ]}
+      >
+        <View style={[styles.searchBar, isTablet && { flex: 1, marginBottom: 0 }]}>
+          <Feather
+            name="search"
+            size={18}
+            color={colors.textMuted}
+            style={styles.searchIcon}
+          />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Buscar por nome ou matrícula..."
+            placeholderTextColor={colors.textMuted}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity
+              onPress={() => setSearchQuery("")}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Feather name="x" size={16} color={colors.textMuted} />
+            </TouchableOpacity>
+          )}
+        </View>
+
+        <View style={styles.statusFiltersRow}>
+          <TouchableOpacity
+            style={[
+              styles.statusTab,
+              statusFilter === "ALL" && styles.statusTabActive,
+            ]}
+            onPress={() => setStatusFilter("ALL")}
+          >
+            <Text
+              style={[
+                styles.statusTabText,
+                statusFilter === "ALL" && styles.statusTabTextActive,
+              ]}
+            >
+              Todos ({data.registros.length})
+            </Text>
           </TouchableOpacity>
-        )}
-      </View>
 
-      {/* Filtros de Status */}
-      <View style={styles.statusFiltersRow}>
-        <TouchableOpacity
-          style={[styles.statusTab, statusFilter === 'ALL' && styles.statusTabActive]}
-          onPress={() => setStatusFilter('ALL')}
-        >
-          <Text style={[styles.statusTabText, statusFilter === 'ALL' && styles.statusTabTextActive]}>
-            Todos ({data.registros.length})
-          </Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.statusTab,
+              statusFilter === "PRESENT" && styles.statusTabActive,
+            ]}
+            onPress={() => setStatusFilter("PRESENT")}
+          >
+            <View style={[styles.dot, { backgroundColor: colors.secondary }]} />
+            <Text
+              style={[
+                styles.statusTabText,
+                statusFilter === "PRESENT" && styles.statusTabTextActive,
+              ]}
+            >
+              Presentes ({data.resumo.totalPresentes})
+            </Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[styles.statusTab, statusFilter === 'PRESENT' && styles.statusTabActive]}
-          onPress={() => setStatusFilter('PRESENT')}
-        >
-          <View style={[styles.dot, { backgroundColor: colors.secondary }]} />
-          <Text style={[styles.statusTabText, statusFilter === 'PRESENT' && styles.statusTabTextActive]}>
-            Presentes ({data.resumo.totalPresentes})
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.statusTab, statusFilter === 'ABSENT' && styles.statusTabActive]}
-          onPress={() => setStatusFilter('ABSENT')}
-        >
-          <View style={[styles.dot, { backgroundColor: colors.error }]} />
-          <Text style={[styles.statusTabText, statusFilter === 'ABSENT' && styles.statusTabTextActive]}>
-            Faltas ({data.resumo.totalFaltas})
-          </Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.statusTab,
+              statusFilter === "ABSENT" && styles.statusTabActive,
+            ]}
+            onPress={() => setStatusFilter("ABSENT")}
+          >
+            <View style={[styles.dot, { backgroundColor: colors.error }]} />
+            <Text
+              style={[
+                styles.statusTabText,
+                statusFilter === "ABSENT" && styles.statusTabTextActive,
+              ]}
+            >
+              Faltas ({data.resumo.totalFaltas})
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </View>
   );
@@ -351,8 +463,8 @@ export const AttendanceHistoryScreen = () => {
         <Text style={styles.emptyTitle}>Nenhum registro encontrado</Text>
         <Text style={styles.emptySubtitle}>
           {searchQuery
-            ? 'Nenhum estudante corresponde à pesquisa atual.'
-            : 'Não há registros de presença lançados no período selecionado.'}
+            ? "Nenhum estudante corresponde à pesquisa atual."
+            : "Não há registros de presença lançados no período selecionado."}
         </Text>
       </View>
     );
@@ -365,7 +477,7 @@ export const AttendanceHistoryScreen = () => {
 
     return (
       <TouchableOpacity
-        style={styles.recordCard}
+        style={[styles.recordCard, isTablet && styles.recordCardTablet]}
         activeOpacity={0.8}
         onPress={() => handleToggleStatus(item)}
       >
@@ -373,11 +485,15 @@ export const AttendanceHistoryScreen = () => {
           <View
             style={[
               styles.avatarPlaceholder,
-              { backgroundColor: isPresent ? colors.secondarySurface : colors.errorSurface },
+              {
+                backgroundColor: isPresent
+                  ? colors.secondarySurface
+                  : colors.errorSurface,
+              },
             ]}
           >
             <Feather
-              name={isPresent ? 'check' : 'user-x'}
+              name={isPresent ? "check" : "user-x"}
               size={18}
               color={isPresent ? colors.secondary : colors.error}
             />
@@ -389,18 +505,22 @@ export const AttendanceHistoryScreen = () => {
             </Text>
             <View style={styles.metaRow}>
               {item.aluno_matricula ? (
-                <Text style={styles.metaMatricula}>Matrícula: {item.aluno_matricula}</Text>
+                <Text style={styles.metaMatricula}>
+                  Matrícula: {item.aluno_matricula}
+                </Text>
               ) : null}
               {item.turma_nome ? (
                 <Text style={styles.metaMatricula}> • {item.turma_nome}</Text>
               ) : null}
-              {selectedPeriod !== 'today' && selectedPeriod !== 'yesterday' ? (
+              {selectedPeriod !== "today" && selectedPeriod !== "yesterday" ? (
                 <Text style={styles.metaDate}> • {dateFormatted}</Text>
               ) : null}
             </View>
             <Text style={styles.metaRegisteredBy} numberOfLines={1}>
-              {item.registrado_por_nome ? `Por: ${item.registrado_por_nome}` : 'Via Sistema'}
-              {timeFormatted ? ` às ${timeFormatted}` : ''}
+              {item.registrado_por_nome
+                ? `Por: ${item.registrado_por_nome}`
+                : "Via Sistema"}
+              {timeFormatted ? ` às ${timeFormatted}` : ""}
             </Text>
           </View>
         </View>
@@ -409,7 +529,11 @@ export const AttendanceHistoryScreen = () => {
           <View
             style={[
               styles.statusBadge,
-              { backgroundColor: isPresent ? colors.secondarySurface : colors.errorSurface },
+              {
+                backgroundColor: isPresent
+                  ? colors.secondarySurface
+                  : colors.errorSurface,
+              },
             ]}
           >
             <Text
@@ -418,10 +542,15 @@ export const AttendanceHistoryScreen = () => {
                 { color: isPresent ? colors.secondary : colors.error },
               ]}
             >
-              {isPresent ? 'Presente' : 'Falta'}
+              {isPresent ? "Presente" : "Falta"}
             </Text>
           </View>
-          <Feather name="edit-2" size={14} color={colors.textMuted} style={{ marginTop: 6 }} />
+          <Feather
+            name="edit-2"
+            size={14}
+            color={colors.textMuted}
+            style={{ marginTop: 6 }}
+          />
         </View>
       </TouchableOpacity>
     );
@@ -433,7 +562,7 @@ export const AttendanceHistoryScreen = () => {
         <View>
           <Text style={styles.headerTitle}>Histórico de Frequência</Text>
           <Text style={styles.headerSubtitle}>
-            Acompanhe a assiduidade e lista de presença
+            Acompanhe a assiduidade e métricas de comparecimento escolar
           </Text>
         </View>
         <TouchableOpacity
@@ -453,6 +582,9 @@ export const AttendanceHistoryScreen = () => {
         </View>
       ) : (
         <FlatList
+          key={`attendance-grid-${listColumns}`}
+          numColumns={listColumns}
+          columnWrapperStyle={listColumns > 1 ? styles.columnWrapper : undefined}
           data={filteredRecords}
           keyExtractor={(item) => String(item.id)}
           renderItem={renderItem}
@@ -480,11 +612,11 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.xl,
+    paddingTop: spacing.lg,
     paddingBottom: spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
@@ -504,26 +636,26 @@ const styles = StyleSheet.create({
     height: 38,
     borderRadius: radius.sm,
     backgroundColor: colors.primarySurface,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   headerContent: {
     marginBottom: spacing.md,
   },
   periodRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: spacing.sm,
     marginBottom: spacing.md,
   },
   periodChip: {
     flex: 1,
-    paddingVertical: spacing.sm,
+    paddingVertical: spacing.sm + 2,
     backgroundColor: colors.surface,
     borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   periodChipActive: {
     backgroundColor: colors.primary,
@@ -537,9 +669,12 @@ const styles = StyleSheet.create({
     color: colors.textInverse,
   },
   metricsGrid: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: spacing.sm,
     marginBottom: spacing.md,
+  },
+  metricsGridTablet: {
+    gap: spacing.md,
   },
   metricCard: {
     flex: 1,
@@ -550,35 +685,50 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     borderLeftWidth: 4,
-    alignItems: 'center',
+    alignItems: "center",
     ...shadows.card,
+  },
+  metricCardTablet: {
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.md,
   },
   metricLabel: {
     fontSize: 11,
-    fontFamily: 'Roboto_500Medium',
+    fontFamily: "Roboto_500Medium",
     color: colors.textSecondary,
     marginBottom: 2,
   },
   metricValue: {
     fontSize: 18,
-    fontFamily: 'Roboto_700Bold',
-    fontWeight: '700',
+    fontFamily: "Roboto_700Bold",
+    fontWeight: "700",
     marginBottom: 2,
+  },
+  metricValueTablet: {
+    fontSize: 24,
   },
   metricSub: {
     fontSize: 10,
-    fontFamily: 'Roboto_400Regular',
+    fontFamily: "Roboto_400Regular",
     color: colors.textMuted,
   },
+  searchAndStatusWrap: {
+    width: "100%",
+  },
+  searchAndStatusWrapTablet: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.md,
+  },
   searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: colors.surface,
     borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.border,
     paddingHorizontal: spacing.md,
-    height: 44,
+    height: 46,
     marginBottom: spacing.md,
   },
   searchIcon: {
@@ -588,17 +738,17 @@ const styles = StyleSheet.create({
     flex: 1,
     ...typography.body,
     color: colors.textPrimary,
-    height: '100%',
+    height: "100%",
   },
   statusFiltersRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: spacing.sm,
   },
   statusTab: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: spacing.xs + 2,
-    paddingHorizontal: spacing.sm + 2,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: spacing.xs + 4,
+    paddingHorizontal: spacing.sm + 4,
     borderRadius: radius.full,
     backgroundColor: colors.surface,
     borderWidth: 1,
@@ -610,12 +760,12 @@ const styles = StyleSheet.create({
   },
   statusTabText: {
     fontSize: 12,
-    fontFamily: 'Roboto_500Medium',
+    fontFamily: "Roboto_500Medium",
     color: colors.textSecondary,
   },
   statusTabTextActive: {
     color: colors.primary,
-    fontWeight: '700',
+    fontWeight: "700",
   },
   dot: {
     width: 8,
@@ -627,6 +777,9 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     paddingBottom: spacing.xxxl * 2,
   },
+  columnWrapper: {
+    gap: spacing.md,
+  },
   recordCard: {
     backgroundColor: colors.surface,
     borderRadius: radius.md,
@@ -634,23 +787,27 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     padding: spacing.md,
     marginBottom: spacing.sm,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     ...shadows.card,
   },
+  recordCardTablet: {
+    flex: 1,
+    marginBottom: spacing.md,
+  },
   recordLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     flex: 1,
     marginRight: spacing.sm,
   },
   avatarPlaceholder: {
-    width: 40,
-    height: 40,
+    width: 42,
+    height: 42,
     borderRadius: radius.full,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginRight: spacing.md,
   },
   studentInfo: {
@@ -659,12 +816,12 @@ const styles = StyleSheet.create({
   studentName: {
     ...typography.bodyMedium,
     color: colors.textPrimary,
-    fontWeight: '700',
+    fontWeight: "700",
     marginBottom: 2,
   },
   metaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 2,
   },
   metaMatricula: {
@@ -683,8 +840,8 @@ const styles = StyleSheet.create({
     fontSize: 11,
   },
   recordRight: {
-    alignItems: 'flex-end',
-    justifyContent: 'center',
+    alignItems: "flex-end",
+    justifyContent: "center",
   },
   statusBadge: {
     paddingHorizontal: spacing.sm,
@@ -693,13 +850,13 @@ const styles = StyleSheet.create({
   },
   statusBadgeText: {
     fontSize: 11,
-    fontFamily: 'Roboto_700Bold',
-    fontWeight: '700',
+    fontFamily: "Roboto_700Bold",
+    fontWeight: "700",
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     padding: spacing.xl,
   },
   loadingText: {
@@ -708,7 +865,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
   },
   emptyContainer: {
-    alignItems: 'center',
+    alignItems: "center",
     paddingVertical: spacing.xxxl,
     paddingHorizontal: spacing.lg,
   },
@@ -717,8 +874,8 @@ const styles = StyleSheet.create({
     height: 64,
     borderRadius: radius.full,
     backgroundColor: colors.surface,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: spacing.md,
     borderWidth: 1,
     borderColor: colors.border,
@@ -731,7 +888,7 @@ const styles = StyleSheet.create({
   emptySubtitle: {
     ...typography.caption,
     color: colors.textSecondary,
-    textAlign: 'center',
+    textAlign: "center",
     maxWidth: 280,
     lineHeight: 18,
   },
