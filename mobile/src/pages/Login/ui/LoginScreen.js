@@ -18,7 +18,7 @@ export const LoginScreen = ({ navigation }) => {
       try {
         const token = await AsyncStorage.getItem('@bipescola_token');
         if (token) {
-          navigation.navigate('Main');
+          navigation.reset({ index: 0, routes: [{ name: 'Main' }] });
         }
       } catch (e) {}
       setCheckingAuth(false);
@@ -39,7 +39,7 @@ export const LoginScreen = ({ navigation }) => {
       await AsyncStorage.setItem('@bipescola_token', response.token);
       await AsyncStorage.setItem('@bipescola_user', JSON.stringify(response.user));
       
-      navigation.navigate('Main');
+      navigation.reset({ index: 0, routes: [{ name: 'Main' }] });
     } catch (error) {
       Alert.alert('Erro no Login', error.message || 'Credenciais inválidas.');
     } finally {

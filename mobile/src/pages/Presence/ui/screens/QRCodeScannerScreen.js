@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   TextInput,
   Button as NativeButton,
+  Alert,
 } from "react-native";
 import { ResponsiveContainer } from "@shared/ui/ResponsiveContainer/ResponsiveContainer";
 import { Feather } from "@expo/vector-icons";
@@ -120,18 +121,18 @@ export const QRCodeScannerScreen = ({ navigation }) => {
             style={styles.confirmBtn}
             onPress={async () => {
               if (!scannedData || !scannedData.startsWith('aluno_')) {
-                alert('Código QR inválido!');
+                Alert.alert('Código Inválido', 'Código QR inválido!');
                 return;
               }
               const aluno_id = scannedData.split('_')[1];
               const dataAtual = new Date().toISOString().split('T')[0];
               try {
                 await markAttendanceAPI({ aluno_id, data: dataAtual, presente: true });
-                alert("Presença confirmada no sistema!");
+                Alert.alert("Sucesso", "Presença confirmada no sistema!");
                 setScannedData("");
                 setScanned(false);
               } catch (e) {
-                alert("Erro ao salvar: " + (e.message || 'Falha na conexão. Você tem permissão?'));
+                Alert.alert("Erro", "Erro ao salvar: " + (e.message || 'Falha na conexão. Você tem permissão?'));
               }
             }}
           />

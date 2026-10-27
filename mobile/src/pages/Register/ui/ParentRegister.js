@@ -29,8 +29,24 @@ export const ParentRegister = ({ onBack }) => {
     }
     try {
       setLoading(true);
-      await createParentAPI({ nome, email });
-      Alert.alert("Sucesso", "Cadastro de responsável realizado com sucesso.");
+      const res = await createParentAPI({ nome, email });
+      const tempPass = res?.tempPassword || "Definida no sistema";
+      Alert.alert(
+        "Sucesso",
+        `Cadastro de responsável realizado com sucesso!\n\nE-mail: ${email}\nSenha Temporária: ${tempPass}`,
+        [
+          {
+            text: "OK",
+            onPress: () => {
+              setNome("");
+              setTelefone("");
+              setEmail("");
+              setCpf("");
+              setSenha("");
+            },
+          },
+        ]
+      );
     } catch (error) {
       Alert.alert("Erro", error.message || "Falha ao cadastrar responsável.");
     } finally {
