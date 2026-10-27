@@ -11,14 +11,15 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useNavigation } from '@react-navigation/native';
-import { ResponsiveContainer } from '@shared/ui/ResponsiveContainer/ResponsiveContainer';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useNavigation } from "@react-navigation/native";
+import { ResponsiveContainer } from "@shared/ui/ResponsiveContainer/ResponsiveContainer";
 import { Feather } from "@expo/vector-icons";
 import { colors, radius, shadows, spacing, typography } from "@shared/theme";
 import { Input } from "@shared/ui/Input/Input";
 import { Button } from "@shared/ui/Button/Button";
 import { changePasswordAPI, updateUserPhotoAPI } from "@shared/api/userApi";
+import { useResponsiveLayout } from "@shared/hooks/useResponsiveLayout";
 
 const PRESET_AVATARS = [
   "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
@@ -29,6 +30,7 @@ const PRESET_AVATARS = [
 
 export const ProfileScreen = () => {
   const navigation = useNavigation();
+  const { isTablet } = useResponsiveLayout();
   const [userData, setUserData] = useState({
     nome: "Carregando...",
     email: "...",
@@ -38,20 +40,20 @@ export const ProfileScreen = () => {
 
   // Modal Alterar Senha
   const [passwordModalVisible, setPasswordModalVisible] = useState(false);
-  const [senhaAtual, setSenhaAtual] = useState('');
-  const [novaSenha, setNovaSenha] = useState('');
-  const [confirmNovaSenha, setConfirmNovaSenha] = useState('');
+  const [senhaAtual, setSenhaAtual] = useState("");
+  const [novaSenha, setNovaSenha] = useState("");
+  const [confirmNovaSenha, setConfirmNovaSenha] = useState("");
   const [savingPassword, setSavingPassword] = useState(false);
 
   // Modal Alterar Foto
   const [photoModalVisible, setPhotoModalVisible] = useState(false);
-  const [photoUrl, setPhotoUrl] = useState('');
+  const [photoUrl, setPhotoUrl] = useState("");
   const [savingPhoto, setSavingPhoto] = useState(false);
 
   useEffect(() => {
     const loadUser = async () => {
       try {
-        const userStr = await AsyncStorage.getItem('@bipescola_user');
+        const userStr = await AsyncStorage.getItem("@bipescola_user");
         if (userStr) {
           const parsed = JSON.parse(userStr);
           setUserData(parsed);
@@ -67,53 +69,55 @@ export const ProfileScreen = () => {
   }, []);
 
   const handleLogout = () => {
-    Alert.alert(
-      "Sair da Conta",
-      "Deseja realmente encerrar a sessão?",
-      [
-        { text: "Cancelar", style: "cancel" },
-        {
-          text: "Sair",
-          style: "destructive",
-          onPress: async () => {
-            await AsyncStorage.removeItem('@bipescola_token');
-            await AsyncStorage.removeItem('@bipescola_user');
-            navigation.reset({
-              index: 0,
-              routes: [{ name: 'Login' }],
-            });
-          }
-        }
-      ]
-    );
+    Alert.alert("Sair da Conta", "Deseja realmente encerrar a sessão?", [
+      { text: "Cancelar", style: "cancel" },
+      {
+        text: "Sair",
+        style: "destructive",
+        onPress: async () => {
+          await AsyncStorage.removeItem("@bipescola_token");
+          await AsyncStorage.removeItem("@bipescola_user");
+          navigation.reset({
+            index: 0,
+            routes: [{ name: "Login" }],
+          });
+        },
+      },
+    ]);
   };
 
   const handleChangePassword = async () => {
     if (!senhaAtual.trim() || !novaSenha.trim()) {
-      Alert.alert('Atenção', 'Preencha a senha atual e a nova senha.');
+      Alert.alert("Atenção", "Preencha a senha atual e a nova senha.");
       return;
     }
 
     if (novaSenha.length < 8) {
-      Alert.alert('Atenção', 'A nova senha deve possuir no mínimo 8 caracteres.');
+      Alert.alert(
+        "Atenção",
+        "A nova senha deve possuir no mínimo 8 caracteres."
+      );
       return;
     }
 
     if (novaSenha !== confirmNovaSenha) {
-      Alert.alert('Erro', 'A confirmação de senha não confere.');
+      Alert.alert("Erro", "A confirmação de senha não confere.");
       return;
     }
 
     try {
       setSavingPassword(true);
       await changePasswordAPI({ senhaAtual, novaSenha });
-      Alert.alert('Sucesso', 'Sua senha foi alterada com sucesso!');
+      Alert.alert("Sucesso", "Sua senha foi alterada com sucesso!");
       setPasswordModalVisible(false);
-      setSenhaAtual('');
-      setNovaSenha('');
-      setConfirmNovaSenha('');
+      setSenhaAtual("");
+      setNovaSenha("");
+      setConfirmNovaSenha("");
     } catch (error) {
-      Alert.alert('Erro ao Alterar Senha', error.message || 'Senha atual incorreta.');
+      Alert.alert(
+        "Erro ao Alterar Senha",
+        error.message || "Senha atual incorreta."
+      );
     } finally {
       setSavingPassword(false);
     }
@@ -122,79 +126,113 @@ export const ProfileScreen = () => {
   const handleUpdatePhoto = async (selectedUrl) => {
     const targetUrl = selectedUrl || photoUrl;
     if (!targetUrl.trim()) {
-      Alert.alert('Atenção', 'Informe ou selecione a URL da foto.');
+      Alert.alert("Atenção", "Informe ou selecione a URL da foto.");
       return;
     }
 
     try {
       setSavingPhoto(true);
       await updateUserPhotoAPI(userData.id, targetUrl.trim());
-      
+
       const updatedUser = { ...userData, foto: targetUrl.trim() };
       setUserData(updatedUser);
-      await AsyncStorage.setItem('@bipescola_user', JSON.stringify(updatedUser));
-      
-      Alert.alert('Sucesso', 'Foto de perfil atualizada com sucesso!');
+      await AsyncStorage.setItem(
+        "@bipescola_user",
+        JSON.stringify(updatedUser)
+      );
+
+      Alert.alert("Sucesso", "Foto de perfil atualizada com sucesso!");
       setPhotoModalVisible(false);
     } catch (error) {
-      Alert.alert('Erro ao Atualizar Foto', error.message || 'Falha na conexão com o servidor.');
+      Alert.alert(
+        "Erro ao Atualizar Foto",
+        error.message || "Falha na conexão com o servidor."
+      );
     } finally {
       setSavingPhoto(false);
     }
   };
 
-
-
   const getRoleLabel = (role) => {
     switch (role) {
-      case 'ADM':
-        return { label: 'Administrador Escolar', bg: colors.highlightSurface, text: colors.highlight };
-      case 'PROF':
-        return { label: 'Professor(a)', bg: colors.secondarySurface, text: colors.secondary };
-      case 'PARENT':
-        return { label: 'Responsável Legal', bg: colors.primarySurface, text: colors.primary };
-      case 'PORTEIRO':
-        return { label: 'Portaria & Segurança', bg: colors.warningSurface, text: colors.warning };
+      case "ADM":
+        return {
+          label: "Administrador Escolar",
+          bg: colors.highlightSurface,
+          text: colors.highlight,
+        };
+      case "PROF":
+        return {
+          label: "Professor(a)",
+          bg: colors.secondarySurface,
+          text: colors.secondary,
+        };
+      case "PARENT":
+        return {
+          label: "Responsável Legal",
+          bg: colors.primarySurface,
+          text: colors.primary,
+        };
+      case "PORTEIRO":
+        return {
+          label: "Portaria & Segurança",
+          bg: colors.warningSurface,
+          text: colors.warning,
+        };
       default:
-        return { label: role || 'Usuário', bg: colors.surface, text: colors.textSecondary };
+        return {
+          label: role || "Usuário",
+          bg: colors.surface,
+          text: colors.textSecondary,
+        };
     }
   };
 
   const roleInfo = getRoleLabel(userData.role);
-  const avatarUri = userData.foto || `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.nome || 'Usuario')}&background=0B3B60&color=fff&size=150`;
+  const avatarUri =
+    userData.foto ||
+    `https://ui-avatars.com/api/?name=${encodeURIComponent(
+      userData.nome || "Usuario"
+    )}&background=0B3B60&color=fff&size=150`;
 
   return (
     <ResponsiveContainer style={styles.safeArea}>
       <View style={styles.header}>
         <View>
           <Text style={styles.headerTitle}>Meu Perfil</Text>
-          <Text style={styles.headerSubtitle}>Dados cadastrais e credenciais de acesso</Text>
+          <Text style={styles.headerSubtitle}>
+            Dados cadastrais e credenciais de acesso
+          </Text>
         </View>
 
-        <TouchableOpacity 
-          onPress={handleLogout} 
+        <TouchableOpacity
+          onPress={handleLogout}
           style={styles.logoutBtn}
           activeOpacity={0.7}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
-          <Feather name="log-out" size={22} color={colors.error} />
+          <Feather name="log-out" size={20} color={colors.error} />
+          {isTablet && <Text style={styles.logoutBtnText}>Sair da Conta</Text>}
         </TouchableOpacity>
       </View>
 
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[
+          styles.scrollContent,
+          isTablet && styles.scrollContentTablet,
+        ]}
         showsVerticalScrollIndicator={false}
       >
-        {/* User Info Header Card */}
-        <View style={styles.profileCard}>
-          <TouchableOpacity 
-            style={styles.avatarContainer} 
+        {/* Coluna Esquerda no Tablet: Identidade Institucional */}
+        <View style={[styles.profileCard, isTablet && styles.profileCardTablet]}>
+          <TouchableOpacity
+            style={styles.avatarContainer}
             activeOpacity={0.8}
             onPress={() => setPhotoModalVisible(true)}
           >
-            <Image 
-              source={{ uri: avatarUri }} 
-              style={styles.profileImage} 
+            <Image
+              source={{ uri: avatarUri }}
+              style={[styles.profileImage, isTablet && styles.profileImageTablet]}
             />
             <View style={styles.cameraBadge}>
               <Feather name="camera" size={14} color={colors.textInverse} />
@@ -202,33 +240,85 @@ export const ProfileScreen = () => {
           </TouchableOpacity>
 
           <Text style={styles.profileName}>{userData.nome}</Text>
-          
+
           <View style={[styles.roleBadge, { backgroundColor: roleInfo.bg }]}>
-            <Text style={[styles.roleText, { color: roleInfo.text }]}>{roleInfo.label}</Text>
+            <Text style={[styles.roleText, { color: roleInfo.text }]}>
+              {roleInfo.label}
+            </Text>
           </View>
+
+          {isTablet && (
+            <TouchableOpacity
+              style={styles.tabletChangePhotoBtn}
+              onPress={() => setPhotoModalVisible(true)}
+            >
+              <Feather name="image" size={15} color={colors.primary} />
+              <Text style={styles.tabletChangePhotoText}>
+                Alterar Foto de Perfil
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
 
-        {/* Informações da Conta */}
-        <View style={styles.sectionCard}>
-          <Text style={styles.sectionTitle}>Informações da Conta</Text>
+        {/* Coluna Direita no Tablet: Informações da Conta & Segurança */}
+        <View style={[styles.sectionCard, isTablet && styles.sectionCardTablet]}>
+          <Text style={styles.sectionTitle}>Informações da Conta & Segurança</Text>
 
           <View style={styles.infoRow}>
-            <Feather name="mail" size={18} color={colors.primary} style={styles.infoIcon} />
+            <Feather
+              name="user"
+              size={18}
+              color={colors.primary}
+              style={styles.infoIcon}
+            />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.infoLabel}>Nome Completo</Text>
+              <Text style={styles.infoValue}>{userData.nome}</Text>
+            </View>
+          </View>
+
+          <View style={styles.infoRow}>
+            <Feather
+              name="mail"
+              size={18}
+              color={colors.primary}
+              style={styles.infoIcon}
+            />
             <View style={{ flex: 1 }}>
               <Text style={styles.infoLabel}>E-mail de Acesso</Text>
               <Text style={styles.infoValue}>{userData.email}</Text>
             </View>
           </View>
 
-          <TouchableOpacity 
-            style={styles.actionBtn} 
+          <View style={styles.infoRow}>
+            <Feather
+              name="shield"
+              size={18}
+              color={colors.primary}
+              style={styles.infoIcon}
+            />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.infoLabel}>Nível de Permissão</Text>
+              <Text style={styles.infoValue}>{roleInfo.label}</Text>
+            </View>
+          </View>
+
+          <TouchableOpacity
+            style={styles.actionBtn}
             activeOpacity={0.7}
             onPress={() => setPasswordModalVisible(true)}
           >
-            <Feather name="lock" size={18} color={colors.primary} style={styles.infoIcon} />
+            <Feather
+              name="lock"
+              size={18}
+              color={colors.primary}
+              style={styles.infoIcon}
+            />
             <View style={{ flex: 1 }}>
-              <Text style={styles.actionTitle}>Alterar Senha</Text>
-              <Text style={styles.actionSubtitle}>Atualize suas credenciais de segurança</Text>
+              <Text style={styles.actionTitle}>Alterar Senha de Acesso</Text>
+              <Text style={styles.actionSubtitle}>
+                Atualize regularmente suas credenciais de segurança
+              </Text>
             </View>
             <Feather name="chevron-right" size={18} color={colors.textMuted} />
           </TouchableOpacity>
@@ -237,14 +327,14 @@ export const ProfileScreen = () => {
 
       {/* Modal de Alteração de Senha */}
       <Modal visible={passwordModalVisible} transparent animationType="fade">
-        <KeyboardAvoidingView 
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
           style={styles.modalOverlay}
         >
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Alterar Senha</Text>
-              <TouchableOpacity 
+              <TouchableOpacity
                 onPress={() => setPasswordModalVisible(false)}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
@@ -289,14 +379,14 @@ export const ProfileScreen = () => {
 
       {/* Modal de Alteração de Foto */}
       <Modal visible={photoModalVisible} transparent animationType="fade">
-        <KeyboardAvoidingView 
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
           style={styles.modalOverlay}
         >
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Foto de Perfil</Text>
-              <TouchableOpacity 
+              <TouchableOpacity
                 onPress={() => setPhotoModalVisible(false)}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
@@ -351,11 +441,11 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.xl,
+    paddingTop: spacing.lg,
     paddingBottom: spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
@@ -371,29 +461,47 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   logoutBtn: {
+    flexDirection: "row",
     minWidth: 44,
     minHeight: 44,
+    paddingHorizontal: spacing.md,
     borderRadius: radius.sm,
     backgroundColor: colors.errorSurface,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
+    gap: spacing.xs,
+  },
+  logoutBtnText: {
+    fontSize: 13,
+    fontFamily: "Roboto_700Bold",
+    color: colors.error,
+    fontWeight: "700",
   },
   scrollContent: {
     padding: spacing.lg,
     paddingBottom: spacing.xxxl * 2,
     gap: spacing.md,
   },
+  scrollContentTablet: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: spacing.lg,
+  },
   profileCard: {
     backgroundColor: colors.surface,
-    borderRadius: radius.md,
+    borderRadius: radius.lg,
     borderWidth: 1,
     borderColor: colors.border,
     padding: spacing.lg,
-    alignItems: 'center',
+    alignItems: "center",
     ...shadows.card,
   },
+  profileCardTablet: {
+    width: "36%",
+    paddingVertical: spacing.xl,
+  },
   avatarContainer: {
-    position: 'relative',
+    position: "relative",
     marginBottom: spacing.md,
   },
   profileImage: {
@@ -403,16 +511,20 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: colors.primary,
   },
+  profileImageTablet: {
+    width: 120,
+    height: 120,
+  },
   cameraBadge: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 0,
     right: 0,
     backgroundColor: colors.primary,
     width: 32,
     height: 32,
     borderRadius: radius.full,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     borderWidth: 2,
     borderColor: colors.surface,
   },
@@ -420,7 +532,7 @@ const styles = StyleSheet.create({
     ...typography.h2,
     color: colors.textPrimary,
     marginBottom: spacing.xs,
-    textAlign: 'center',
+    textAlign: "center",
   },
   roleBadge: {
     paddingHorizontal: spacing.md,
@@ -429,16 +541,35 @@ const styles = StyleSheet.create({
   },
   roleText: {
     fontSize: 12,
-    fontFamily: 'Roboto_700Bold',
-    fontWeight: '700',
+    fontFamily: "Roboto_700Bold",
+    fontWeight: "700",
+  },
+  tabletChangePhotoBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: spacing.lg,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderRadius: radius.md,
+    backgroundColor: colors.primarySurface,
+    gap: 6,
+  },
+  tabletChangePhotoText: {
+    fontSize: 12,
+    fontFamily: "Roboto_700Bold",
+    color: colors.primary,
   },
   sectionCard: {
     backgroundColor: colors.surface,
-    borderRadius: radius.md,
+    borderRadius: radius.lg,
     borderWidth: 1,
     borderColor: colors.border,
     padding: spacing.lg,
     ...shadows.card,
+  },
+  sectionCardTablet: {
+    flex: 1,
+    padding: spacing.xl,
   },
   sectionTitle: {
     ...typography.h3,
@@ -446,9 +577,9 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   infoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: spacing.sm,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: spacing.sm + 4,
     borderBottomWidth: 1,
     borderBottomColor: colors.divider,
   },
@@ -465,41 +596,40 @@ const styles = StyleSheet.create({
     marginTop: 1,
   },
   actionBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingTop: spacing.md,
     minHeight: 48,
   },
   actionTitle: {
     ...typography.bodyMedium,
     color: colors.primary,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   actionSubtitle: {
     ...typography.caption,
     color: colors.textMuted,
     marginTop: 1,
   },
-  // Modais
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(15, 23, 42, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
     padding: spacing.lg,
   },
   modalContent: {
-    width: '100%',
-    maxWidth: 440,
+    width: "100%",
+    maxWidth: 460,
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
     padding: spacing.lg,
     ...shadows.modal,
   },
   modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: spacing.md,
   },
   modalTitle: {
@@ -512,8 +642,8 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   presetsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
+    flexDirection: "row",
+    justifyContent: "space-around",
     marginBottom: spacing.md,
   },
   presetItem: {
@@ -522,14 +652,14 @@ const styles = StyleSheet.create({
     borderRadius: radius.full,
     padding: 2,
     borderWidth: 2,
-    borderColor: 'transparent',
+    borderColor: "transparent",
   },
   presetItemSelected: {
     borderColor: colors.primary,
   },
   presetImage: {
-    width: '100%',
-    height: '100%',
+    width: "100%",
+    height: "100%",
     borderRadius: radius.full,
   },
   modalButtonContainer: {

@@ -12,20 +12,22 @@ import { Button } from "@shared/ui/Button/Button";
 import { RegisterInput } from "./RegisterInput";
 import { Feather } from "@expo/vector-icons";
 import { createUserAPI } from "@shared/api/userApi";
+import { colors, radius, shadows, spacing, typography } from "@shared/theme";
+import { useResponsiveLayout } from "@shared/hooks/useResponsiveLayout";
 
 const ROLES = [
-  { id: "PROF", label: "Professor" },
-  { id: "PORTEIRO", label: "Porteiro" },
-  { id: "ADM", label: "Coordenador / ADM" },
+  { id: "PROF", label: "Professor(a)", icon: "book-open" },
+  { id: "PORTEIRO", label: "Portaria & Segurança", icon: "key" },
+  { id: "ADM", label: "Coordenador / ADM", icon: "shield" },
 ];
 
-export const EmployeeRegister = ({ onBack }) => {
+export const EmployeeRegister = () => {
+  const { isTablet } = useResponsiveLayout();
   const [loading, setLoading] = useState(false);
   const [nome, setNome] = useState("");
   const [telefone, setTelefone] = useState("");
   const [email, setEmail] = useState("");
   const [cpf, setCpf] = useState("");
-  const [senha, setSenha] = useState("");
   const [role, setRole] = useState("PROF");
 
   const handleRegister = async () => {
@@ -35,7 +37,11 @@ export const EmployeeRegister = ({ onBack }) => {
     }
     try {
       setLoading(true);
-      const res = await createUserAPI({ nome: nome.trim(), email: email.trim(), role });
+      const res = await createUserAPI({
+        nome: nome.trim(),
+        email: email.trim(),
+        role,
+      });
       const tempPass = res?.tempPassword || "Definida no sistema";
       Alert.alert(
         "Sucesso",
@@ -48,7 +54,6 @@ export const EmployeeRegister = ({ onBack }) => {
               setTelefone("");
               setEmail("");
               setCpf("");
-              setSenha("");
             },
           },
         ]
@@ -61,35 +66,29 @@ export const EmployeeRegister = ({ onBack }) => {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <View style={styles.headerTop}>
-          <Text style={styles.headerTitle}>Cadastro de Funcionário</Text>
-          {onBack && (
-            <TouchableOpacity onPress={onBack} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-              <Feather name="x" size={24} color="#000" />
-            </TouchableOpacity>
-          )}
+    <ScrollView
+      contentContainerStyle={styles.scrollContent}
+      showsVerticalScrollIndicator={false}
+    >
+      <View style={[styles.formCard, isTablet && styles.formCardTablet]}>
+        <View style={styles.sectionHeader}>
+          <Feather name="briefcase" size={18} color={colors.highlight} />
+          <Text style={styles.sectionTitle}>
+            Informações do Colaborador Escolar
+          </Text>
         </View>
-        <Text style={styles.headerSubtitle}>
-          Adicione as informações pessoais para concluir{"\n"}o cadastro
-        </Text>
-      </View>
 
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        <Text style={styles.sectionTitle}>Informações Pessoais</Text>
-
-        <View style={styles.form}>
-          <RegisterInput 
-            label="Nome" 
-            placeholder="Ex: Carlos Silva" 
+        <View style={[styles.fieldsGrid, isTablet && styles.fieldsGridTablet]}>
+          <RegisterInput
+            containerStyle={isTablet && styles.halfField}
+            label="Nome Completo"
+            placeholder="Ex: Carlos Silva"
+            required
             value={nome}
             onChangeText={setNome}
           />
           <RegisterInput
+            containerStyle={isTablet && styles.halfField}
             label="Telefone (Opcional)"
             placeholder="Ex: (79) 91234-5678"
             keyboardType="phone-pad"
@@ -97,14 +96,17 @@ export const EmployeeRegister = ({ onBack }) => {
             onChangeText={setTelefone}
           />
           <RegisterInput
-            label="Email"
+            containerStyle={isTablet && styles.halfField}
+            label="E-mail Institucional"
             placeholder="Ex: carlos@bipescola.com"
             keyboardType="email-address"
             autoCapitalize="none"
+            required
             value={email}
             onChangeText={setEmail}
           />
           <RegisterInput
+            containerStyle={isTablet && styles.halfField}
             label="CPF (Opcional)"
             placeholder="Ex: 123.456.789-00"
             keyboardType="numeric"
@@ -113,7 +115,7 @@ export const EmployeeRegister = ({ onBack }) => {
           />
         </View>
 
-        <Text style={styles.sectionTitle}>Cargo / Perfil de Acesso</Text>
+        <Text style={styles.roleSectionLabel}>Cargo / Perfil de Acesso</Text>
 
         <View style={styles.rolesRow}>
           {ROLES.map((r) => {
@@ -122,15 +124,20 @@ export const EmployeeRegister = ({ onBack }) => {
               <TouchableOpacity
                 key={r.id}
                 style={[styles.roleChip, isSelected && styles.roleChipActive]}
+                activeOpacity={0.75}
                 onPress={() => setRole(r.id)}
               >
                 <Feather
-                  name={r.id === "ADM" ? "shield" : r.id === "PORTEIRO" ? "key" : "book-open"}
+                  name={r.icon}
                   size={16}
-                  color={isSelected ? "#fff" : "#444"}
-                  style={{ marginRight: 6 }}
+                  color={isSelected ? colors.textInverse : colors.textSecondary}
                 />
-                <Text style={[styles.roleChipText, isSelected && styles.roleChipTextActive]}>
+                <Text
+                  style={[
+                    styles.roleChipText,
+                    isSelected && styles.roleChipTextActive,
+                  ]}
+                >
                   {r.label}
                 </Text>
               </TouchableOpacity>
@@ -138,98 +145,109 @@ export const EmployeeRegister = ({ onBack }) => {
           })}
         </View>
 
-        <View style={styles.buttonContainer}>
+        <View
+          style={[
+            styles.buttonContainer,
+            isTablet && styles.buttonContainerTablet,
+          ]}
+        >
           {loading ? (
-            <ActivityIndicator size="large" color="#666666" />
+            <ActivityIndicator size="large" color={colors.highlight} />
           ) : (
             <Button
               title="Cadastrar Funcionário"
-              style={styles.confirmButton}
-              backgroundColor="#68519d"
-              textColor="#fff"
+              backgroundColor={colors.highlight}
               onPress={handleRegister}
             />
           )}
         </View>
-      </ScrollView>
-    </View>
+      </View>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-  },
-  header: {
-    paddingHorizontal: 24,
-    paddingTop: 32,
-    paddingBottom: 16,
-  },
-  headerTop: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontFamily: "Roboto_700Bold",
-    color: "#000",
-    marginBottom: 4,
-  },
-  headerSubtitle: {
-    fontSize: 12,
-    fontFamily: "Roboto_300Light",
-    color: "#555",
-  },
   scrollContent: {
-    paddingHorizontal: 24,
-    paddingBottom: 100,
+    padding: spacing.lg,
+    paddingBottom: spacing.xxxl * 2,
+  },
+  formCard: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.lg,
+    ...shadows.card,
+  },
+  formCardTablet: {
+    padding: spacing.xl,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs,
+    marginBottom: spacing.md,
+    paddingBottom: spacing.xs,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.divider,
   },
   sectionTitle: {
-    fontSize: 14,
-    fontFamily: "Roboto_700Bold",
-    color: "#000",
-    marginBottom: 12,
-    marginTop: 8,
+    ...typography.h3,
+    color: colors.textPrimary,
   },
-  form: {
-    marginBottom: 8,
+  fieldsGrid: {
+    width: "100%",
+  },
+  fieldsGridTablet: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+  },
+  halfField: {
+    width: "48.5%",
+  },
+  roleSectionLabel: {
+    ...typography.captionBold,
+    color: colors.textSecondary,
+    marginTop: spacing.xs,
+    marginBottom: spacing.sm,
   },
   rolesRow: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 8,
-    marginBottom: 28,
+    gap: spacing.sm,
+    marginBottom: spacing.xl,
   },
   roleChip: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#F0F0F0",
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#DDD",
+    backgroundColor: colors.background,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm + 4,
+    borderRadius: radius.md,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    gap: spacing.xs,
   },
   roleChipActive: {
-    backgroundColor: "#68519d",
-    borderColor: "#4A3B73",
+    backgroundColor: colors.highlight,
+    borderColor: colors.highlight,
   },
   roleChipText: {
-    fontSize: 12,
+    fontSize: 13,
     fontFamily: "Roboto_500Medium",
-    color: "#444",
+    color: colors.textSecondary,
   },
   roleChipTextActive: {
-    color: "#fff",
+    color: colors.textInverse,
     fontWeight: "700",
   },
   buttonContainer: {
-    alignItems: "center",
-    marginTop: 8,
-  },
-  confirmButton: {
     width: "100%",
+    marginTop: spacing.sm,
+  },
+  buttonContainerTablet: {
+    maxWidth: 300,
+    alignSelf: "flex-end",
   },
 });

@@ -1,45 +1,61 @@
-import React from 'react';
-import { View, Text, StyleSheet, Image } from 'react-native';
-import { Feather } from '@expo/vector-icons';
-import { colors, radius, shadows, spacing, typography } from '@shared/theme';
+import React from "react";
+import { View, Text, StyleSheet, Image } from "react-native";
+import { Feather } from "@expo/vector-icons";
+import { colors, radius, shadows, spacing, typography } from "@shared/theme";
 
-export const NoticeCard = ({ notice }) => {
+export const NoticeCard = ({ notice, style }) => {
   return (
-    <View style={styles.cardContainer}>
-      <View style={styles.header}>
-        <Image 
-          source={{ uri: notice.avatarUrl || 'https://ui-avatars.com/api/?name=Escola&background=C2185B&color=fff' }} 
-          style={styles.avatar} 
-        />
-        <View style={styles.headerTextContainer}>
-          <Text style={styles.name}>{notice.authorName}</Text>
-          <Text style={styles.role}>{notice.authorRole || 'Comunicado Oficial'}</Text>
-        </View>
-
-        {notice.destinatario_nome ? (
-          <View style={[styles.badge, styles.individualBadge]}>
-            <Feather name="user-check" size={12} color={colors.accent} />
-            <Text style={[styles.badgeText, { color: colors.accent }]}>
-              {notice.destinatario_nome}
+    <View style={[styles.cardContainer, style]}>
+      <View>
+        <View style={styles.header}>
+          <Image
+            source={{
+              uri:
+                notice.avatarUrl ||
+                "https://ui-avatars.com/api/?name=Escola&background=C2185B&color=fff",
+            }}
+            style={styles.avatar}
+          />
+          <View style={styles.headerTextContainer}>
+            <Text style={styles.name} numberOfLines={1}>
+              {notice.authorName}
+            </Text>
+            <Text style={styles.role}>
+              {notice.authorRole || "Comunicado Oficial"}
             </Text>
           </View>
-        ) : (
-          <View style={styles.badge}>
-            <Feather name="globe" size={12} color={colors.notice} />
-            <Text style={styles.badgeText}>Geral</Text>
-          </View>
-        )}
-      </View>
-      
-      <View style={styles.bodyContainer}>
-        <Text style={styles.subject}>
-          {notice.subject}
-        </Text>
-        <Text style={styles.content}>{notice.content}</Text>
+
+          {notice.destinatario_nome ? (
+            <View style={[styles.badge, styles.individualBadge]}>
+              <Feather name="user-check" size={12} color={colors.accent} />
+              <Text
+                style={[styles.badgeText, { color: colors.accent }]}
+                numberOfLines={1}
+              >
+                {notice.destinatario_nome}
+              </Text>
+            </View>
+          ) : (
+            <View style={styles.badge}>
+              <Feather name="globe" size={12} color={colors.notice} />
+              <Text style={styles.badgeText}>Geral</Text>
+            </View>
+          )}
+        </View>
+
+        <View style={styles.bodyContainer}>
+          <Text style={styles.subject}>{notice.subject}</Text>
+          <Text style={styles.content}>{notice.content}</Text>
+        </View>
       </View>
 
       <View style={styles.footer}>
-        <Feather name="calendar" size={12} color={colors.textMuted} style={{ marginRight: 4 }} />
+        <Feather
+          name="calendar"
+          size={12}
+          color={colors.textMuted}
+          style={{ marginRight: 4 }}
+        />
         <Text style={styles.date}>{notice.date}</Text>
       </View>
     </View>
@@ -54,11 +70,12 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     padding: spacing.md,
     marginBottom: spacing.md,
+    justifyContent: "space-between",
     ...shadows.card,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: spacing.md,
   },
   avatar: {
@@ -70,7 +87,8 @@ const styles = StyleSheet.create({
   },
   headerTextContainer: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: "center",
+    marginRight: spacing.xs,
   },
   name: {
     ...typography.h3,
@@ -82,22 +100,23 @@ const styles = StyleSheet.create({
     marginTop: 1,
   },
   badge: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: colors.noticeSurface,
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
     borderRadius: radius.full,
     gap: 4,
+    maxWidth: 140,
   },
   individualBadge: {
     backgroundColor: colors.accentSurface,
   },
   badgeText: {
     fontSize: 11,
-    fontFamily: 'Roboto_700Bold',
+    fontFamily: "Roboto_700Bold",
     color: colors.notice,
-    fontWeight: '700',
+    fontWeight: "700",
   },
   bodyContainer: {
     marginBottom: spacing.sm,
@@ -113,9 +132,9 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   footer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-end",
     borderTopWidth: 1,
     borderTopColor: colors.divider,
     paddingTop: spacing.sm,

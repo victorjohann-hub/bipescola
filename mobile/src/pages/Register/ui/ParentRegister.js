@@ -11,10 +11,12 @@ import {
 import { Feather } from "@expo/vector-icons";
 import { Button } from "@shared/ui/Button/Button";
 import { RegisterInput } from "./RegisterInput";
-
 import { createParentAPI } from "@shared/api/userApi";
+import { colors, radius, shadows, spacing, typography } from "@shared/theme";
+import { useResponsiveLayout } from "@shared/hooks/useResponsiveLayout";
 
-export const ParentRegister = ({ onBack }) => {
+export const ParentRegister = () => {
+  const { isTablet } = useResponsiveLayout();
   const [loading, setLoading] = useState(false);
   const [nome, setNome] = useState("");
   const [telefone, setTelefone] = useState("");
@@ -24,7 +26,10 @@ export const ParentRegister = ({ onBack }) => {
 
   const handleRegister = async () => {
     if (!nome || !email) {
-      Alert.alert("Atenção", "Preencha ao menos Nome e Email do responsável.");
+      Alert.alert(
+        "Atenção",
+        "Preencha ao menos Nome e Email do responsável."
+      );
       return;
     }
     try {
@@ -55,158 +60,173 @@ export const ParentRegister = ({ onBack }) => {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Cadastro de Responsavel</Text>
-        <Text style={styles.headerSubtitle}>
-          Adicione as informações pessoais para concluir{"\n"}o cadastro
-        </Text>
-      </View>
+    <ScrollView
+      contentContainerStyle={styles.scrollContent}
+      showsVerticalScrollIndicator={false}
+    >
+      <View style={[styles.formCard, isTablet && styles.formCardTablet]}>
+        <View style={styles.sectionHeader}>
+          <Feather name="user" size={18} color={colors.highlight} />
+          <Text style={styles.sectionTitle}>Dados do Responsável Legal</Text>
+        </View>
 
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        <Text style={styles.sectionTitle}>Informações do Responsável</Text>
-
-        <View style={styles.form}>
-          <RegisterInput 
-            label="Nome" 
-            placeholder="" 
+        <View style={[styles.fieldsGrid, isTablet && styles.fieldsGridTablet]}>
+          <RegisterInput
+            containerStyle={isTablet && styles.halfField}
+            label="Nome Completo"
+            placeholder="Ex: Maria Oliveira"
+            required
             value={nome}
             onChangeText={setNome}
           />
           <RegisterInput
-            label="Telefone"
+            containerStyle={isTablet && styles.halfField}
+            label="Telefone / WhatsApp"
             placeholder="Ex: (79) 91234-5678"
             keyboardType="phone-pad"
             value={telefone}
             onChangeText={setTelefone}
           />
           <RegisterInput
-            label="Email"
-            placeholder="Ex: example@gmail.com"
+            containerStyle={isTablet && styles.halfField}
+            label="E-mail de Acesso"
+            placeholder="Ex: maria@email.com"
             keyboardType="email-address"
             autoCapitalize="none"
+            required
             value={email}
             onChangeText={setEmail}
           />
           <RegisterInput
-            label="Cpf"
+            containerStyle={isTablet && styles.halfField}
+            label="CPF"
             placeholder="Ex: 123.456.789-00"
             keyboardType="numeric"
             value={cpf}
             onChangeText={setCpf}
           />
-          <RegisterInput 
-            label="Senha" 
-            placeholder="" 
-            isPassword 
+          <RegisterInput
+            containerStyle={isTablet && styles.halfField}
+            label="Senha Inicial (Opcional - Gerada automaticamente)"
+            placeholder="••••••••"
+            isPassword
             value={senha}
             onChangeText={setSenha}
           />
         </View>
 
-        <Text style={styles.sectionTitle}>
-          Informações do Aluno(a)/Alunos(as)
-        </Text>
-        <Text style={styles.studentLabel}>Aluno(a) 1</Text>
+        <View style={[styles.sectionHeader, { marginTop: spacing.md }]}>
+          <Feather name="book-open" size={18} color={colors.secondary} />
+          <Text style={styles.sectionTitle}>
+            Vínculo de Aluno(a) Dependente
+          </Text>
+        </View>
 
-        <View style={styles.form}>
-          <RegisterInput label="Nome" placeholder="" />
+        <View style={[styles.fieldsGrid, isTablet && styles.fieldsGridTablet]}>
           <RegisterInput
-            label="Cpf"
+            containerStyle={isTablet && styles.halfField}
+            label="Nome do Aluno(a)"
+            placeholder="Ex: Pedro Oliveira"
+          />
+          <RegisterInput
+            containerStyle={isTablet && styles.halfField}
+            label="CPF / Matrícula do Aluno(a)"
             placeholder="Ex: 123.456.789-00"
             keyboardType="numeric"
           />
-
-          <TouchableOpacity style={styles.addStudentButton}>
-            <Text style={styles.addStudentText}>Adicionar novo aluno(a)</Text>
-            <Feather name="plus" size={16} color="#000" />
-          </TouchableOpacity>
         </View>
 
-        <View style={styles.buttonContainer}>
+        <TouchableOpacity style={styles.addStudentButton} activeOpacity={0.75}>
+          <Feather name="plus-circle" size={16} color={colors.secondary} />
+          <Text style={styles.addStudentText}>
+            Adicionar outro dependente
+          </Text>
+        </TouchableOpacity>
+
+        <View
+          style={[
+            styles.buttonContainer,
+            isTablet && styles.buttonContainerTablet,
+          ]}
+        >
           {loading ? (
-            <ActivityIndicator size="large" color="#666666" />
+            <ActivityIndicator size="large" color={colors.highlight} />
           ) : (
             <Button
-              title="Cadastrar"
-              style={styles.confirmButton}
-              backgroundColor="#666666"
-              textColor="#fff"
+              title="Concluir Cadastro de Responsável"
+              backgroundColor={colors.highlight}
               onPress={handleRegister}
             />
           )}
         </View>
-      </ScrollView>
-    </View>
+      </View>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-  },
-  header: {
-    paddingHorizontal: 24,
-    paddingTop: 32,
-    paddingBottom: 16,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontFamily: "Roboto_700Bold",
-    color: "#000",
-    marginBottom: 8,
-  },
-  headerSubtitle: {
-    fontSize: 12,
-    fontFamily: "Roboto_300Light",
-    color: "#555",
-  },
   scrollContent: {
-    paddingHorizontal: 24,
-    paddingBottom: 100, // padding for bottom bar
+    padding: spacing.lg,
+    paddingBottom: spacing.xxxl * 2,
+  },
+  formCard: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.lg,
+    ...shadows.card,
+  },
+  formCardTablet: {
+    padding: spacing.xl,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs,
+    marginBottom: spacing.md,
+    paddingBottom: spacing.xs,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.divider,
   },
   sectionTitle: {
-    fontSize: 14,
-    fontFamily: "Roboto_700Bold",
-    color: "#000",
-    marginBottom: 16,
-    marginTop: 8,
+    ...typography.h3,
+    color: colors.textPrimary,
   },
-  studentLabel: {
-    fontSize: 12,
-    fontFamily: "Roboto_500Medium",
-    color: "#000",
-    marginBottom: 8,
+  fieldsGrid: {
+    width: "100%",
   },
-  form: {
-    marginBottom: 8,
+  fieldsGridTablet: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+  },
+  halfField: {
+    width: "48.5%",
   },
   addStudentButton: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#9D9D9D",
+    backgroundColor: colors.secondarySurface,
     alignSelf: "flex-start",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 4,
-    marginTop: -8, // to pull it closer to the input
-    marginBottom: 24,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.md,
+    gap: spacing.xs,
+    marginTop: spacing.xs,
+    marginBottom: spacing.xl,
   },
   addStudentText: {
-    fontSize: 10,
-    fontFamily: "Roboto_500Medium",
-    color: "#000",
-    marginRight: 16,
+    fontSize: 13,
+    fontFamily: "Roboto_700Bold",
+    color: colors.secondary,
   },
   buttonContainer: {
-    alignItems: "center",
-    marginTop: 32,
-  },
-  confirmButton: {
     width: "100%",
+    marginTop: spacing.sm,
+  },
+  buttonContainerTablet: {
+    maxWidth: 320,
+    alignSelf: "flex-end",
   },
 });

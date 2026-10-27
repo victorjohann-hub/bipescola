@@ -1,56 +1,81 @@
-import React from "react";
+import React, { useState } from "react";
 import { View, Text, TextInput, StyleSheet } from "react-native";
+import { colors, radius, spacing, typography } from "@shared/theme";
 
-export const RegisterInput = ({ label, placeholder, isPassword, ...props }) => {
+export const RegisterInput = ({
+  label,
+  placeholder,
+  isPassword,
+  required = false,
+  containerStyle,
+  ...props
+}) => {
+  const [focused, setFocused] = useState(false);
+
   return (
-    <View style={styles.container}>
-      <View style={styles.textContainer}>
-        <Text style={styles.label}>{label}</Text>
+    <View style={[styles.wrapper, containerStyle]}>
+      {label ? (
+        <View style={styles.labelRow}>
+          <Text style={styles.label}>{label}</Text>
+          {required && <View style={styles.requiredDot} />}
+        </View>
+      ) : null}
+      <View
+        style={[
+          styles.inputBox,
+          focused && {
+            borderColor: colors.highlight,
+            backgroundColor: colors.surface,
+          },
+        ]}
+      >
         <TextInput
           style={styles.input}
           placeholder={placeholder}
-          placeholderTextColor="#555"
+          placeholderTextColor={colors.textMuted}
           secureTextEntry={isPassword}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
           {...props}
         />
       </View>
-      <View style={styles.redDot} />
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    backgroundColor: "#9D9D9D", // Gray background
-    borderRadius: 4,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+  wrapper: {
+    marginBottom: spacing.md,
+  },
+  labelRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 16,
-  },
-  textContainer: {
-    flex: 1,
+    marginBottom: spacing.xs,
+    gap: 6,
   },
   label: {
-    color: "#444",
-    fontSize: 10,
-    fontFamily: "Roboto_300Light",
-    marginBottom: 2,
+    ...typography.captionBold,
+    color: colors.textSecondary,
+  },
+  requiredDot: {
+    width: 6,
+    height: 6,
+    borderRadius: radius.full,
+    backgroundColor: colors.highlight,
+  },
+  inputBox: {
+    backgroundColor: colors.background,
+    borderRadius: radius.sm,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    paddingHorizontal: spacing.md,
+    minHeight: 48,
+    justifyContent: "center",
   },
   input: {
-    fontSize: 12,
-    fontFamily: "Roboto_300Light",
-    color: "#000",
-    padding: 0,
-    height: 20,
-  },
-  redDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: "#CC0000",
-    marginLeft: 8,
+    fontSize: 15,
+    fontFamily: "Roboto_400Regular",
+    color: colors.textPrimary,
+    paddingVertical: spacing.xs,
   },
 });
