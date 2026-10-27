@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "mobile",
+    "name": "BipEscola",
     "slug": "mobile",
     "version": "1.0.0",
     "orientation": "default",
@@ -18,7 +18,10 @@
       }
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "name": "BipEscola",
+      "shortName": "BipEscola",
+      "lang": "pt-BR"
     },
     "plugins": [
       "expo-font",

@@ -1,5 +1,8 @@
 import express from 'express';
 import cors from 'cors';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import userRoutes from './src/routes/userRoutes.js';
 import parentRoutes from './src/routes/parentRoutes.js';
 import admRoutes from './src/routes/admRoutes.js';
@@ -24,7 +27,17 @@ app.use('/api/class', classRoutes);
 app.use('/api/classes', classRoutes);
 app.use('/api/turmas', classRoutes);
 
+const webDistDir = fileURLToPath(new URL('../mobile/dist', import.meta.url));
+const webIndexFile = path.join(webDistDir, 'index.html');
+
+// Serve arquivos estáticos do build Web (quando compilado via `npx expo export --platform web`)
+app.use(express.static(webDistDir, { index: false }));
+
 app.get('/', (req, res) => {
+    const acceptHeader = req.headers.accept || '';
+    if (acceptHeader.includes('text/html') && fs.existsSync(webIndexFile)) {
+        return res.sendFile(webIndexFile);
+    }
     res.status(200).json({ msg: "Bem-vindo" });
 });
 

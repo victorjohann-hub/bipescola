@@ -7,11 +7,12 @@ import {
   TextInput,
   Alert,
   ScrollView,
+  Platform,
 } from "react-native";
 import { ResponsiveContainer } from "@shared/ui/ResponsiveContainer/ResponsiveContainer";
 import { Feather } from "@expo/vector-icons";
 import { Button } from "@shared/ui/Button/Button";
-import { CameraView, useCameraPermissions } from "expo-camera";
+import { CameraView, Camera, useCameraPermissions } from "expo-camera";
 import { useIsFocused } from "@react-navigation/native";
 import { markAttendanceAPI } from "@shared/api/schoolApi";
 import { colors, radius, shadows, spacing, typography } from "@shared/theme";
@@ -23,45 +24,17 @@ export const QRCodeScannerScreen = ({ navigation }) => {
   const [scanned, setScanned] = useState(false);
   const [facing, setFacing] = useState("back");
   const [submitting, setSubmitting] = useState(false);
+  const [scanningImage, setScanningImage] = useState(false);
   const [recentScans, setRecentScans] = useState([]);
   const [permission, requestPermission] = useCameraPermissions();
   const isFocused = useIsFocused();
 
-  if (!permission) {
-    return (
-      <ResponsiveContainer style={styles.safeArea}>
-        <View style={styles.centerBox}>
-          <Text style={styles.loadingText}>Carregando câmera...</Text>
-        </View>
-      </ResponsiveContainer>
-    );
-  }
-
-  if (!permission.granted) {
-    return (
-      <ResponsiveContainer style={styles.safeArea}>
-        <View style={styles.centerBox}>
-          <View style={styles.permissionCard}>
-            <Feather
-              name="camera-off"
-              size={40}
-              color={colors.secondary}
-              style={{ marginBottom: spacing.md }}
-            />
-            <Text style={styles.permissionTitle}>Permissão de Câmera</Text>
-            <Text style={styles.permissionDesc}>
-              Precisamos de acesso à câmera para escanear o QR Code de identificação dos alunos.
-            </Text>
-            <Button
-              title="Conceder Permissão"
-              backgroundColor={colors.secondary}
-              onPress={requestPermission}
-            />
-          </View>
-        </View>
-      </ResponsiveContainer>
-    );
-  }
+  const isWeb = Platform.OS === "web";
+  const isInsecureWeb =
+    isWeb &&
+    typeof window !== "undefined" &&
+    window.isSecureContext === false;
+  const hasCameraPermission = Boolean(permission && permission.granted);
 
   const handleBarCodeScanned = ({ data }) => {
     setScanned(true);
@@ -70,6 +43,45 @@ export const QRCodeScannerScreen = ({ navigation }) => {
 
   const toggleCameraFacing = () => {
     setFacing((prev) => (prev === "back" ? "front" : "back"));
+  };
+
+  const handleWebImageCapture = () => {
+    if (!isWeb || typeof document === "undefined") return;
+
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/*";
+    input.capture = "environment";
+
+    input.onchange = async (event) => {
+      const file = event?.target?.files?.[0];
+      if (!file) return;
+
+      const objectUrl = URL.createObjectURL(file);
+      try {
+        setScanningImage(true);
+        const results = await Camera.scanFromURLAsync(objectUrl, ["qr"]);
+        if (results && results.length > 0 && results[0].data) {
+          setScanned(true);
+          setScannedData(results[0].data);
+        } else {
+          Alert.alert(
+            "QR Code não identificado",
+            "Não foi possível localizar um QR Code nítido na imagem. Tente aproximar mais a câmera ou digite o código manualmente (ex: aluno_1)."
+          );
+        }
+      } catch (err) {
+        Alert.alert(
+          "Leitura por Imagem",
+          "Não foi possível processar a imagem neste navegador. Você pode digitar o código diretamente no campo (ex: aluno_1)."
+        );
+      } finally {
+        URL.revokeObjectURL(objectUrl);
+        setScanningImage(false);
+      }
+    };
+
+    input.click();
   };
 
   const handleConfirmPresence = async () => {
@@ -167,7 +179,7 @@ export const QRCodeScannerScreen = ({ navigation }) => {
                 isTablet && styles.scannerContainerTablet,
               ]}
             >
-              {isFocused && (
+              {hasCameraPermission && isFocused ? (
                 <CameraView
                   style={StyleSheet.absoluteFillObject}
                   facing={facing}
@@ -176,12 +188,58 @@ export const QRCodeScannerScreen = ({ navigation }) => {
                     barcodeTypes: ["qr"],
                   }}
                 />
+              ) : (
+                <View style={styles.inlinePermissionBox}>
+                  <Feather
+                    name="camera"
+                    size={36}
+                    color={colors.secondaryLight}
+                    style={{ marginBottom: spacing.xs }}
+                  />
+                  <Text style={styles.inlinePermissionTitle}>
+                    {isInsecureWeb
+                      ? "Câmera ao vivo requer HTTPS"
+                      : "Câmera Desativada"}
+                  </Text>
+                  <Text style={styles.inlinePermissionDesc}>
+                    {isInsecureWeb
+                      ? "No celular via HTTP local, use o botão de foto abaixo ou acesse pelo link HTTPS do túnel."
+                      : "Toque abaixo para autorizar a leitura pela câmera do aparelho."}
+                  </Text>
+                  {!isInsecureWeb && (
+                    <TouchableOpacity
+                      style={styles.inlineGrantBtn}
+                      onPress={requestPermission}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={styles.inlineGrantBtnText}>
+                        Conceder Permissão
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
               )}
               <View style={[styles.corner, styles.topLeft]} />
               <View style={[styles.corner, styles.topRight]} />
               <View style={[styles.corner, styles.bottomLeft]} />
               <View style={[styles.corner, styles.bottomRight]} />
             </View>
+
+            {isWeb && (
+              <TouchableOpacity
+                style={styles.webCaptureBtn}
+                onPress={handleWebImageCapture}
+                disabled={scanningImage}
+                activeOpacity={0.8}
+              >
+                <Feather name="camera" size={16} color={colors.secondary} />
+                <Text style={styles.webCaptureBtnText}>
+                  {scanningImage
+                    ? "Analisando imagem do QR Code..."
+                    : "Ler QR Code por Foto / Câmera do Celular"}
+                </Text>
+              </TouchableOpacity>
+            )}
 
             {scanned && (
               <TouchableOpacity
@@ -203,7 +261,7 @@ export const QRCodeScannerScreen = ({ navigation }) => {
           <View style={styles.validationCard}>
             <Text style={styles.sectionTitle}>Dados da Leitura</Text>
             <Text style={styles.sectionDesc}>
-              Verifique o código identificado antes de confirmar o acesso
+              Escaneie o QR Code ou digite o código do estudante (ex: aluno_1)
             </Text>
 
             <View style={styles.inputContainer}>
@@ -215,11 +273,12 @@ export const QRCodeScannerScreen = ({ navigation }) => {
               />
               <TextInput
                 style={styles.input}
-                placeholder="Aguardando leitura do QR Code..."
+                placeholder="Ex: aluno_1 (ou escaneie o QR Code)"
                 placeholderTextColor={colors.textMuted}
                 value={scannedData}
                 onChangeText={setScannedData}
-                editable={false}
+                autoCapitalize="none"
+                autoCorrect={false}
               />
             </View>
 
@@ -398,6 +457,58 @@ const styles = StyleSheet.create({
   scannerContainerTablet: {
     width: 312,
     height: 312,
+  },
+  inlinePermissionBox: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: spacing.lg,
+    backgroundColor: "#142318",
+  },
+  inlinePermissionTitle: {
+    fontSize: 15,
+    fontFamily: "Roboto_700Bold",
+    color: "#FFFFFF",
+    textAlign: "center",
+    marginBottom: 6,
+  },
+  inlinePermissionDesc: {
+    fontSize: 12,
+    fontFamily: "Roboto_400Regular",
+    color: "#D1E7DD",
+    textAlign: "center",
+    lineHeight: 17,
+    marginBottom: spacing.md,
+  },
+  inlineGrantBtn: {
+    backgroundColor: colors.secondaryLight,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.full,
+  },
+  inlineGrantBtnText: {
+    fontSize: 13,
+    fontFamily: "Roboto_700Bold",
+    color: "#1B3B13",
+  },
+  webCaptureBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.secondarySurface,
+    borderWidth: 1,
+    borderColor: colors.secondary,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.md,
+    marginTop: spacing.md,
+    gap: 8,
+    width: "100%",
+  },
+  webCaptureBtnText: {
+    fontSize: 13,
+    fontFamily: "Roboto_700Bold",
+    color: colors.secondary,
   },
   corner: {
     position: "absolute",

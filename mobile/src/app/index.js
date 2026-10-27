@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, ActivityIndicator } from 'react-native';
+import '@shared/utils/webAlertPolyfill';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts, LondrinaSolid_300Light, LondrinaSolid_900Black } from '@expo-google-fonts/londrina-solid';
 import { Roboto_300Light, Roboto_500Medium, Roboto_700Bold } from '@expo-google-fonts/roboto';
