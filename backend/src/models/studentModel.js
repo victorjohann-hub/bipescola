@@ -120,15 +120,18 @@ export async function create({
   return await findById(result.insertId);
 }
 
-export async function updateById(id, {
-  matricula,
-  nome,
-  aniversario,
-  turma_id,
-  id_pai,
-  faltas,
-  status
-}) {
+export async function updateById(id, fields) {
+  const existing = await findById(id);
+  if (!existing) return null;
+
+  const matricula = fields.matricula !== undefined ? fields.matricula : existing.matricula;
+  const nome = fields.nome !== undefined ? fields.nome : existing.nome;
+  const aniversario = fields.aniversario !== undefined ? fields.aniversario : existing.aniversario;
+  const turma_id = fields.turma_id !== undefined ? fields.turma_id : existing.turma_id;
+  const id_pai = fields.id_pai !== undefined ? fields.id_pai : existing.id_pai;
+  const faltas = fields.faltas !== undefined ? fields.faltas : existing.faltas;
+  const status = fields.status !== undefined ? fields.status : existing.status;
+
   const sql = `
     UPDATE alunos
     SET

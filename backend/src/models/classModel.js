@@ -55,6 +55,12 @@ export async function createClass({ nome }) {
 }
 
 
+export async function countStudentsByTurmaId(turmaId) {
+  const sql = `SELECT COUNT(*) AS total FROM alunos WHERE turma_id = ?`;
+  const result = await query(sql, [turmaId]);
+  return result[0]?.total || 0;
+}
+
 export async function deleteById(id) {
   const turma = await findById(id);
 

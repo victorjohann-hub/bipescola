@@ -86,7 +86,8 @@ export async function deleteClassById(req, res) {
             data: turma
         });
     } catch (error) {
-        return res.status(500).json({
+        const status = error.statusCode || 500;
+        return res.status(status).json({
             message: 'Erro ao deletar turma',
             error: error.message
         });

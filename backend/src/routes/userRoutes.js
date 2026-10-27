@@ -23,10 +23,11 @@ router.put('/change-password', authMiddleware, changePassword);
 router.post('/forgot-password', forgotPassword);
 router.post('/reset-password', resetPassword);
 router.put('/:id/photo', authMiddleware, updateUserPhoto);
-router.post('/', createUser);
-router.get('/', listUsers);
-router.get('/:id', getUser);
-router.put('/:id', updateUser);
+
+router.post('/', authMiddleware, roleMiddleware('ADM'), createUser);
+router.get('/', authMiddleware, roleMiddleware('ADM'), listUsers);
+router.get('/:id', authMiddleware, getUser);
+router.put('/:id', authMiddleware, updateUser);
 
 router.delete(
   '/:id',
@@ -36,6 +37,3 @@ router.delete(
 );
 
 export default router;
-
-
-

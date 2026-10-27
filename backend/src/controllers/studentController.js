@@ -95,6 +95,12 @@ export async function getStudent(req, res) {
       });
     }
 
+    if (req.user && req.user.role === 'PARENT' && student.id_pai !== Number(req.user.id)) {
+      return res.status(403).json({
+        error: "Acesso negado"
+      });
+    }
+
     return res.status(200).json({
       message: "Aluno encontrado com sucesso",
       data: student
@@ -115,6 +121,12 @@ export async function listStudentsByParent(req, res) {
     if (!Number.isInteger(parentId)) {
       return res.status(400).json({
         error: "ID do pai inválido"
+      });
+    }
+
+    if (req.user && req.user.role === 'PARENT' && Number(req.user.id) !== parentId) {
+      return res.status(403).json({
+        error: "Acesso negado: você só pode consultar seus dependentes"
       });
     }
 
@@ -192,15 +204,18 @@ export async function updateStudent(req, res) {
       });
     }
 
-    let parentId = null;
+    let parentId = undefined;
 
-    if (id_pai !== undefined && id_pai !== null) {
-      parentId = Number(id_pai);
-
-      if (!Number.isInteger(parentId)) {
-        return res.status(400).json({
-          error: "id_pai deve ser um número inteiro"
-        });
+    if (id_pai !== undefined) {
+      if (id_pai === null) {
+        parentId = null;
+      } else {
+        parentId = Number(id_pai);
+        if (!Number.isInteger(parentId)) {
+          return res.status(400).json({
+            error: "id_pai deve ser um número inteiro"
+          });
+        }
       }
     }
 
@@ -212,15 +227,17 @@ export async function updateStudent(req, res) {
       });
     }
 
-    const student = await studentService.updateStudent(studentId, {
+    const updatePayload = {
       matricula,
       nome,
-      aniversario,
       turma_id: turmaId,
-      id_pai: parentId,
-      faltas,
-      status
-    });
+    };
+    if (aniversario !== undefined) updatePayload.aniversario = aniversario;
+    if (parentId !== undefined) updatePayload.id_pai = parentId;
+    if (faltas !== undefined) updatePayload.faltas = Number(faltas);
+    if (status !== undefined) updatePayload.status = status;
+
+    const student = await studentService.updateStudent(studentId, updatePayload);
 
     return res.status(200).json({
       message: "Aluno atualizado com sucesso",

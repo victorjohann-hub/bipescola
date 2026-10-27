@@ -1,3 +1,4 @@
+import * as studentService from "../services/studentService.js";
 import * as attendanceService from "../services/attendanceService.js";
 
 export async function createAttendance(req, res) {
@@ -50,6 +51,20 @@ export async function listAttendanceByStudent(req, res) {
       });
     }
 
+    if (req.user && req.user.role === 'PARENT') {
+      const student = await studentService.getStudentById(id);
+      if (!student) {
+        return res.status(404).json({
+          error: "Aluno não encontrado"
+        });
+      }
+      if (student.id_pai !== Number(req.user.id)) {
+        return res.status(403).json({
+          error: "Acesso negado: você não tem permissão para visualizar este aluno"
+        });
+      }
+    }
+
     const attendance = await attendanceService.getAttendanceByStudent(id);
 
     return res.status(200).json(attendance);
@@ -90,6 +105,15 @@ export async function getAttendance(req, res) {
       return res.status(404).json({
         error: "Registro de presença não encontrado"
       });
+    }
+
+    if (req.user && req.user.role === 'PARENT') {
+      const student = await studentService.getStudentById(attendance.aluno_id);
+      if (!student || student.id_pai !== Number(req.user.id)) {
+        return res.status(403).json({
+          error: "Acesso negado"
+        });
+      }
     }
 
     return res.status(200).json(attendance);

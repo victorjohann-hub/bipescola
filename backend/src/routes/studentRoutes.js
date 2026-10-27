@@ -1,4 +1,4 @@
-﻿import express from "express";
+import express from "express";
 
 import {
   createStudent,
@@ -10,27 +10,30 @@ import {
   deleteStudent
 } from "../controllers/studentController.js";
 
+import { authMiddleware } from "../middlewares/authMiddleware.js";
+import { roleMiddleware } from "../middlewares/roleMiddleware.js";
+
 const router = express.Router();
 
-// Criar aluno
-router.post("/", createStudent);
+// Criar aluno (apenas ADM)
+router.post("/", authMiddleware, roleMiddleware("ADM"), createStudent);
 
-// Listar alunos
-router.get("/", listStudents);
+// Listar alunos (ADM, PROF, PORTEIRO)
+router.get("/", authMiddleware, roleMiddleware("ADM", "PROF", "PORTEIRO"), listStudents);
 
-// Listar alunos por pai
-router.get("/pai/:id", listStudentsByParent);
+// Listar alunos por pai (autenticado)
+router.get("/pai/:id", authMiddleware, listStudentsByParent);
 
-// Listar alunos por turma
-router.get("/turma/:id", listStudentsByTurma);
+// Listar alunos por turma (ADM, PROF, PORTEIRO)
+router.get("/turma/:id", authMiddleware, roleMiddleware("ADM", "PROF", "PORTEIRO"), listStudentsByTurma);
 
-// Buscar aluno por ID
-router.get("/:id", getStudent);
+// Buscar aluno por ID (autenticado)
+router.get("/:id", authMiddleware, getStudent);
 
-// Editar aluno
-router.put("/:id", updateStudent);
+// Editar aluno (apenas ADM)
+router.put("/:id", authMiddleware, roleMiddleware("ADM"), updateStudent);
 
-// Deletar aluno
-router.delete("/:id", deleteStudent);
+// Deletar aluno (apenas ADM)
+router.delete("/:id", authMiddleware, roleMiddleware("ADM"), deleteStudent);
 
 export default router;
