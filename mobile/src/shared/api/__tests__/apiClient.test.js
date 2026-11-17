@@ -57,6 +57,38 @@ describe('apiClient and getBaseUrl', () => {
       expect(getBaseUrl({}, {})).toBe('http://localhost:3000/api');
       Platform.OS = originalOS;
     });
+
+    it('deve apontar para a porta 3000 do mesmo IP quando aberto no Expo Web Dev Server (porta 8081)', () => {
+      const originalOS = Platform.OS;
+      Platform.OS = 'web';
+      const fakeWindow = {
+        location: {
+          protocol: 'http:',
+          hostname: '192.168.1.45',
+          port: '8081',
+          origin: 'http://192.168.1.45:8081',
+        },
+      };
+      expect(getBaseUrl({}, {}, fakeWindow)).toBe('http://192.168.1.45:3000/api');
+      Platform.OS = originalOS;
+    });
+
+    it('deve usar o mesmo origin (/api) quando servido pelo servidor unificado ou túnel HTTPS na Web', () => {
+      const originalOS = Platform.OS;
+      Platform.OS = 'web';
+      const fakeWindow = {
+        location: {
+          protocol: 'https:',
+          hostname: 'bipescola-colegio.trycloudflare.com',
+          port: '',
+          origin: 'https://bipescola-colegio.trycloudflare.com',
+        },
+      };
+      expect(getBaseUrl({}, {}, fakeWindow)).toBe(
+        'https://bipescola-colegio.trycloudflare.com/api'
+      );
+      Platform.OS = originalOS;
+    });
   });
 
   describe('apiClient requests', () => {

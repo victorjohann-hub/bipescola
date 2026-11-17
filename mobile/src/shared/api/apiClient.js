@@ -2,9 +2,27 @@ import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
 
-export function getBaseUrl(env = process.env, constants = Constants) {
+export function getBaseUrl(
+  env = process.env,
+  constants = Constants,
+  win = typeof window !== 'undefined' ? window : undefined
+) {
   if (env && env.EXPO_PUBLIC_API_URL) {
     return env.EXPO_PUBLIC_API_URL;
+  }
+
+  // No navegador Web (celular ou desktop), resolve dinamicamente pelo endereço atual da página
+  if (Platform.OS === 'web' && win && win.location && win.location.hostname) {
+    const { protocol, hostname, port, origin } = win.location;
+    // Quando aberto via Expo Web Dev Server (porta 8081 ou 19006), aponta para a porta 3000 do mesmo IP/host
+    if (port === '8081' || port === '19006') {
+      return `${protocol}//${hostname}:3000/api`;
+    }
+    // Quando servido de forma unificada pelo Backend (porta 3000) ou via túnel HTTPS (Cloudflare / Ngrok)
+    if (origin && origin !== 'null') {
+      return `${origin}/api`;
+    }
+    return `${protocol}//${hostname}:3000/api`;
   }
 
   // Detecta o IP do host dinamicamente ao rodar via Expo Go na mesma rede
@@ -22,10 +40,9 @@ export function getBaseUrl(env = process.env, constants = Constants) {
   return 'http://localhost:3000/api';
 }
 
-const BASE_URL = getBaseUrl();
-
 export const apiClient = async (endpoint, options = {}) => {
-  const url = `${BASE_URL}${endpoint}`;
+  const baseUrl = getBaseUrl();
+  const url = `${baseUrl}${endpoint}`;
   
   let token = null;
   try {
