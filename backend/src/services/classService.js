@@ -18,6 +18,12 @@ export async function getClassById (id){
 }
 
 export async function deleteClassById(id) {
+    const studentCount = await classModel.countStudentsByTurmaId(id);
+    if (studentCount > 0) {
+        const error = new Error(`Não é possível excluir uma turma com alunos vinculados (${studentCount} aluno(s))`);
+        error.statusCode = 400;
+        throw error;
+    }
     return await classModel.deleteById(id);
 }
 

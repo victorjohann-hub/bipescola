@@ -1,4 +1,4 @@
-﻿import express from 'express';
+import express from 'express';
 
 import {
   createParent,
@@ -12,9 +12,9 @@ import { roleMiddleware } from '../middlewares/roleMiddleware.js';
 
 const router = express.Router();
 
-router.post('/', createParent);
-router.get('/', listParents);
-router.put('/:id', updateParent);
+router.post('/', authMiddleware, roleMiddleware('ADM'), createParent);
+router.get('/', authMiddleware, roleMiddleware('ADM', 'PROF'), listParents);
+router.put('/:id', authMiddleware, roleMiddleware('ADM'), updateParent);
 
 router.delete(
   '/:id',

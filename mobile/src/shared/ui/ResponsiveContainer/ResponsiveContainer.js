@@ -1,26 +1,31 @@
 import React from 'react';
-import { View, StyleSheet, useWindowDimensions } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, shadows, spacing } from '@shared/theme';
+import { colors, spacing } from '@shared/theme';
+import { useResponsiveLayout } from '@shared/hooks/useResponsiveLayout';
 
-export const ResponsiveContainer = ({ children, style, edges }) => {
-  const { width } = useWindowDimensions();
+export const ResponsiveContainer = ({ children, style, contentStyle, edges, fullBleed = false }) => {
+  const { isTablet, isLargeTablet, containerMaxWidth } = useResponsiveLayout();
   const insets = useSafeAreaInsets();
-  const isTablet = width >= 768;
 
   return (
-    <SafeAreaView 
-      style={[styles.outerContainer, style]} 
+    <SafeAreaView
+      style={[styles.outerContainer, style]}
       edges={edges || ['top', 'left', 'right']}
     >
-      <View style={[
-        styles.innerContainer, 
-        isTablet && styles.tabletContainer,
-        {
-          paddingBottom: Math.max(insets.bottom, spacing.md) + spacing.lg,
-          maxWidth: isTablet ? (width > 900 ? 760 : '88%') : '100%',
-        }
-      ]}>
+      <View
+        style={[
+          styles.innerContainer,
+          isTablet && !fullBleed && styles.tabletContainer,
+          {
+            // No tablet a navegação é lateral (Navigation Rail / Sidebar), então não precisa de padding extra de BottomTab
+            paddingBottom: isTablet ? Math.max(insets.bottom, spacing.md) : Math.max(insets.bottom, spacing.md) + spacing.lg,
+            maxWidth: fullBleed ? '100%' : containerMaxWidth,
+            paddingHorizontal: isLargeTablet && !fullBleed ? spacing.lg : 0,
+          },
+          contentStyle,
+        ]}
+      >
         {children}
       </View>
     </SafeAreaView>
@@ -38,9 +43,6 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   tabletContainer: {
-    backgroundColor: colors.surface,
-    ...shadows.card,
-    borderRadius: 16,
-    overflow: 'hidden',
+    backgroundColor: colors.background,
   },
 });

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -12,41 +12,41 @@ import {
   Platform,
   RefreshControl,
   TextInput,
-} from 'react-native';
-import { ResponsiveContainer } from '@shared/ui/ResponsiveContainer/ResponsiveContainer';
-import { Feather } from '@expo/vector-icons';
+} from "react-native";
+import { ResponsiveContainer } from "@shared/ui/ResponsiveContainer/ResponsiveContainer";
+import { Feather } from "@expo/vector-icons";
 import {
   listClassesAPI,
   createClassAPI,
   updateClassAPI,
   deleteClassAPI,
-} from '@shared/api/adminApi';
-import { Input } from '@shared/ui/Input/Input';
-import { Button } from '@shared/ui/Button/Button';
-import { colors, radius, shadows, spacing, typography } from '@shared/theme';
+} from "@shared/api/adminApi";
+import { Input } from "@shared/ui/Input/Input";
+import { Button } from "@shared/ui/Button/Button";
+import { colors, radius, shadows, spacing, typography } from "@shared/theme";
+import { useResponsiveLayout } from "@shared/hooks/useResponsiveLayout";
 
 export const ClassManagementScreen = ({ navigation }) => {
+  const { isTablet, gridColumns } = useResponsiveLayout();
   const [classes, setClasses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
 
-  // Modal de Criação / Edição
   const [modalVisible, setModalVisible] = useState(false);
   const [editingClass, setEditingClass] = useState(null);
-  const [nome, setNome] = useState('');
+  const [nome, setNome] = useState("");
   const [saving, setSaving] = useState(false);
 
   const fetchClasses = useCallback(async () => {
     try {
       setLoading(true);
       const res = await listClassesAPI();
-      // O backend retorna { message: '...', data: [...] } ou array direto
       const list = res?.data || (Array.isArray(res) ? res : []);
       setClasses(list);
     } catch (error) {
-      console.error('Erro ao buscar turmas:', error);
-      Alert.alert('Erro', error.message || 'Falha ao buscar turmas no servidor.');
+      console.error("Erro ao buscar turmas:", error);
+      Alert.alert("Erro", error.message || "Falha ao buscar turmas no servidor.");
     } finally {
       setLoading(false);
     }
@@ -64,19 +64,19 @@ export const ClassManagementScreen = ({ navigation }) => {
 
   const openCreateModal = () => {
     setEditingClass(null);
-    setNome('');
+    setNome("");
     setModalVisible(true);
   };
 
   const openEditModal = (turma) => {
     setEditingClass(turma);
-    setNome(turma.nome || '');
+    setNome(turma.nome || "");
     setModalVisible(true);
   };
 
   const handleSave = async () => {
     if (!nome.trim()) {
-      Alert.alert('Atenção', 'Informe o nome da turma (ex: "1º Ano A").');
+      Alert.alert("Atenção", 'Informe o nome da turma (ex: "1º Ano A").');
       return;
     }
 
@@ -84,15 +84,15 @@ export const ClassManagementScreen = ({ navigation }) => {
       setSaving(true);
       if (editingClass) {
         await updateClassAPI(editingClass.id, { nome: nome.trim() });
-        Alert.alert('Sucesso', 'Turma atualizada com sucesso!');
+        Alert.alert("Sucesso", "Turma atualizada com sucesso!");
       } else {
         await createClassAPI({ nome: nome.trim() });
-        Alert.alert('Sucesso', 'Nova turma cadastrada com sucesso!');
+        Alert.alert("Sucesso", "Nova turma cadastrada com sucesso!");
       }
       setModalVisible(false);
       fetchClasses();
     } catch (error) {
-      Alert.alert('Erro', error.message || 'Falha ao salvar turma.');
+      Alert.alert("Erro", error.message || "Falha ao salvar turma.");
     } finally {
       setSaving(false);
     }
@@ -100,20 +100,23 @@ export const ClassManagementScreen = ({ navigation }) => {
 
   const handleDelete = (turma) => {
     Alert.alert(
-      'Excluir Turma',
-      `Deseja realmente excluir a turma "${turma.nome}"?\n\nAlunos vinculados a esta turma podem ser afetados.`,
+      "Excluir Turma",
+      `Deseja realmente excluir a turma "${turma.nome}"?\n\nTurmas com estudantes matriculados não podem ser excluídas.`,
       [
-        { text: 'Cancelar', style: 'cancel' },
+        { text: "Cancelar", style: "cancel" },
         {
-          text: 'Excluir',
-          style: 'destructive',
+          text: "Excluir",
+          style: "destructive",
           onPress: async () => {
             try {
               await deleteClassAPI(turma.id);
-              Alert.alert('Sucesso', 'Turma excluída com sucesso!');
+              Alert.alert("Sucesso", "Turma excluída com sucesso!");
               fetchClasses();
             } catch (error) {
-              Alert.alert('Erro ao excluir', error.message || 'Não foi possível remover a turma.');
+              Alert.alert(
+                "Erro ao excluir",
+                error.message || "Não foi possível remover a turma."
+              );
             }
           },
         },
@@ -126,20 +129,24 @@ export const ClassManagementScreen = ({ navigation }) => {
   );
 
   const renderItem = ({ item }) => (
-    <View style={styles.classCard}>
+    <View style={[styles.classCard, isTablet && styles.classCardTablet]}>
       <View style={styles.cardLeft}>
         <View style={styles.iconCircle}>
           <Feather name="layers" size={22} color={colors.accent} />
         </View>
         <View style={styles.infoCol}>
-          <Text style={styles.className}>{item.nome}</Text>
+          <Text style={styles.className} numberOfLines={1}>
+            {item.nome}
+          </Text>
           <View style={styles.statusRow}>
             <View
               style={[
                 styles.statusBadge,
                 {
                   backgroundColor:
-                    item.status === 'inativa' ? colors.errorSurface : colors.secondarySurface,
+                    item.status === "inativa"
+                      ? colors.errorSurface
+                      : colors.secondarySurface,
                 },
               ]}
             >
@@ -147,16 +154,19 @@ export const ClassManagementScreen = ({ navigation }) => {
                 style={[
                   styles.statusText,
                   {
-                    color: item.status === 'inativa' ? colors.error : colors.secondary,
+                    color:
+                      item.status === "inativa"
+                        ? colors.error
+                        : colors.secondary,
                   },
                 ]}
               >
-                {item.status === 'inativa' ? 'Inativa' : 'Ativa'}
+                {item.status === "inativa" ? "Inativa" : "Ativa"}
               </Text>
             </View>
             {item.data_criacao && (
               <Text style={styles.dateText}>
-                Criada em: {item.data_criacao.split('T')[0].split('-').reverse().join('/')}
+                {item.data_criacao.split("T")[0].split("-").reverse().join("/")}
               </Text>
             )}
           </View>
@@ -173,7 +183,10 @@ export const ClassManagementScreen = ({ navigation }) => {
           <Feather name="edit-2" size={18} color={colors.primary} />
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.actionIconBtn, { backgroundColor: colors.errorSurface }]}
+          style={[
+            styles.actionIconBtn,
+            { backgroundColor: colors.errorSurface },
+          ]}
           activeOpacity={0.7}
           onPress={() => handleDelete(item)}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
@@ -187,7 +200,7 @@ export const ClassManagementScreen = ({ navigation }) => {
   return (
     <ResponsiveContainer style={styles.safeArea}>
       <View style={styles.header}>
-        <View style={styles.headerTop}>
+        <View style={styles.headerLeft}>
           <TouchableOpacity
             style={styles.backButton}
             hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
@@ -195,25 +208,32 @@ export const ClassManagementScreen = ({ navigation }) => {
           >
             <Feather name="arrow-left" size={24} color={colors.textPrimary} />
           </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.createButton}
-            activeOpacity={0.8}
-            onPress={openCreateModal}
-          >
-            <Feather name="plus" size={18} color={colors.textInverse} />
-            <Text style={styles.createButtonText}>Nova Turma</Text>
-          </TouchableOpacity>
+          <View>
+            <Text style={styles.headerTitle}>Gerenciar Turmas</Text>
+            <Text style={styles.headerSubtitle}>
+              Crie, edite e organize as turmas da instituição ({filteredClasses.length})
+            </Text>
+          </View>
         </View>
-        <Text style={styles.headerTitle}>Gerenciar Turmas</Text>
-        <Text style={styles.headerSubtitle}>
-          Crie, edite e organize as turmas da instituição
-        </Text>
+
+        <TouchableOpacity
+          style={styles.createButton}
+          activeOpacity={0.8}
+          onPress={openCreateModal}
+        >
+          <Feather name="plus" size={18} color={colors.textInverse} />
+          <Text style={styles.createButtonText}>Nova Turma</Text>
+        </TouchableOpacity>
       </View>
 
       <View style={styles.content}>
-        {/* Barra de Busca */}
         <View style={styles.searchBar}>
-          <Feather name="search" size={18} color={colors.textMuted} style={{ marginRight: spacing.sm }} />
+          <Feather
+            name="search"
+            size={18}
+            color={colors.textMuted}
+            style={{ marginRight: spacing.sm }}
+          />
           <TextInput
             style={styles.searchInput}
             placeholder="Buscar por nome da turma..."
@@ -222,7 +242,7 @@ export const ClassManagementScreen = ({ navigation }) => {
             onChangeText={setSearchQuery}
           />
           {searchQuery.length > 0 && (
-            <TouchableOpacity onPress={() => setSearchQuery('')}>
+            <TouchableOpacity onPress={() => setSearchQuery("")}>
               <Feather name="x" size={16} color={colors.textMuted} />
             </TouchableOpacity>
           )}
@@ -241,8 +261,8 @@ export const ClassManagementScreen = ({ navigation }) => {
             <Text style={styles.emptyTitle}>Nenhuma turma encontrada</Text>
             <Text style={styles.emptySubtitle}>
               {searchQuery
-                ? 'Nenhuma turma coincide com os termos pesquisados.'
-                : 'Cadastre a primeira turma para começar a organizar as salas e alunos.'}
+                ? "Nenhuma turma coincide com os termos pesquisados."
+                : "Cadastre a primeira turma para começar a organizar as salas e alunos."}
             </Text>
             {!searchQuery && (
               <Button
@@ -254,6 +274,11 @@ export const ClassManagementScreen = ({ navigation }) => {
           </View>
         ) : (
           <FlatList
+            key={`classes-grid-${gridColumns}`}
+            numColumns={gridColumns}
+            columnWrapperStyle={
+              gridColumns > 1 ? styles.columnWrapper : undefined
+            }
             data={filteredClasses}
             keyExtractor={(item) => String(item.id)}
             renderItem={renderItem}
@@ -274,13 +299,13 @@ export const ClassManagementScreen = ({ navigation }) => {
       {/* Modal Criar / Editar Turma */}
       <Modal visible={modalVisible} transparent animationType="fade">
         <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
           style={styles.modalOverlay}
         >
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>
-                {editingClass ? 'Editar Turma' : 'Cadastrar Nova Turma'}
+                {editingClass ? "Editar Turma" : "Cadastrar Nova Turma"}
               </Text>
               <TouchableOpacity
                 onPress={() => setModalVisible(false)}
@@ -300,7 +325,7 @@ export const ClassManagementScreen = ({ navigation }) => {
 
             <View style={styles.modalButtonContainer}>
               <Button
-                title={editingClass ? 'Salvar Alterações' : 'Criar Turma'}
+                title={editingClass ? "Salvar Alterações" : "Criar Turma"}
                 loading={saving}
                 onPress={handleSave}
               />
@@ -318,29 +343,32 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.xl,
+    paddingTop: spacing.lg,
     paddingBottom: spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
     backgroundColor: colors.surface,
   },
-  headerTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing.sm,
+  headerLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    flex: 1,
   },
   backButton: {
-    minWidth: 44,
-    minHeight: 44,
-    justifyContent: 'center',
+    minWidth: 40,
+    minHeight: 40,
+    justifyContent: "center",
   },
   createButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: colors.accent,
-    paddingVertical: spacing.sm,
+    paddingVertical: spacing.sm + 2,
     paddingHorizontal: spacing.md,
     borderRadius: radius.md,
     gap: 6,
@@ -363,24 +391,28 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
   },
   searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: colors.surface,
     borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.border,
     paddingHorizontal: spacing.md,
-    height: 44,
+    height: 46,
     marginBottom: spacing.md,
   },
   searchInput: {
     flex: 1,
     ...typography.body,
     color: colors.textPrimary,
-    height: '100%',
+    height: "100%",
   },
   listContent: {
     paddingBottom: spacing.xxxl * 2,
+    gap: spacing.sm,
+  },
+  columnWrapper: {
+    gap: spacing.md,
   },
   classCard: {
     backgroundColor: colors.surface,
@@ -388,15 +420,19 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     padding: spacing.md,
-    marginBottom: spacing.sm,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    marginBottom: spacing.xs,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     ...shadows.card,
   },
+  classCardTablet: {
+    flex: 1,
+    marginBottom: spacing.sm,
+  },
   cardLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     flex: 1,
     marginRight: spacing.sm,
   },
@@ -405,8 +441,8 @@ const styles = StyleSheet.create({
     height: 44,
     borderRadius: radius.md,
     backgroundColor: colors.accentSurface,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginRight: spacing.md,
   },
   infoCol: {
@@ -415,12 +451,12 @@ const styles = StyleSheet.create({
   className: {
     ...typography.bodyMedium,
     color: colors.textPrimary,
-    fontWeight: '700',
+    fontWeight: "700",
     marginBottom: 4,
   },
   statusRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: spacing.sm,
   },
   statusBadge: {
@@ -430,8 +466,8 @@ const styles = StyleSheet.create({
   },
   statusText: {
     fontSize: 11,
-    fontFamily: 'Roboto_700Bold',
-    fontWeight: '700',
+    fontFamily: "Roboto_700Bold",
+    fontWeight: "700",
   },
   dateText: {
     ...typography.caption,
@@ -439,22 +475,22 @@ const styles = StyleSheet.create({
     fontSize: 11,
   },
   actionsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs,
   },
   actionIconBtn: {
-    width: 36,
-    height: 36,
+    width: 38,
+    height: 38,
     borderRadius: radius.sm,
     backgroundColor: colors.primarySurface,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   centerBox: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     padding: spacing.xl,
   },
   loadingText: {
@@ -463,8 +499,8 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
   },
   emptyContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     paddingVertical: spacing.xxxl,
     paddingHorizontal: spacing.lg,
   },
@@ -473,8 +509,8 @@ const styles = StyleSheet.create({
     height: 72,
     borderRadius: radius.full,
     backgroundColor: colors.surface,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: spacing.md,
     borderWidth: 1,
     borderColor: colors.border,
@@ -487,29 +523,29 @@ const styles = StyleSheet.create({
   emptySubtitle: {
     ...typography.caption,
     color: colors.textSecondary,
-    textAlign: 'center',
+    textAlign: "center",
     maxWidth: 280,
     lineHeight: 18,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(15, 23, 42, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
     padding: spacing.lg,
   },
   modalContent: {
-    width: '100%',
-    maxWidth: 440,
+    width: "100%",
+    maxWidth: 460,
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
     padding: spacing.lg,
     ...shadows.modal,
   },
   modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: spacing.md,
   },
   modalTitle: {

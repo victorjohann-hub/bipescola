@@ -6,30 +6,54 @@ import {
   ScrollView,
   Alert,
   ActivityIndicator,
+  TouchableOpacity,
 } from "react-native";
 import { Button } from "@shared/ui/Button/Button";
 import { RegisterInput } from "./RegisterInput";
 import { Feather } from "@expo/vector-icons";
-import { createProfessorAPI } from "@shared/api/userApi";
+import { createUserAPI } from "@shared/api/userApi";
+import { colors, radius, shadows, spacing, typography } from "@shared/theme";
+import { useResponsiveLayout } from "@shared/hooks/useResponsiveLayout";
 
-export const EmployeeRegister = ({ onBack }) => {
+const ROLES = [
+  { id: "PROF", label: "Professor(a)", icon: "book-open" },
+  { id: "PORTEIRO", label: "Portaria & Segurança", icon: "key" },
+  { id: "ADM", label: "Coordenador / ADM", icon: "shield" },
+];
+
+export const EmployeeRegister = () => {
+  const { isTablet } = useResponsiveLayout();
   const [loading, setLoading] = useState(false);
   const [nome, setNome] = useState("");
-  const [telefone, setTelefone] = useState("");
   const [email, setEmail] = useState("");
-  const [cpf, setCpf] = useState("");
-  const [senha, setSenha] = useState("");
   const [role, setRole] = useState("PROF");
 
   const handleRegister = async () => {
-    if (!nome || !email) {
-      Alert.alert("Atenção", "Preencha ao menos Nome e Email.");
+    if (!nome.trim() || !email.trim()) {
+      Alert.alert("Atenção", "Preencha o Nome e o E-mail Institucional.");
       return;
     }
     try {
       setLoading(true);
-      await createProfessorAPI({ nome, email });
-      Alert.alert("Sucesso", "Cadastro de funcionário realizado com sucesso.");
+      const res = await createUserAPI({
+        nome: nome.trim(),
+        email: email.trim(),
+        role,
+      });
+      const tempPass = res?.tempPassword || "Definida no sistema";
+      Alert.alert(
+        "Sucesso",
+        `Cadastro de funcionário (${role}) realizado com sucesso!\n\nE-mail: ${email.trim()}\nSenha Temporária: ${tempPass}`,
+        [
+          {
+            text: "OK",
+            onPress: () => {
+              setNome("");
+              setEmail("");
+            },
+          },
+        ]
+      );
     } catch (error) {
       Alert.alert("Erro", error.message || "Falha ao cadastrar funcionário.");
     } finally {
@@ -38,152 +62,172 @@ export const EmployeeRegister = ({ onBack }) => {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Cadastro de Funcionário</Text>
-        <Text style={styles.headerSubtitle}>
-          Adicione as informações pessoais para concluir{"\n"}o cadastro
-        </Text>
-      </View>
+    <ScrollView
+      contentContainerStyle={styles.scrollContent}
+      showsVerticalScrollIndicator={false}
+    >
+      <View style={[styles.formCard, isTablet && styles.formCardTablet]}>
+        <View style={styles.sectionHeader}>
+          <Feather name="briefcase" size={18} color={colors.highlight} />
+          <Text style={styles.sectionTitle}>
+            Informações do Colaborador Escolar
+          </Text>
+        </View>
 
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        <Text style={styles.sectionTitle}>Informações Pessoais</Text>
-
-        <View style={styles.form}>
-          <RegisterInput 
-            label="Nome" 
-            placeholder="" 
+        <View style={[styles.fieldsGrid, isTablet && styles.fieldsGridTablet]}>
+          <RegisterInput
+            containerStyle={isTablet && styles.halfField}
+            label="Nome Completo"
+            placeholder="Ex: Carlos Silva"
+            required
             value={nome}
             onChangeText={setNome}
           />
           <RegisterInput
-            label="Telefone"
-            placeholder="Ex: (79) 91234-5678"
-            keyboardType="phone-pad"
-            value={telefone}
-            onChangeText={setTelefone}
-          />
-          <RegisterInput
-            label="Email"
-            placeholder="Ex: example@gmail.com"
+            containerStyle={isTablet && styles.halfField}
+            label="E-mail Institucional"
+            placeholder="Ex: carlos@bipescola.com"
             keyboardType="email-address"
             autoCapitalize="none"
+            required
             value={email}
             onChangeText={setEmail}
           />
-          <RegisterInput
-            label="Cpf"
-            placeholder="Ex: 123.456.789-00"
-            keyboardType="numeric"
-            value={cpf}
-            onChangeText={setCpf}
-          />
-          <RegisterInput 
-            label="Senha" 
-            placeholder="" 
-            isPassword 
-            value={senha}
-            onChangeText={setSenha}
-          />
         </View>
 
-        <Text style={styles.sectionTitle}>Cargo</Text>
+        <Text style={styles.roleSectionLabel}>Cargo / Perfil de Acesso</Text>
 
-        <View style={styles.roleDropdown}>
-          <Text style={styles.roleDropdownText}>Professor</Text>
-          <View style={styles.roleDropdownIconGroup}>
-            <Feather name="chevron-down" size={16} color="#000" />
-            <View style={styles.redDot} />
-          </View>
+        <View style={styles.rolesRow}>
+          {ROLES.map((r) => {
+            const isSelected = role === r.id;
+            return (
+              <TouchableOpacity
+                key={r.id}
+                style={[styles.roleChip, isSelected && styles.roleChipActive]}
+                activeOpacity={0.75}
+                onPress={() => setRole(r.id)}
+              >
+                <Feather
+                  name={r.icon}
+                  size={16}
+                  color={isSelected ? colors.textInverse : colors.textSecondary}
+                />
+                <Text
+                  style={[
+                    styles.roleChipText,
+                    isSelected && styles.roleChipTextActive,
+                  ]}
+                >
+                  {r.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
 
-        <View style={styles.buttonContainer}>
+        <View
+          style={[
+            styles.buttonContainer,
+            isTablet && styles.buttonContainerTablet,
+          ]}
+        >
           {loading ? (
-            <ActivityIndicator size="large" color="#666666" />
+            <ActivityIndicator size="large" color={colors.highlight} />
           ) : (
             <Button
-              title="Cadastrar"
-              style={styles.confirmButton}
-              backgroundColor="#666666"
-              textColor="#fff"
+              title="Cadastrar Funcionário"
+              backgroundColor={colors.highlight}
               onPress={handleRegister}
             />
           )}
         </View>
-      </ScrollView>
-    </View>
+      </View>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-  },
-  header: {
-    paddingHorizontal: 24,
-    paddingTop: 32,
-    paddingBottom: 16,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontFamily: "Roboto_700Bold",
-    color: "#000",
-    marginBottom: 8,
-  },
-  headerSubtitle: {
-    fontSize: 12,
-    fontFamily: "Roboto_300Light",
-    color: "#555",
-  },
   scrollContent: {
-    paddingHorizontal: 24,
-    paddingBottom: 100,
+    padding: spacing.lg,
+    paddingBottom: spacing.xxxl * 2,
+  },
+  formCard: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.lg,
+    ...shadows.card,
+  },
+  formCardTablet: {
+    padding: spacing.xl,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs,
+    marginBottom: spacing.md,
+    paddingBottom: spacing.xs,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.divider,
   },
   sectionTitle: {
-    fontSize: 14,
-    fontFamily: "Roboto_700Bold",
-    color: "#000",
-    marginBottom: 16,
-    marginTop: 8,
+    ...typography.h3,
+    color: colors.textPrimary,
   },
-  form: {
-    marginBottom: 8,
+  fieldsGrid: {
+    width: "100%",
   },
-  roleDropdown: {
-    backgroundColor: "#9D9D9D",
-    borderRadius: 4,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
+  fieldsGridTablet: {
     flexDirection: "row",
+    flexWrap: "wrap",
     justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 32,
   },
-  roleDropdownText: {
-    fontSize: 12,
-    fontFamily: "Roboto_300Light",
-    color: "#444",
+  halfField: {
+    width: "48.5%",
   },
-  roleDropdownIconGroup: {
+  roleSectionLabel: {
+    ...typography.captionBold,
+    color: colors.textSecondary,
+    marginTop: spacing.xs,
+    marginBottom: spacing.sm,
+  },
+  rolesRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.sm,
+    marginBottom: spacing.xl,
+  },
+  roleChip: {
     flexDirection: "row",
     alignItems: "center",
+    backgroundColor: colors.background,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm + 4,
+    borderRadius: radius.md,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    gap: spacing.xs,
   },
-  redDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: "#CC0000",
-    marginLeft: 8,
+  roleChipActive: {
+    backgroundColor: colors.highlight,
+    borderColor: colors.highlight,
+  },
+  roleChipText: {
+    fontSize: 13,
+    fontFamily: "Roboto_500Medium",
+    color: colors.textSecondary,
+  },
+  roleChipTextActive: {
+    color: colors.textInverse,
+    fontWeight: "700",
   },
   buttonContainer: {
-    alignItems: "center",
-    marginTop: 32,
-  },
-  confirmButton: {
     width: "100%",
+    marginTop: spacing.sm,
+  },
+  buttonContainerTablet: {
+    maxWidth: 300,
+    alignSelf: "flex-end",
   },
 });

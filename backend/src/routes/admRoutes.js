@@ -1,4 +1,4 @@
-﻿import express from "express";
+import express from "express";
 
 import {
   createAdm,
@@ -13,10 +13,10 @@ import { roleMiddleware } from "../middlewares/roleMiddleware.js";
 
 const router = express.Router();
 
-router.post("/", createAdm);
-router.get("/", listAdms);
-router.get("/:id", getAdm);
-router.put("/:id", updateAdm);
+router.post("/", authMiddleware, roleMiddleware("ADM"), createAdm);
+router.get("/", authMiddleware, roleMiddleware("ADM"), listAdms);
+router.get("/:id", authMiddleware, roleMiddleware("ADM"), getAdm);
+router.put("/:id", authMiddleware, roleMiddleware("ADM"), updateAdm);
 
 router.delete(
   "/:id",

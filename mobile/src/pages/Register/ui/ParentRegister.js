@@ -11,26 +11,41 @@ import {
 import { Feather } from "@expo/vector-icons";
 import { Button } from "@shared/ui/Button/Button";
 import { RegisterInput } from "./RegisterInput";
-
 import { createParentAPI } from "@shared/api/userApi";
+import { colors, radius, shadows, spacing, typography } from "@shared/theme";
+import { useResponsiveLayout } from "@shared/hooks/useResponsiveLayout";
 
-export const ParentRegister = ({ onBack }) => {
+export const ParentRegister = () => {
+  const { isTablet } = useResponsiveLayout();
   const [loading, setLoading] = useState(false);
   const [nome, setNome] = useState("");
-  const [telefone, setTelefone] = useState("");
   const [email, setEmail] = useState("");
-  const [cpf, setCpf] = useState("");
-  const [senha, setSenha] = useState("");
 
   const handleRegister = async () => {
-    if (!nome || !email) {
-      Alert.alert("Atenção", "Preencha ao menos Nome e Email do responsável.");
+    if (!nome.trim() || !email.trim()) {
+      Alert.alert(
+        "Atenção",
+        "Preencha o Nome e o E-mail do responsável."
+      );
       return;
     }
     try {
       setLoading(true);
-      await createParentAPI({ nome, email });
-      Alert.alert("Sucesso", "Cadastro de responsável realizado com sucesso.");
+      const res = await createParentAPI({ nome: nome.trim(), email: email.trim() });
+      const tempPass = res?.tempPassword || "Definida no sistema";
+      Alert.alert(
+        "Sucesso",
+        `Cadastro de responsável realizado com sucesso!\n\nE-mail: ${email.trim()}\nSenha Temporária: ${tempPass}`,
+        [
+          {
+            text: "OK",
+            onPress: () => {
+              setNome("");
+              setEmail("");
+            },
+          },
+        ]
+      );
     } catch (error) {
       Alert.alert("Erro", error.message || "Falha ao cadastrar responsável.");
     } finally {
@@ -39,158 +54,135 @@ export const ParentRegister = ({ onBack }) => {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Cadastro de Responsavel</Text>
-        <Text style={styles.headerSubtitle}>
-          Adicione as informações pessoais para concluir{"\n"}o cadastro
-        </Text>
-      </View>
+    <ScrollView
+      contentContainerStyle={styles.scrollContent}
+      showsVerticalScrollIndicator={false}
+    >
+      <View style={[styles.formCard, isTablet && styles.formCardTablet]}>
+        <View style={styles.sectionHeader}>
+          <Feather name="user" size={18} color={colors.highlight} />
+          <Text style={styles.sectionTitle}>Dados do Responsável Legal</Text>
+        </View>
 
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        <Text style={styles.sectionTitle}>Informações do Responsável</Text>
-
-        <View style={styles.form}>
-          <RegisterInput 
-            label="Nome" 
-            placeholder="" 
+        <View style={[styles.fieldsGrid, isTablet && styles.fieldsGridTablet]}>
+          <RegisterInput
+            containerStyle={isTablet && styles.halfField}
+            label="Nome Completo do Responsável"
+            placeholder="Ex: Maria Oliveira"
+            required
             value={nome}
             onChangeText={setNome}
           />
           <RegisterInput
-            label="Telefone"
-            placeholder="Ex: (79) 91234-5678"
-            keyboardType="phone-pad"
-            value={telefone}
-            onChangeText={setTelefone}
-          />
-          <RegisterInput
-            label="Email"
-            placeholder="Ex: example@gmail.com"
+            containerStyle={isTablet && styles.halfField}
+            label="E-mail de Acesso"
+            placeholder="Ex: maria@email.com"
             keyboardType="email-address"
             autoCapitalize="none"
+            required
             value={email}
             onChangeText={setEmail}
           />
-          <RegisterInput
-            label="Cpf"
-            placeholder="Ex: 123.456.789-00"
-            keyboardType="numeric"
-            value={cpf}
-            onChangeText={setCpf}
-          />
-          <RegisterInput 
-            label="Senha" 
-            placeholder="" 
-            isPassword 
-            value={senha}
-            onChangeText={setSenha}
-          />
         </View>
 
-        <Text style={styles.sectionTitle}>
-          Informações do Aluno(a)/Alunos(as)
-        </Text>
-        <Text style={styles.studentLabel}>Aluno(a) 1</Text>
-
-        <View style={styles.form}>
-          <RegisterInput label="Nome" placeholder="" />
-          <RegisterInput
-            label="Cpf"
-            placeholder="Ex: 123.456.789-00"
-            keyboardType="numeric"
-          />
-
-          <TouchableOpacity style={styles.addStudentButton}>
-            <Text style={styles.addStudentText}>Adicionar novo aluno(a)</Text>
-            <Feather name="plus" size={16} color="#000" />
-          </TouchableOpacity>
+        <View style={styles.guidanceBox}>
+          <Feather name="info" size={18} color={colors.secondary} />
+          <View style={{ flex: 1 }}>
+            <Text style={styles.guidanceTitle}>Vínculo de Alunos Dependentes</Text>
+            <Text style={styles.guidanceText}>
+              A credencial de acesso do responsável será gerada com senha temporária. Para vincular os filhos a esta conta, acesse o módulo "Gerenciar Alunos" após concluir este cadastro.
+            </Text>
+          </View>
         </View>
 
-        <View style={styles.buttonContainer}>
+        <View
+          style={[
+            styles.buttonContainer,
+            isTablet && styles.buttonContainerTablet,
+          ]}
+        >
           {loading ? (
-            <ActivityIndicator size="large" color="#666666" />
+            <ActivityIndicator size="large" color={colors.highlight} />
           ) : (
             <Button
-              title="Cadastrar"
-              style={styles.confirmButton}
-              backgroundColor="#666666"
-              textColor="#fff"
+              title="Concluir Cadastro de Responsável"
+              backgroundColor={colors.highlight}
               onPress={handleRegister}
             />
           )}
         </View>
-      </ScrollView>
-    </View>
+      </View>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-  },
-  header: {
-    paddingHorizontal: 24,
-    paddingTop: 32,
-    paddingBottom: 16,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontFamily: "Roboto_700Bold",
-    color: "#000",
-    marginBottom: 8,
-  },
-  headerSubtitle: {
-    fontSize: 12,
-    fontFamily: "Roboto_300Light",
-    color: "#555",
-  },
   scrollContent: {
-    paddingHorizontal: 24,
-    paddingBottom: 100, // padding for bottom bar
+    padding: spacing.lg,
+    paddingBottom: spacing.xxxl * 2,
   },
-  sectionTitle: {
-    fontSize: 14,
-    fontFamily: "Roboto_700Bold",
-    color: "#000",
-    marginBottom: 16,
-    marginTop: 8,
+  formCard: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.lg,
+    ...shadows.card,
   },
-  studentLabel: {
-    fontSize: 12,
-    fontFamily: "Roboto_500Medium",
-    color: "#000",
-    marginBottom: 8,
+  formCardTablet: {
+    padding: spacing.xl,
   },
-  form: {
-    marginBottom: 8,
-  },
-  addStudentButton: {
+  sectionHeader: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#9D9D9D",
-    alignSelf: "flex-start",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 4,
-    marginTop: -8, // to pull it closer to the input
-    marginBottom: 24,
+    gap: spacing.xs,
+    marginBottom: spacing.md,
+    paddingBottom: spacing.xs,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.divider,
   },
-  addStudentText: {
-    fontSize: 10,
-    fontFamily: "Roboto_500Medium",
-    color: "#000",
-    marginRight: 16,
+  sectionTitle: {
+    ...typography.h3,
+    color: colors.textPrimary,
+  },
+  fieldsGrid: {
+    width: "100%",
+  },
+  fieldsGridTablet: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+  },
+  halfField: {
+    width: "48.5%",
+  },
+  guidanceBox: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    backgroundColor: colors.secondarySurface,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    gap: spacing.sm,
+    marginTop: spacing.md,
+    marginBottom: spacing.lg,
+  },
+  guidanceTitle: {
+    fontSize: 13,
+    fontFamily: "Roboto_700Bold",
+    color: colors.secondary,
+    marginBottom: 2,
+  },
+  guidanceText: {
+    ...typography.caption,
+    color: colors.textSecondary,
+    lineHeight: 18,
   },
   buttonContainer: {
-    alignItems: "center",
-    marginTop: 32,
-  },
-  confirmButton: {
     width: "100%",
+    marginTop: spacing.sm,
+  },
+  buttonContainerTablet: {
+    maxWidth: 320,
+    alignSelf: "flex-end",
   },
 });

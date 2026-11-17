@@ -1,8 +1,28 @@
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Constants from 'expo-constants';
 
-// Atualizado para o IP atual da máquina na rede local (192.168.1.50:3000)
-const BASE_URL = 'http://192.168.1.50:3000/api';
+export function getBaseUrl(env = process.env, constants = Constants) {
+  if (env && env.EXPO_PUBLIC_API_URL) {
+    return env.EXPO_PUBLIC_API_URL;
+  }
+
+  // Detecta o IP do host dinamicamente ao rodar via Expo Go na mesma rede
+  const hostUri = constants?.expoConfig?.hostUri || constants?.manifest2?.extra?.expoClient?.hostUri;
+  if (hostUri) {
+    const ip = hostUri.split(':')[0];
+    return `http://${ip}:3000/api`;
+  }
+
+  // Emuladores e simulação local
+  if (Platform.OS === 'android') {
+    return 'http://10.0.2.2:3000/api';
+  }
+
+  return 'http://localhost:3000/api';
+}
+
+const BASE_URL = getBaseUrl();
 
 export const apiClient = async (endpoint, options = {}) => {
   const url = `${BASE_URL}${endpoint}`;

@@ -8,17 +8,21 @@ function generatePassword() {
   return Math.random().toString(36).slice(-8);
 }
 
-export async function createUser({ nome, email }) {
+export async function createUser({ nome, email, role = 'PARENT' }) {
   const tempPassword = generatePassword();
 
   const hash = await bcrypt.hash(tempPassword, 10);
 
-  const user = await userModel.create({
+  let user = await userModel.create({
     nome,
     email,
     senha: hash,
     firstLogin: true
   });
+
+  if (role && role !== 'PARENT') {
+    user = await userModel.updateRoleById(user.id, role);
+  }
 
   return {
     user,
@@ -82,11 +86,8 @@ export async function deleteUser(id) {
   return await userModel.deleteById(id);
 }
 
-
 export async function changePassword(id, senhaAtual, novaSenha) {
-  const user = await userModel.findByEmail(
-    (await userModel.findById(id))?.email
-  );
+  const user = await userModel.findPasswordById(id);
 
   if (!user) {
     throw new Error("Usuário não encontrado");
@@ -153,6 +154,7 @@ export async function forgotPassword(email) {
 
   return true;
 }
+
 export async function resetPassword(email, token, novaSenha) {
   const user = await userModel.findByResetToken(email, token);
 
@@ -179,6 +181,3 @@ export async function updateUserPhoto(id, foto) {
 
   return await userModel.findById(id);
 }
-
-
-

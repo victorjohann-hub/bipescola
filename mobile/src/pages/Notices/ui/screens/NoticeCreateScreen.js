@@ -1,20 +1,31 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert, Modal, FlatList } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Feather } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
-import { createPostAPI } from '@shared/api/schoolApi';
-import { listParentsAPI } from '@shared/api/adminApi';
-import { Button } from '@shared/ui/Button/Button';
-import { colors, radius, shadows, spacing, typography } from '@shared/theme';
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  ScrollView,
+  Alert,
+  Modal,
+  FlatList,
+} from "react-native";
+import { Feather } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
+import { ResponsiveContainer } from "@shared/ui/ResponsiveContainer/ResponsiveContainer";
+import { createPostAPI } from "@shared/api/schoolApi";
+import { listParentsAPI } from "@shared/api/adminApi";
+import { Button } from "@shared/ui/Button/Button";
+import { colors, radius, shadows, spacing, typography } from "@shared/theme";
+import { useResponsiveLayout } from "@shared/hooks/useResponsiveLayout";
 
 export const NoticeCreateScreen = () => {
   const navigation = useNavigation();
-  const [titulo, setTitulo] = useState('');
-  const [conteudo, setConteudo] = useState('');
+  const { isTablet } = useResponsiveLayout();
+  const [titulo, setTitulo] = useState("");
+  const [conteudo, setConteudo] = useState("");
   const [loading, setLoading] = useState(false);
-  
-  // Lógica de Destinatários
+
   const [parents, setParents] = useState([]);
   const [selectedParent, setSelectedParent] = useState(null);
   const [isModalVisible, setModalVisible] = useState(false);
@@ -23,8 +34,14 @@ export const NoticeCreateScreen = () => {
     const fetchParents = async () => {
       try {
         const res = await listParentsAPI();
-        setParents([{ id: 'todos', nome: 'Todos os Responsáveis (Aviso Geral)' }, ...(res.data || res || [])]);
-        setSelectedParent({ id: 'todos', nome: 'Todos os Responsáveis (Aviso Geral)' });
+        setParents([
+          { id: "todos", nome: "Todos os Responsáveis (Aviso Geral)" },
+          ...(res.data || res || []),
+        ]);
+        setSelectedParent({
+          id: "todos",
+          nome: "Todos os Responsáveis (Aviso Geral)",
+        });
       } catch (error) {
         console.error("Erro ao carregar pais", error);
       }
@@ -34,22 +51,23 @@ export const NoticeCreateScreen = () => {
 
   const handleCreate = async () => {
     if (!titulo.trim() || !conteudo.trim()) {
-      Alert.alert('Atenção', 'Preencha o assunto e o conteúdo do aviso.');
+      Alert.alert("Atenção", "Preencha o assunto e o conteúdo do aviso.");
       return;
     }
 
     try {
       setLoading(true);
-      const payload = { 
-        titulo, 
+      const payload = {
+        titulo,
         conteudo,
-        destinatario_id: selectedParent?.id === 'todos' ? null : selectedParent?.id
+        destinatario_id:
+          selectedParent?.id === "todos" ? null : selectedParent?.id,
       };
       await createPostAPI(payload);
-      Alert.alert('Sucesso', 'Aviso publicado no mural com sucesso!');
+      Alert.alert("Sucesso", "Aviso publicado no mural com sucesso!");
       navigation.goBack();
     } catch (error) {
-      Alert.alert('Erro', error.message || 'Falha ao criar aviso.');
+      Alert.alert("Erro", error.message || "Falha ao criar aviso.");
     } finally {
       setLoading(false);
     }
@@ -61,10 +79,10 @@ export const NoticeCreateScreen = () => {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <ResponsiveContainer style={styles.safeArea}>
       <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton} 
+        <TouchableOpacity
+          style={styles.backButton}
           hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
           onPress={() => navigation.goBack()}
         >
@@ -74,49 +92,70 @@ export const NoticeCreateScreen = () => {
         <View style={{ width: 24 }} />
       </View>
 
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
         <Text style={styles.screenSubtitle}>
-          Publique avisos e recados para a comunidade escolar
+          Publique avisos oficiais e recados para a comunidade escolar
         </Text>
 
-        <View style={styles.formCard}>
-          {/* Seletor de Destinatário */}
-          <View style={styles.formGroup}>
-            <Text style={styles.label}>Destinatário do Aviso</Text>
-            <TouchableOpacity 
-              style={styles.dropdownBtn}
-              activeOpacity={0.7}
-              onPress={() => setModalVisible(true)}
-            >
-              <Feather name="users" size={18} color={colors.notice} style={{ marginRight: spacing.sm }} />
-              <Text style={styles.dropdownBtnText} numberOfLines={1}>
-                {selectedParent ? selectedParent.nome : 'Selecione um destinatário...'}
-              </Text>
-              <Feather name="chevron-down" size={18} color={colors.textMuted} />
-            </TouchableOpacity>
-          </View>
+        <View style={[styles.formCard, isTablet && styles.formCardTablet]}>
+          <View style={[styles.topFieldsWrap, isTablet && styles.topFieldsRowTablet]}>
+            {/* Seletor de Destinatário */}
+            <View style={[styles.formGroup, isTablet && { flex: 1 }]}>
+              <Text style={styles.label}>Destinatário do Aviso</Text>
+              <TouchableOpacity
+                style={styles.dropdownBtn}
+                activeOpacity={0.7}
+                onPress={() => setModalVisible(true)}
+              >
+                <Feather
+                  name="users"
+                  size={18}
+                  color={colors.notice}
+                  style={{ marginRight: spacing.sm }}
+                />
+                <Text style={styles.dropdownBtnText} numberOfLines={1}>
+                  {selectedParent
+                    ? selectedParent.nome
+                    : "Selecione um destinatário..."}
+                </Text>
+                <Feather
+                  name="chevron-down"
+                  size={18}
+                  color={colors.textMuted}
+                />
+              </TouchableOpacity>
+            </View>
 
-          {/* Assunto / Título */}
-          <View style={styles.formGroup}>
-            <Text style={styles.label}>Assunto do Comunicado</Text>
-            <View style={styles.inputContainer}>
-              <TextInput 
-                style={styles.input} 
-                placeholder="Ex: Reunião Pedagógica de Pais" 
-                placeholderTextColor={colors.textMuted} 
-                value={titulo}
-                onChangeText={setTitulo}
-              />
+            {/* Assunto / Título */}
+            <View style={[styles.formGroup, isTablet && { flex: 1 }]}>
+              <Text style={styles.label}>Assunto do Comunicado</Text>
+              <View style={styles.inputContainer}>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Ex: Reunião Pedagógica de Pais"
+                  placeholderTextColor={colors.textMuted}
+                  value={titulo}
+                  onChangeText={setTitulo}
+                />
+              </View>
             </View>
           </View>
 
           {/* Conteúdo */}
           <View style={styles.formGroup}>
             <Text style={styles.label}>Mensagem Completa</Text>
-            <View style={styles.textAreaContainer}>
-              <TextInput 
-                style={styles.textArea} 
-                placeholder="Escreva os detalhes, datas e orientações do comunicado..." 
+            <View
+              style={[
+                styles.textAreaContainer,
+                isTablet && styles.textAreaContainerTablet,
+              ]}
+            >
+              <TextInput
+                style={[styles.textArea, isTablet && styles.textAreaTablet]}
+                placeholder="Escreva os detalhes, datas e orientações do comunicado..."
                 placeholderTextColor={colors.textMuted}
                 multiline
                 textAlignVertical="top"
@@ -126,7 +165,12 @@ export const NoticeCreateScreen = () => {
             </View>
           </View>
 
-          <View style={styles.submitSection}>
+          <View
+            style={[
+              styles.submitSection,
+              isTablet && styles.submitSectionTablet,
+            ]}
+          >
             <Button
               title="Publicar Comunicado"
               backgroundColor={colors.notice}
@@ -143,7 +187,7 @@ export const NoticeCreateScreen = () => {
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Escolha o Destinatário</Text>
-              <TouchableOpacity 
+              <TouchableOpacity
                 onPress={() => setModalVisible(false)}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
@@ -153,25 +197,34 @@ export const NoticeCreateScreen = () => {
 
             <FlatList
               data={parents}
-              keyExtractor={(item, index) => item.id ? item.id.toString() : index.toString()}
+              keyExtractor={(item, index) =>
+                item.id ? item.id.toString() : index.toString()
+              }
               renderItem={({ item }) => (
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={[
                     styles.modalItem,
-                    selectedParent?.id === item.id && styles.modalItemSelected
-                  ]} 
+                    selectedParent?.id === item.id && styles.modalItemSelected,
+                  ]}
                   onPress={() => selectParent(item)}
                 >
-                  <Feather 
-                    name={item.id === 'todos' ? 'globe' : 'user'} 
-                    size={16} 
-                    color={selectedParent?.id === item.id ? colors.notice : colors.textMuted} 
+                  <Feather
+                    name={item.id === "todos" ? "globe" : "user"}
+                    size={16}
+                    color={
+                      selectedParent?.id === item.id
+                        ? colors.notice
+                        : colors.textMuted
+                    }
                     style={{ marginRight: spacing.sm }}
                   />
-                  <Text style={[
-                    styles.modalItemText,
-                    selectedParent?.id === item.id && styles.modalItemTextSelected
-                  ]}>
+                  <Text
+                    style={[
+                      styles.modalItemText,
+                      selectedParent?.id === item.id &&
+                        styles.modalItemTextSelected,
+                    ]}
+                  >
                     {item.nome || item.email}
                   </Text>
                 </TouchableOpacity>
@@ -180,7 +233,7 @@ export const NoticeCreateScreen = () => {
           </View>
         </View>
       </Modal>
-    </SafeAreaView>
+    </ResponsiveContainer>
   );
 };
 
@@ -190,9 +243,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
     borderBottomWidth: 1,
@@ -206,8 +259,8 @@ const styles = StyleSheet.create({
   backButton: {
     minWidth: 44,
     minHeight: 44,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   content: {
     padding: spacing.lg,
@@ -221,12 +274,24 @@ const styles = StyleSheet.create({
   },
   formCard: {
     backgroundColor: colors.surface,
-    borderRadius: radius.md,
+    borderRadius: radius.lg,
     borderWidth: 1,
     borderColor: colors.border,
     padding: spacing.lg,
     gap: spacing.md,
     ...shadows.card,
+  },
+  formCardTablet: {
+    padding: spacing.xl,
+    gap: spacing.lg,
+  },
+  topFieldsWrap: {
+    gap: spacing.md,
+  },
+  topFieldsRowTablet: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: spacing.lg,
   },
   formGroup: {
     gap: spacing.xs,
@@ -236,8 +301,8 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
   dropdownBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: colors.background,
     borderRadius: radius.sm,
     borderWidth: 1.5,
@@ -248,7 +313,7 @@ const styles = StyleSheet.create({
   dropdownBtnText: {
     flex: 1,
     fontSize: 14,
-    fontFamily: 'Roboto_500Medium',
+    fontFamily: "Roboto_500Medium",
     color: colors.textPrimary,
   },
   inputContainer: {
@@ -258,11 +323,11 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     paddingHorizontal: spacing.md,
     minHeight: 48,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   input: {
     fontSize: 15,
-    fontFamily: 'Roboto_400Regular',
+    fontFamily: "Roboto_400Regular",
     color: colors.textPrimary,
   },
   textAreaContainer: {
@@ -274,36 +339,45 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     minHeight: 120,
   },
+  textAreaContainerTablet: {
+    minHeight: 180,
+  },
   textArea: {
     fontSize: 14,
-    fontFamily: 'Roboto_400Regular',
+    fontFamily: "Roboto_400Regular",
     color: colors.textPrimary,
     minHeight: 100,
+  },
+  textAreaTablet: {
+    minHeight: 160,
   },
   submitSection: {
     marginTop: spacing.sm,
   },
-  // Modal de Destinatários
+  submitSectionTablet: {
+    width: 280,
+    alignSelf: "flex-end",
+  },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(15, 23, 42, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
     padding: spacing.lg,
   },
   modalContent: {
-    width: '100%',
-    maxWidth: 440,
-    maxHeight: '75%',
+    width: "100%",
+    maxWidth: 480,
+    maxHeight: "75%",
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
     padding: spacing.lg,
     ...shadows.modal,
   },
   modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: spacing.md,
     paddingBottom: spacing.sm,
     borderBottomWidth: 1,
@@ -314,8 +388,8 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
   },
   modalItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.sm,
     borderBottomWidth: 1,
@@ -330,7 +404,7 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
   },
   modalItemTextSelected: {
-    fontWeight: '700',
+    fontWeight: "700",
     color: colors.notice,
   },
 });

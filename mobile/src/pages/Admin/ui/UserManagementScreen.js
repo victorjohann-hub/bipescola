@@ -1,34 +1,41 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  FlatList, 
-  TouchableOpacity, 
-  Alert, 
+import React, { useState, useEffect, useMemo } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+  Alert,
   ActivityIndicator,
   Modal,
   ScrollView,
   KeyboardAvoidingView,
-  Platform
-} from 'react-native';
-import { ResponsiveContainer } from '@shared/ui/ResponsiveContainer/ResponsiveContainer';
-import { Feather } from '@expo/vector-icons';
-import { listUsersAPI, deleteUserAPI, updateUserAPI } from '@shared/api/adminApi';
-import { Input } from '@shared/ui/Input/Input';
-import { Button } from '@shared/ui/Button/Button';
-import { colors, radius, shadows, spacing, typography } from '@shared/theme';
+  Platform,
+  TextInput,
+} from "react-native";
+import { ResponsiveContainer } from "@shared/ui/ResponsiveContainer/ResponsiveContainer";
+import { Feather } from "@expo/vector-icons";
+import {
+  listUsersAPI,
+  deleteUserAPI,
+  updateUserAPI,
+} from "@shared/api/adminApi";
+import { Input } from "@shared/ui/Input/Input";
+import { Button } from "@shared/ui/Button/Button";
+import { colors, radius, shadows, spacing, typography } from "@shared/theme";
+import { useResponsiveLayout } from "@shared/hooks/useResponsiveLayout";
 
 export const UserManagementScreen = ({ navigation }) => {
+  const { isTablet, listColumns } = useResponsiveLayout();
   const [users, setUsers] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
 
-  // Estado de Edição Real
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
-  const [editNome, setEditNome] = useState('');
-  const [editEmail, setEditEmail] = useState('');
-  const [editRole, setEditRole] = useState('PARENT');
+  const [editNome, setEditNome] = useState("");
+  const [editEmail, setEditEmail] = useState("");
+  const [editRole, setEditRole] = useState("PARENT");
   const [savingEdit, setSavingEdit] = useState(false);
 
   const fetchUsers = async () => {
@@ -37,7 +44,7 @@ export const UserManagementScreen = ({ navigation }) => {
       const res = await listUsersAPI();
       setUsers(res.data || []);
     } catch (error) {
-      Alert.alert('Erro', 'Falha ao buscar usuários');
+      Alert.alert("Erro", "Falha ao buscar usuários");
     } finally {
       setLoading(false);
     }
@@ -49,15 +56,15 @@ export const UserManagementScreen = ({ navigation }) => {
 
   const openEditModal = (user) => {
     setEditingUser(user);
-    setEditNome(user.nome || '');
-    setEditEmail(user.email || '');
-    setEditRole(user.role || 'PARENT');
+    setEditNome(user.nome || "");
+    setEditEmail(user.email || "");
+    setEditRole(user.role || "PARENT");
     setEditModalVisible(true);
   };
 
   const handleSaveEdit = async () => {
     if (!editNome || !editEmail) {
-      Alert.alert('Atenção', 'Nome e email são obrigatórios.');
+      Alert.alert("Atenção", "Nome e email são obrigatórios.");
       return;
     }
     try {
@@ -67,65 +74,104 @@ export const UserManagementScreen = ({ navigation }) => {
         email: editEmail,
         role: editRole,
       });
-      Alert.alert('Sucesso', 'Usuário atualizado com sucesso!');
+      Alert.alert("Sucesso", "Usuário atualizado com sucesso!");
       setEditModalVisible(false);
       fetchUsers();
     } catch (error) {
-      Alert.alert('Erro', error.message || 'Falha ao atualizar usuário');
+      Alert.alert("Erro", error.message || "Falha ao atualizar usuário");
     } finally {
       setSavingEdit(false);
     }
   };
 
   const handleDelete = (id, nome) => {
-    Alert.alert('Atenção', `Deseja realmente excluir ${nome}?`, [
-      { text: 'Cancelar', style: 'cancel' },
-      { 
-        text: 'Excluir', 
-        style: 'destructive',
+    Alert.alert("Atenção", `Deseja realmente excluir ${nome}?`, [
+      { text: "Cancelar", style: "cancel" },
+      {
+        text: "Excluir",
+        style: "destructive",
         onPress: async () => {
           try {
             await deleteUserAPI(id);
-            Alert.alert('Sucesso', 'Usuário excluído!');
+            Alert.alert("Sucesso", "Usuário excluído!");
             fetchUsers();
           } catch (error) {
-            Alert.alert('Erro', error.message || 'Falha ao excluir');
+            Alert.alert("Erro", error.message || "Falha ao excluir");
           }
-        }
-      }
+        },
+      },
     ]);
   };
 
   const getRoleBadge = (role) => {
     switch (role) {
-      case 'ADM':
-        return { label: 'Administrador', bg: colors.highlightSurface, text: colors.highlight };
-      case 'PROF':
-        return { label: 'Professor', bg: colors.secondarySurface, text: colors.secondary };
-      case 'PARENT':
-        return { label: 'Responsável', bg: colors.primarySurface, text: colors.primary };
+      case "ADM":
+        return {
+          label: "Administrador",
+          bg: colors.highlightSurface,
+          text: colors.highlight,
+        };
+      case "PROF":
+        return {
+          label: "Professor",
+          bg: colors.secondarySurface,
+          text: colors.secondary,
+        };
+      case "PORTEIRO":
+        return {
+          label: "Porteiro",
+          bg: colors.warningSurface,
+          text: colors.warning,
+        };
+      case "PARENT":
+        return {
+          label: "Responsável",
+          bg: colors.primarySurface,
+          text: colors.primary,
+        };
       default:
-        return { label: role || 'Usuário', bg: colors.surface, text: colors.textSecondary };
+        return {
+          label: role || "Usuário",
+          bg: colors.surface,
+          text: colors.textSecondary,
+        };
     }
   };
+
+  const filteredUsers = useMemo(() => {
+    if (!searchQuery.trim()) return users;
+    const q = searchQuery.toLowerCase();
+    return users.filter(
+      (u) =>
+        u.nome?.toLowerCase().includes(q) ||
+        u.email?.toLowerCase().includes(q) ||
+        u.role?.toLowerCase().includes(q)
+    );
+  }, [users, searchQuery]);
 
   const renderItem = ({ item }) => {
     const badge = getRoleBadge(item.role);
 
     return (
-      <View style={styles.card}>
+      <View style={[styles.card, isTablet && styles.cardTablet]}>
         <View style={styles.cardInfo}>
-          <Text style={styles.name}>{item.nome}</Text>
-          <Text style={styles.email}>{item.email}</Text>
-          
+          <Text style={styles.name} numberOfLines={1}>
+            {item.nome}
+          </Text>
+          <Text style={styles.email} numberOfLines={1}>
+            {item.email}
+          </Text>
+
           <View style={[styles.roleBadge, { backgroundColor: badge.bg }]}>
-            <Text style={[styles.roleText, { color: badge.text }]}>{badge.label}</Text>
+            <Text style={[styles.roleText, { color: badge.text }]}>
+              {badge.label}
+            </Text>
           </View>
         </View>
 
         <View style={styles.actions}>
-          <TouchableOpacity 
-            style={styles.actionBtn} 
+          <TouchableOpacity
+            style={styles.actionBtn}
             activeOpacity={0.7}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             onPress={() => openEditModal(item)}
@@ -133,8 +179,8 @@ export const UserManagementScreen = ({ navigation }) => {
             <Feather name="edit-2" size={18} color={colors.primary} />
           </TouchableOpacity>
 
-          <TouchableOpacity 
-            style={[styles.actionBtn, styles.deleteBtn]} 
+          <TouchableOpacity
+            style={[styles.actionBtn, styles.deleteBtn]}
             activeOpacity={0.7}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             onPress={() => handleDelete(item.id, item.nome)}
@@ -149,8 +195,8 @@ export const UserManagementScreen = ({ navigation }) => {
   return (
     <ResponsiveContainer style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity 
-          onPress={() => navigation.goBack()} 
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
           style={styles.backBtn}
           hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
         >
@@ -158,35 +204,67 @@ export const UserManagementScreen = ({ navigation }) => {
         </TouchableOpacity>
         <View>
           <Text style={styles.headerTitle}>Gerenciar Usuários</Text>
-          <Text style={styles.headerSubtitle}>Lista de Professores, Pais e Admins</Text>
+          <Text style={styles.headerSubtitle}>
+            Lista de Professores, Porteiros, Pais e Admins ({filteredUsers.length})
+          </Text>
         </View>
       </View>
-      
+
+      <View style={styles.searchContainer}>
+        <Feather
+          name="search"
+          size={18}
+          color={colors.textMuted}
+          style={{ marginRight: spacing.sm }}
+        />
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Buscar usuário por nome, e-mail ou cargo..."
+          placeholderTextColor={colors.textMuted}
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+        />
+        {searchQuery.length > 0 && (
+          <TouchableOpacity onPress={() => setSearchQuery("")}>
+            <Feather name="x" size={16} color={colors.textMuted} />
+          </TouchableOpacity>
+        )}
+      </View>
+
       {loading ? (
-        <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: spacing.xl }} />
+        <ActivityIndicator
+          size="large"
+          color={colors.primary}
+          style={{ marginTop: spacing.xl }}
+        />
       ) : (
-        <FlatList 
-          data={users}
+        <FlatList
+          key={`users-grid-${listColumns}`}
+          numColumns={listColumns}
+          columnWrapperStyle={
+            listColumns > 1 ? styles.columnWrapper : undefined
+          }
+          data={filteredUsers}
           keyExtractor={(item) => item.id.toString()}
           renderItem={renderItem}
           contentContainerStyle={styles.listContainer}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={
-            <Text style={styles.emptyText}>Nenhum usuário cadastrado.</Text>
+            <Text style={styles.emptyText}>Nenhum usuário encontrado.</Text>
           }
         />
       )}
 
       {/* Modal de Edição Real */}
       <Modal visible={editModalVisible} transparent animationType="fade">
-        <KeyboardAvoidingView 
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined} 
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
           style={styles.modalOverlay}
         >
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Editar Usuário</Text>
-              <TouchableOpacity 
+              <TouchableOpacity
                 onPress={() => setEditModalVisible(false)}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
@@ -213,20 +291,27 @@ export const UserManagementScreen = ({ navigation }) => {
 
               <Text style={styles.rolePickerLabel}>Perfil de Acesso</Text>
               <View style={styles.rolePickerContainer}>
-                {['ADM', 'PROF', 'PARENT'].map((r) => (
+                {[
+                  { id: "ADM", label: "Admin" },
+                  { id: "PROF", label: "Professor" },
+                  { id: "PORTEIRO", label: "Porteiro" },
+                  { id: "PARENT", label: "Responsável" },
+                ].map((r) => (
                   <TouchableOpacity
-                    key={r}
+                    key={r.id}
                     style={[
                       styles.roleOption,
-                      editRole === r && styles.roleOptionSelected
+                      editRole === r.id && styles.roleOptionSelected,
                     ]}
-                    onPress={() => setEditRole(r)}
+                    onPress={() => setEditRole(r.id)}
                   >
-                    <Text style={[
-                      styles.roleOptionText,
-                      editRole === r && styles.roleOptionTextSelected
-                    ]}>
-                      {r === 'ADM' ? 'Admin' : r === 'PROF' ? 'Professor' : 'Responsável'}
+                    <Text
+                      style={[
+                        styles.roleOptionText,
+                        editRole === r.id && styles.roleOptionTextSelected,
+                      ]}
+                    >
+                      {r.label}
                     </Text>
                   </TouchableOpacity>
                 ))}
@@ -253,10 +338,10 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.xl,
+    paddingTop: spacing.lg,
     paddingBottom: spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
@@ -265,8 +350,8 @@ const styles = StyleSheet.create({
   backBtn: {
     minWidth: 44,
     minHeight: 44,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginRight: spacing.sm,
   },
   headerTitle: {
@@ -278,8 +363,29 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginTop: 2,
   },
+  searchContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: spacing.md,
+    height: 46,
+    marginHorizontal: spacing.lg,
+    marginTop: spacing.md,
+  },
+  searchInput: {
+    flex: 1,
+    ...typography.body,
+    color: colors.textPrimary,
+    height: "100%",
+  },
   listContainer: {
     padding: spacing.lg,
+    gap: spacing.md,
+  },
+  columnWrapper: {
     gap: spacing.md,
   },
   card: {
@@ -288,13 +394,17 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.border,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     ...shadows.card,
+  },
+  cardTablet: {
+    flex: 1,
   },
   cardInfo: {
     flex: 1,
+    marginRight: spacing.sm,
   },
   name: {
     ...typography.h3,
@@ -306,7 +416,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   roleBadge: {
-    alignSelf: 'flex-start',
+    alignSelf: "flex-start",
     paddingHorizontal: spacing.sm,
     paddingVertical: 3,
     borderRadius: radius.full,
@@ -314,49 +424,48 @@ const styles = StyleSheet.create({
   },
   roleText: {
     fontSize: 11,
-    fontFamily: 'Roboto_500Medium',
-    fontWeight: '600',
+    fontFamily: "Roboto_500Medium",
+    fontWeight: "600",
   },
   actions: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: spacing.xs,
   },
   actionBtn: {
-    minWidth: 44,
-    minHeight: 44,
+    minWidth: 42,
+    minHeight: 42,
     borderRadius: radius.sm,
     backgroundColor: colors.primarySurface,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   deleteBtn: {
     backgroundColor: colors.errorSurface,
   },
   emptyText: {
     ...typography.body,
-    textAlign: 'center',
+    textAlign: "center",
     marginTop: spacing.xl,
   },
-  // Modal de Edição
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(15, 23, 42, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
     padding: spacing.lg,
   },
   modalContent: {
-    width: '100%',
-    maxWidth: 480,
+    width: "100%",
+    maxWidth: 500,
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
     padding: spacing.lg,
     ...shadows.modal,
   },
   modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: spacing.lg,
   },
   modalTitle: {
@@ -369,19 +478,22 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   rolePickerContainer: {
-    flexDirection: 'row',
-    gap: spacing.sm,
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.xs,
     marginBottom: spacing.lg,
   },
   roleOption: {
     flex: 1,
-    minHeight: 44,
+    minWidth: "45%",
+    minHeight: 42,
     borderRadius: radius.sm,
     borderWidth: 1.5,
     borderColor: colors.border,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     backgroundColor: colors.surface,
+    paddingHorizontal: spacing.xs,
   },
   roleOptionSelected: {
     borderColor: colors.primary,
@@ -389,12 +501,12 @@ const styles = StyleSheet.create({
   },
   roleOptionText: {
     fontSize: 12,
-    fontFamily: 'Roboto_500Medium',
+    fontFamily: "Roboto_500Medium",
     color: colors.textSecondary,
   },
   roleOptionTextSelected: {
     color: colors.primary,
-    fontWeight: '700',
+    fontWeight: "700",
   },
   modalActions: {
     marginTop: spacing.md,

@@ -1,38 +1,44 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  FlatList, 
-  TouchableOpacity, 
-  Alert, 
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+  Alert,
   ActivityIndicator,
   Modal,
   ScrollView,
   KeyboardAvoidingView,
   Platform,
-  TextInput
-} from 'react-native';
-import { ResponsiveContainer } from '@shared/ui/ResponsiveContainer/ResponsiveContainer';
-import { Feather } from '@expo/vector-icons';
-import { listStudentsAPI, deleteStudentAPI, updateStudentAPI, listClassesAPI } from '@shared/api/adminApi';
-import { Input } from '@shared/ui/Input/Input';
-import { Button } from '@shared/ui/Button/Button';
-import { colors, radius, shadows, spacing, typography } from '@shared/theme';
+  TextInput,
+} from "react-native";
+import { ResponsiveContainer } from "@shared/ui/ResponsiveContainer/ResponsiveContainer";
+import { Feather } from "@expo/vector-icons";
+import {
+  listStudentsAPI,
+  deleteStudentAPI,
+  updateStudentAPI,
+  listClassesAPI,
+} from "@shared/api/adminApi";
+import { Input } from "@shared/ui/Input/Input";
+import { Button } from "@shared/ui/Button/Button";
+import { colors, radius, shadows, spacing, typography } from "@shared/theme";
+import { useResponsiveLayout } from "@shared/hooks/useResponsiveLayout";
 
 export const StudentManagementScreen = ({ navigation }) => {
+  const { isTablet, listColumns } = useResponsiveLayout();
   const [students, setStudents] = useState([]);
   const [classes, setClasses] = useState([]);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
 
-  // Estado de Edição Real
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [editingStudent, setEditingStudent] = useState(null);
-  const [editNome, setEditNome] = useState('');
-  const [editMatricula, setEditMatricula] = useState('');
+  const [editNome, setEditNome] = useState("");
+  const [editMatricula, setEditMatricula] = useState("");
   const [editTurmaId, setEditTurmaId] = useState(null);
-  const [editStatus, setEditStatus] = useState('ativo');
+  const [editStatus, setEditStatus] = useState("ativo");
   const [savingEdit, setSavingEdit] = useState(false);
 
   const fetchStudents = async () => {
@@ -42,10 +48,14 @@ export const StudentManagementScreen = ({ navigation }) => {
         listStudentsAPI(),
         listClassesAPI().catch(() => ({ data: [] })),
       ]);
-      setStudents(resStudents?.data || (Array.isArray(resStudents) ? resStudents : []));
-      setClasses(resClasses?.data || (Array.isArray(resClasses) ? resClasses : []));
+      setStudents(
+        resStudents?.data || (Array.isArray(resStudents) ? resStudents : [])
+      );
+      setClasses(
+        resClasses?.data || (Array.isArray(resClasses) ? resClasses : [])
+      );
     } catch (error) {
-      Alert.alert('Erro', 'Falha ao buscar alunos');
+      Alert.alert("Erro", "Falha ao buscar alunos");
     } finally {
       setLoading(false);
     }
@@ -57,16 +67,16 @@ export const StudentManagementScreen = ({ navigation }) => {
 
   const openEditModal = (student) => {
     setEditingStudent(student);
-    setEditNome(student.nome || '');
-    setEditMatricula(student.matricula || '');
+    setEditNome(student.nome || "");
+    setEditMatricula(student.matricula || "");
     setEditTurmaId(student.turma_id || null);
-    setEditStatus(student.status || 'ativo');
+    setEditStatus(student.status || "ativo");
     setEditModalVisible(true);
   };
 
   const handleSaveEdit = async () => {
     if (!editNome || !editMatricula) {
-      Alert.alert('Atenção', 'Nome e matrícula são obrigatórios.');
+      Alert.alert("Atenção", "Nome e matrícula são obrigatórios.");
       return;
     }
     try {
@@ -77,80 +87,104 @@ export const StudentManagementScreen = ({ navigation }) => {
         status: editStatus,
         turma_id: editTurmaId || editingStudent.turma_id || 1,
       });
-      Alert.alert('Sucesso', 'Aluno atualizado com sucesso!');
+      Alert.alert("Sucesso", "Aluno atualizado com sucesso!");
       setEditModalVisible(false);
       fetchStudents();
     } catch (error) {
-      Alert.alert('Erro', error.message || 'Falha ao atualizar aluno');
+      Alert.alert("Erro", error.message || "Falha ao atualizar aluno");
     } finally {
       setSavingEdit(false);
     }
   };
 
   const handleDelete = (id, nome) => {
-    Alert.alert('Atenção', `Deseja realmente excluir o aluno ${nome}?`, [
-      { text: 'Cancelar', style: 'cancel' },
-      { 
-        text: 'Excluir', 
-        style: 'destructive',
+    Alert.alert("Atenção", `Deseja realmente excluir o aluno ${nome}?`, [
+      { text: "Cancelar", style: "cancel" },
+      {
+        text: "Excluir",
+        style: "destructive",
         onPress: async () => {
           try {
             await deleteStudentAPI(id);
-            Alert.alert('Sucesso', 'Aluno excluído!');
+            Alert.alert("Sucesso", "Aluno excluído!");
             fetchStudents();
           } catch (error) {
-            Alert.alert('Erro', error.message || 'Falha ao excluir');
+            Alert.alert("Erro", error.message || "Falha ao excluir");
           }
-        }
-      }
+        },
+      },
     ]);
   };
 
   const getStatusBadge = (status) => {
     switch (status) {
-      case 'ativo':
-        return { label: 'Ativo', bg: colors.secondarySurface, text: colors.secondary };
-      case 'inativo':
-        return { label: 'Inativo', bg: colors.errorSurface, text: colors.error };
-      case 'transferido':
-        return { label: 'Transferido', bg: colors.warningSurface, text: colors.warning };
+      case "ativo":
+        return {
+          label: "Ativo",
+          bg: colors.secondarySurface,
+          text: colors.secondary,
+        };
+      case "inativo":
+        return { label: "Inativo", bg: colors.errorSurface, text: colors.error };
+      case "transferido":
+        return {
+          label: "Transferido",
+          bg: colors.warningSurface,
+          text: colors.warning,
+        };
       default:
-        return { label: status || 'Ativo', bg: colors.primarySurface, text: colors.primary };
+        return {
+          label: status || "Ativo",
+          bg: colors.primarySurface,
+          text: colors.primary,
+        };
     }
   };
 
   const filteredStudents = students.filter((s) => {
     if (!searchQuery.trim()) return true;
     const q = searchQuery.toLowerCase();
-    return s.nome?.toLowerCase().includes(q) || s.matricula?.toLowerCase().includes(q);
+    return (
+      s.nome?.toLowerCase().includes(q) ||
+      s.matricula?.toLowerCase().includes(q)
+    );
   });
 
   const renderItem = ({ item }) => {
     const badge = getStatusBadge(item.status);
 
     return (
-      <View style={styles.card}>
+      <View style={[styles.card, isTablet && styles.cardTablet]}>
         <View style={styles.cardInfo}>
-          <Text style={styles.name}>{item.nome}</Text>
+          <Text style={styles.name} numberOfLines={1}>
+            {item.nome}
+          </Text>
           <View style={styles.metaRow}>
             <Text style={styles.details}>Matrícula: {item.matricula}</Text>
             {item.turma_nome ? (
-              <View style={[styles.statusBadge, { backgroundColor: colors.accentSurface }]}>
+              <View
+                style={[
+                  styles.statusBadge,
+                  { backgroundColor: colors.accentSurface, marginTop: 0 },
+                ]}
+              >
                 <Text style={[styles.statusText, { color: colors.accent }]}>
                   {item.turma_nome}
                 </Text>
               </View>
             ) : null}
           </View>
-          
+
           <View style={[styles.statusBadge, { backgroundColor: badge.bg }]}>
-            <Text style={[styles.statusText, { color: badge.text }]}>{badge.label}</Text>
+            <Text style={[styles.statusText, { color: badge.text }]}>
+              {badge.label}
+            </Text>
           </View>
         </View>
 
         <View style={styles.actions}>
-          <TouchableOpacity 
-            style={styles.actionBtn} 
+          <TouchableOpacity
+            style={styles.actionBtn}
             activeOpacity={0.7}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             onPress={() => openEditModal(item)}
@@ -158,8 +192,8 @@ export const StudentManagementScreen = ({ navigation }) => {
             <Feather name="edit-2" size={18} color={colors.primary} />
           </TouchableOpacity>
 
-          <TouchableOpacity 
-            style={[styles.actionBtn, styles.deleteBtn]} 
+          <TouchableOpacity
+            style={[styles.actionBtn, styles.deleteBtn]}
             activeOpacity={0.7}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             onPress={() => handleDelete(item.id, item.nome)}
@@ -174,8 +208,8 @@ export const StudentManagementScreen = ({ navigation }) => {
   return (
     <ResponsiveContainer style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity 
-          onPress={() => navigation.goBack()} 
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
           style={styles.backBtn}
           hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
         >
@@ -183,12 +217,19 @@ export const StudentManagementScreen = ({ navigation }) => {
         </TouchableOpacity>
         <View>
           <Text style={styles.headerTitle}>Gerenciar Alunos</Text>
-          <Text style={styles.headerSubtitle}>Lista de Estudantes Matriculados</Text>
+          <Text style={styles.headerSubtitle}>
+            Lista de Estudantes Matriculados ({filteredStudents.length})
+          </Text>
         </View>
       </View>
 
       <View style={styles.searchContainer}>
-        <Feather name="search" size={18} color={colors.textMuted} style={{ marginRight: spacing.sm }} />
+        <Feather
+          name="search"
+          size={18}
+          color={colors.textMuted}
+          style={{ marginRight: spacing.sm }}
+        />
         <TextInput
           style={styles.searchInput}
           placeholder="Buscar aluno por nome ou matrícula..."
@@ -197,16 +238,25 @@ export const StudentManagementScreen = ({ navigation }) => {
           onChangeText={setSearchQuery}
         />
         {searchQuery.length > 0 && (
-          <TouchableOpacity onPress={() => setSearchQuery('')}>
+          <TouchableOpacity onPress={() => setSearchQuery("")}>
             <Feather name="x" size={16} color={colors.textMuted} />
           </TouchableOpacity>
         )}
       </View>
-      
+
       {loading ? (
-        <ActivityIndicator size="large" color={colors.secondary} style={{ marginTop: spacing.xl }} />
+        <ActivityIndicator
+          size="large"
+          color={colors.secondary}
+          style={{ marginTop: spacing.xl }}
+        />
       ) : (
-        <FlatList 
+        <FlatList
+          key={`students-grid-${listColumns}`}
+          numColumns={listColumns}
+          columnWrapperStyle={
+            listColumns > 1 ? styles.columnWrapper : undefined
+          }
           data={filteredStudents}
           keyExtractor={(item) => item.id.toString()}
           renderItem={renderItem}
@@ -214,7 +264,9 @@ export const StudentManagementScreen = ({ navigation }) => {
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={
             <Text style={styles.emptyText}>
-              {searchQuery ? 'Nenhum estudante corresponde à pesquisa.' : 'Nenhum aluno encontrado.'}
+              {searchQuery
+                ? "Nenhum estudante corresponde à pesquisa."
+                : "Nenhum aluno encontrado."}
             </Text>
           }
         />
@@ -222,14 +274,14 @@ export const StudentManagementScreen = ({ navigation }) => {
 
       {/* Modal de Edição Real */}
       <Modal visible={editModalVisible} transparent animationType="fade">
-        <KeyboardAvoidingView 
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined} 
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
           style={styles.modalOverlay}
         >
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Editar Aluno</Text>
-              <TouchableOpacity 
+              <TouchableOpacity
                 onPress={() => setEditModalVisible(false)}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
@@ -255,20 +307,27 @@ export const StudentManagementScreen = ({ navigation }) => {
               {classes.length > 0 && (
                 <View style={{ marginBottom: spacing.md }}>
                   <Text style={styles.statusPickerLabel}>Turma do Aluno</Text>
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 6 }}>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={{ gap: spacing.xs, marginTop: 6 }}
+                  >
                     {classes.map((c) => (
                       <TouchableOpacity
                         key={c.id}
                         style={[
-                          styles.statusOption,
-                          editTurmaId === c.id && styles.statusOptionSelected
+                          styles.turmaOption,
+                          editTurmaId === c.id && styles.statusOptionSelected,
                         ]}
                         onPress={() => setEditTurmaId(c.id)}
                       >
-                        <Text style={[
-                          styles.statusOptionText,
-                          editTurmaId === c.id && styles.statusOptionTextSelected
-                        ]}>
+                        <Text
+                          style={[
+                            styles.statusOptionText,
+                            editTurmaId === c.id &&
+                              styles.statusOptionTextSelected,
+                          ]}
+                        >
                           {c.nome}
                         </Text>
                       </TouchableOpacity>
@@ -279,19 +338,21 @@ export const StudentManagementScreen = ({ navigation }) => {
 
               <Text style={styles.statusPickerLabel}>Status do Aluno</Text>
               <View style={styles.statusPickerContainer}>
-                {['ativo', 'inativo', 'transferido'].map((s) => (
+                {["ativo", "inativo", "transferido"].map((s) => (
                   <TouchableOpacity
                     key={s}
                     style={[
                       styles.statusOption,
-                      editStatus === s && styles.statusOptionSelected
+                      editStatus === s && styles.statusOptionSelected,
                     ]}
                     onPress={() => setEditStatus(s)}
                   >
-                    <Text style={[
-                      styles.statusOptionText,
-                      editStatus === s && styles.statusOptionTextSelected
-                    ]}>
+                    <Text
+                      style={[
+                        styles.statusOptionText,
+                        editStatus === s && styles.statusOptionTextSelected,
+                      ]}
+                    >
                       {s.charAt(0).toUpperCase() + s.slice(1)}
                     </Text>
                   </TouchableOpacity>
@@ -320,10 +381,10 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.xl,
+    paddingTop: spacing.lg,
     paddingBottom: spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
@@ -332,8 +393,8 @@ const styles = StyleSheet.create({
   backBtn: {
     minWidth: 44,
     minHeight: 44,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginRight: spacing.sm,
   },
   headerTitle: {
@@ -346,14 +407,14 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: colors.surface,
     borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.border,
     paddingHorizontal: spacing.md,
-    height: 44,
+    height: 46,
     marginHorizontal: spacing.lg,
     marginTop: spacing.md,
   },
@@ -361,11 +422,11 @@ const styles = StyleSheet.create({
     flex: 1,
     ...typography.body,
     color: colors.textPrimary,
-    height: '100%',
+    height: "100%",
   },
   metaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: spacing.sm,
     marginTop: 2,
     marginBottom: spacing.xs,
@@ -374,19 +435,26 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     gap: spacing.md,
   },
+  columnWrapper: {
+    gap: spacing.md,
+  },
   card: {
     backgroundColor: colors.surface,
     padding: spacing.md,
     borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.border,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     ...shadows.card,
+  },
+  cardTablet: {
+    flex: 1,
   },
   cardInfo: {
     flex: 1,
+    marginRight: spacing.sm,
   },
   name: {
     ...typography.h3,
@@ -398,7 +466,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   statusBadge: {
-    alignSelf: 'flex-start',
+    alignSelf: "flex-start",
     paddingHorizontal: spacing.sm,
     paddingVertical: 3,
     borderRadius: radius.full,
@@ -406,49 +474,48 @@ const styles = StyleSheet.create({
   },
   statusText: {
     fontSize: 11,
-    fontFamily: 'Roboto_500Medium',
-    fontWeight: '600',
+    fontFamily: "Roboto_500Medium",
+    fontWeight: "600",
   },
   actions: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: spacing.xs,
   },
   actionBtn: {
-    minWidth: 44,
-    minHeight: 44,
+    minWidth: 42,
+    minHeight: 42,
     borderRadius: radius.sm,
     backgroundColor: colors.primarySurface,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   deleteBtn: {
     backgroundColor: colors.errorSurface,
   },
   emptyText: {
     ...typography.body,
-    textAlign: 'center',
+    textAlign: "center",
     marginTop: spacing.xl,
   },
-  // Modal de Edição
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(15, 23, 42, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
     padding: spacing.lg,
   },
   modalContent: {
-    width: '100%',
-    maxWidth: 480,
+    width: "100%",
+    maxWidth: 500,
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
     padding: spacing.lg,
     ...shadows.modal,
   },
   modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: spacing.lg,
   },
   modalTitle: {
@@ -461,9 +528,19 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   statusPickerContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: spacing.sm,
     marginBottom: spacing.lg,
+  },
+  turmaOption: {
+    paddingHorizontal: spacing.md,
+    minHeight: 40,
+    borderRadius: radius.sm,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: colors.surface,
   },
   statusOption: {
     flex: 1,
@@ -471,8 +548,8 @@ const styles = StyleSheet.create({
     borderRadius: radius.sm,
     borderWidth: 1.5,
     borderColor: colors.border,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     backgroundColor: colors.surface,
   },
   statusOptionSelected: {
@@ -481,12 +558,12 @@ const styles = StyleSheet.create({
   },
   statusOptionText: {
     fontSize: 12,
-    fontFamily: 'Roboto_500Medium',
+    fontFamily: "Roboto_500Medium",
     color: colors.textSecondary,
   },
   statusOptionTextSelected: {
     color: colors.secondary,
-    fontWeight: '700',
+    fontWeight: "700",
   },
   modalActions: {
     marginTop: spacing.md,

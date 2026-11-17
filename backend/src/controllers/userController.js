@@ -2,7 +2,7 @@ import * as userService from '../services/userService.js';
 
 export async function createUser(req, res) {
   try {
-    const { nome, email } = req.body ?? {};
+    const { nome, email, role } = req.body ?? {};
 
     if (!nome || !email) {
       return res.status(400).json({
@@ -10,9 +10,16 @@ export async function createUser(req, res) {
       });
     }
 
+    if (role && !['ADM', 'PROF', 'PARENT', 'PORTEIRO'].includes(role)) {
+      return res.status(400).json({
+        error: 'Cargo (role) inválido'
+      });
+    }
+
     const result = await userService.createUser({
       nome,
-      email
+      email,
+      role: role || 'PARENT'
     });
 
     return res.status(201).json({
@@ -88,6 +95,12 @@ export async function getUser(req, res) {
       });
     }
 
+    if (req.user && req.user.role !== 'ADM' && Number(req.user.id) !== userId) {
+      return res.status(403).json({
+        error: 'Acesso negado'
+      });
+    }
+
     const user = await userService.getUserById(userId);
 
     if (!user) {
@@ -119,12 +132,29 @@ export async function updateUser(req, res) {
       });
     }
 
-    const { nome, email } = req.body ?? {};
+    const { nome, email, role } = req.body ?? {};
 
     if (!nome || !email) {
       return res.status(400).json({
         error: 'nome e email são obrigatórios'
       });
+    }
+
+    if (role !== undefined && !['ADM', 'PROF', 'PARENT', 'PORTEIRO'].includes(role)) {
+      return res.status(400).json({
+        error: 'Cargo (role) inválido'
+      });
+    }
+
+    if (req.user && req.user.role !== 'ADM' && Number(req.user.id) !== userId) {
+      return res.status(403).json({
+        error: 'Acesso negado'
+      });
+    }
+
+    let roleToUpdate = undefined;
+    if (role !== undefined && (!req.user || req.user.role === 'ADM')) {
+      roleToUpdate = role;
     }
 
     const existingUser = await userService.getUserById(userId);
@@ -135,12 +165,14 @@ export async function updateUser(req, res) {
       });
     }
 
-    const user = await userService.updateUser(userId, {
-      nome,
-      email
-    });
+    const updatePayload = { nome, email };
+    if (roleToUpdate !== undefined) {
+      updatePayload.role = roleToUpdate;
+    }
 
-    return res.status(200).json({
+    const user = await userService.updateUser(userId, updatePayload);
+
+    return res.status(200).json({ 
       message: 'Usuário atualizado com sucesso',
       data: user
     });

@@ -102,17 +102,25 @@ export async function updateRoleById(id, role) {
   return await findById(id);
 }
 
-export async function updateById(id, { nome, email }) {
+export async function updateById(id, { nome, email, role }) {
+  const sets = ['nome = COALESCE(?, nome)', 'email = COALESCE(?, email)'];
+  const params = [nome || null, email || null];
+
+  if (role !== undefined) {
+    sets.push('role = ?');
+    params.push(role);
+  }
+
+  sets.push('data_atualizacao = CURRENT_TIMESTAMP');
+  params.push(id);
+
   const sql = `
     UPDATE users
-    SET
-      nome = ?,
-      email = ?,
-      data_atualizacao = CURRENT_TIMESTAMP
+    SET ${sets.join(', ')}
     WHERE id = ?
   `;
 
-  await query(sql, [nome, email, id]);
+  await query(sql, params);
 
   return await findById(id);
 }

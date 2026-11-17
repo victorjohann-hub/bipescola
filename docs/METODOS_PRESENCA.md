@@ -1,480 +1,167 @@
-# Dois Métodos de Registro de Presença - BipEscola
+# 📋 Métodos de Registro e Acompanhamento de Presença - BipEscola
 
-Comparação entre QR Code e Confirmação Manual.
-
----
-
-## RESUMO COMPARATIVO
-
-| Aspecto | QR Code | Confirmacao Manual |
-|---------|-----------|---------------------|
-| Velocidade | Muito rápida (~1s) | Rápida (~10s) |
-| Casos de Uso | Entrada/Saída realtime | Consolidação em lote |
-| Precisão | Automática | Seleção manual |
-| Equipamento | Precisa leitor QR | Só precisa app/web |
-| Para Pais | Ideal para seus filhos | Também funciona |
-| Para Admin | Bom para pontuais | Ótimo para lotes |
-| Erros | QR danificado | Marcação errada |
+> **BipEscola**: Documentação técnica e operacional dos métodos de registro e consulta de presença escolar (QR Code, Chamada Manual e Histórico).
 
 ---
 
-## METODO 1: QR CODE
-
-### Fluxo Visual
-
-```
-┌─────────────────────────────────┐
-│      TELA DE QR CODE            │
-├─────────────────────────────────┤
-│                                 │
-│   ┌─────────────────────────┐   │
-│   │   📷 Câmera Ativa      │   │
-│   │                         │   │
-│   │   ┌─────────────┐       │   │
-│   │   │  [QR Code]  │       │   │
-│   │   └─────────────┘       │   │
-│   └─────────────────────────┘   │
-│                                 │
-│   Aproxime o código...          │
-│                                 │
-│   [ Cancelar ]  [ Manual ]      │
-└─────────────────────────────────┘
-        ↓ (QR Lido)
-┌─────────────────────────────────┐
-│     CONFIRMAÇÃO SUCESSO         │
-├─────────────────────────────────┤
-│                                 │
-│   ✅ Entrada Registrada!        │
-│                                 │
-│   João Silva Santos             │
-│   Matrícula: MAT001             │
-│   Turma: Turma A                │
-│   Hora: 07:30:45                │
-│                                 │
-│   [ Próximo ]                   │
-└─────────────────────────────────┘
-```
-
-### API
-
-```javascript
-// Fluxo no Backend
-POST /api/movimentacoes/qrcode
-
-// 1. Decodificar QR Code
-codigo_qr = decodificar("QR_001_MAT001")
-
-// 2. Extrair matrícula
-matricula = extrair_matricula(codigo_qr)  // "MAT001"
-
-// 3. Buscar aluno
-aluno = SELECT * FROM alunos WHERE matricula = matricula
-
-// 4. Validar permissão do usuário
-if user.role == 'admin' || user_has_child(user.id, aluno.id):
-    valido = true
-
-// 5. Validar aluno
-if aluno.status != 'ativo':
-    erro = "Aluno inativo"
-
-// 6. Registrar
-INSERT INTO registros_movimentacao (
-    aluno_id, matricula, escola_id, turma_id,
-    tipo_movimentacao, data_registro, hora_registro, data_hora_completa
-) VALUES (aluno.id, aluno.matricula, aluno.escola_id, aluno.turma_id,
-          'entrada', CURDATE(), CURTIME(), NOW())
-
-// 7. Retornar confirmação
-return {
-    aluno: aluno.nome_completo,
-    tipo: 'entrada',
-    hora: NOW()
-}
-```
-
-### Vantagens
-
-- Muito rápida (1-2 segundos)
-- Automática (sem risco de erro humano)
-- Ideal para entrada/saída contínua
-- Rastreável por QR Code
-- Funciona para pais acompanharem filhos
-- Coordenação pode usar em pontos críticos
-
-### Desvantagens
-
-- Precisa de leitor QR (câmera + software)
-- QR danificado = não funciona
-- Requer tecnologia (smartphone/tablet)
-- Conexão internet necessária
-
-### Quando Usar
-
-- Entrada diária (07:30)
-- Saída almoço (11:30)
-- Retorno almoço (12:30)
-- Saída final (17:00)
-- Pais confirmando filhos
-- Situações pontuais
+## 📌 Sumário
+1. [Visão Geral dos Métodos](#1-visão-geral-dos-métodos)
+2. [Método 1: Leitura de QR Code (Portaria / Entrada Rápida)](#2-método-1-leitura-de-qr-code-portaria--entrada-rápida)
+3. [Método 2: Chamada Manual por Turma (Sala de Aula / Coordenação)](#3-método-2-chamada-manual-por-turma-sala-de-aula--coordenação)
+4. [Acompanhamento e Histórico de Presença](#4-acompanhamento-e-histórico-de-presença)
+5. [Contratos de API e Persistência no Banco](#5-contratos-de-api-e-persistência-no-banco)
+6. [Tratamento de Fuso Horário (Timezone BRT)](#6-tratamento-de-fuso-horário-timezone-brt)
 
 ---
 
-## METODO 2: CONFIRMACAO MANUAL
+## 1. Visão Geral dos Métodos
 
-### Fluxo Visual
+O **BipEscola** oferece flexibilidade operacional permitindo que o registro de presença seja realizado por meio de duas abordagens complementares, ambas integradas à mesma tabela e regras de negócio:
 
-```
-┌──────────────────────────────────┐
-│   LISTA DE ALUNOS - PRESENÇA     │
-├──────────────────────────────────┤
-│                                  │
-│  Turma A - INFANTIL I            │
-│  ☐ João Silva Santos (MAT001)    │
-│  ☐ Ana Paula Costa (MAT002)      │
-│                                  │
-│  Turma B - INFANTIL I            │
-│  ☐ Pedro Oliveira (MAT003)       │
-│  ☐ Lucia Ferreira (MAT004)       │
-│                                  │
-│  Turma C - INFANTIL II           │
-│  ☐ Bruno Martins (MAT005)        │
-│  ☐ Gabriela Rocha (MAT006)       │
-│                                  │
-│  Tipo: [ Entrada ▼ ]             │
-│                                  │
-│  [ Cancelar ]  [ Confirmar ]     │
-└──────────────────────────────────┘
-        ↓ (Seleciona + Confirma)
-┌──────────────────────────────────┐
-│   CONFIRMAÇÃO SUCESSO            │
-├──────────────────────────────────┤
-│                                  │
-│  ✅ Presença Registrada!         │
-│                                  │
-│  3 alunos confirmados            │
-│                                  │
-│  • João Silva Santos             │
-│  • Ana Paula Costa               │
-│  • Pedro Oliveira                │
-│                                  │
-│  Hora: 07:35                     │
-│                                  │
-│  [ Voltar ]  [ Nova Rodada ]     │
-└──────────────────────────────────┘
-```
-
-### API
-
-```javascript
-// Fluxo no Backend
-POST /api/movimentacoes/confirmacao
-
-// Input
-{
-  usuario_id: 2,
-  aluno_ids: [1, 2, 3],
-  tipo_movimentacao: 'entrada'
-}
-
-// 1. Validar permissões para cada aluno
-for (aluno_id of aluno_ids):
-    if user.role == 'pai':
-        if !user_has_child(user.id, aluno_id):
-            erro = "Não autorizado"
-    
-    // Validar aluno
-    aluno = SELECT * FROM alunos WHERE id = aluno_id
-    if aluno.status != 'ativo':
-        erro = "Aluno inativo"
-
-// 2. Inserir registros para todos
-for (aluno_id of aluno_ids):
-    INSERT INTO registros_movimentacao (
-        aluno_id, matricula, escola_id, turma_id,
-        tipo_movimentacao, data_registro, hora_registro, data_hora_completa
-    ) VALUES (aluno_id, aluno.matricula, aluno.escola_id, 
-              aluno.turma_id, 'entrada', CURDATE(), 
-              CURTIME(), NOW())
-
-// 3. Retornar confirmação
-return {
-    total: 3,
-    registros: [
-        { aluno: "João", matricula: "MAT001" },
-        { aluno: "Ana", matricula: "MAT002" },
-        { aluno: "Pedro", matricula: "MAT003" }
-    ]
-}
-```
-
-### Vantagens
-
-- Simples de usar (todo mundo sabe clicar)
-- Ideal para registros em lote
-- Registra múltiplos alunos de uma vez
-- Consolidação ao final do turno
-- Funciona em qualquer dispositivo (web/app)
-- Pais podem marcar seus filhos
-- Seguro (não precisa de QR físico)
-
-### Desvantagens
-
-- Mais lenta (10-30 segundos)
-- Risco de erro humano (marcar errado)
-- Requer atenção do usuário
-- Não rastreia hora exata individual
-- Fácil esquecer de marcar alguém
-
-### Quando Usar
-
-- Consolidação ao final do turno
-- Presença diária por turma
-- Corrigir registros perdidos
-- Pais acompanhando filhos
-- Relatórios administrativos
-- Não há urgência de horário exato
+| Característica | 📷 Leitura de QR Code | 📝 Chamada Manual por Turma |
+|---|---|---|
+| **Tela no App** | `mobile/src/pages/Presence/QRCodeScannerScreen.js` | `mobile/src/pages/Presence/ClassListScreen.js` |
+| **Público Principal** | Portaria (`PORTEIRO`), Inspetores e Professores | Professores (`PROF`) e Administradores (`ADM`) |
+| **Cenário de Uso** | Entrada e recepção dos alunos na portaria | Sala de aula, conferência de início do turno |
+| **Tempo Médio** | Instantâneo (~1 segundo por aluno) | Rápido (~1 toque por aluno na lista) |
+| **Hardware Necessário** | Câmera do smartphone/tablet | Apenas tela sensível ao toque / dispositivo móvel |
+| **Feedback ao Usuário** | Som de "bip" (`expo-av`) + Toast com nome do aluno | Alternância visual imediata (Badge Verde/Vermelho) |
+| **Endpoint Consumido** | `POST /api/attendances` | `POST /api/attendances` |
 
 ---
 
-## QUAL USAR EM CADA SITUACAO
+## 2. Método 1: Leitura de QR Code (Portaria / Entrada Rápida)
 
-### Para PAIS
+### 2.1. Como Funciona
+Cada crachá ou carteirinha do aluno possui um QR Code codificado no padrão institucional:
+- **Padrão Primário**: `aluno_<ID>` (exemplo: `aluno_1`, `aluno_42`)
+- **Padrão Numérico Direto**: `<ID>` (exemplo: `1`, `42`)
 
-Scenario 1: Pai deixa filho na escola
-- Opcao 1 (QR Code): Excelente
-  - Pai escaneia QR Code do filho
-  - Confirmação instantânea
-  - Pode ir embora sabendo que foi registrado
+O operador (porteiro ou professor) aponta a câmera do aplicativo para o código do aluno. O app decodifica o identificador, extrai o `student_id` e envia a requisição de presença para o backend.
 
-- Opcao 2 (Manual): Bom
-  - Pai marca filho na lista
-  - Depois clica confirmar
-  - Pode esquecer se fizer depois
+### 2.2. Fluxo de Execução
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Operador as Porteiro / Professor
+    participant App as App Mobile (CameraView)
+    participant Audio as Feedback Sonoro (expo-av)
+    participant API as Backend (/api/attendances)
+    participant DB as MySQL (presencas)
 
-Scenario 2: Pai consultando se filho chegou
-- Opcao 1 (QR Code): Muito bom
-  - Pai vê histórico do filho
-  - Vê hora exata de entrada
-
-- Opcao 2 (Manual): Fraco
-  - Manual não é para consulta, é para registrar
-
----
-
-### Para ADMIN/COORDENACAO
-
-Scenario 1: Abertura da escola (07:30)
-- Opcao 1 (QR Code): Bom
-  - Vai sendo registrado conforme chegam
-  - Mais trabalhoso (um por um)
-
-- Opcao 2 (Manual): Excelente
-  - Registra todos de uma vez no fim do turno
-  - Mais rápido e prático
-
-Scenario 2: Aluno chega tarde
-- Opcao 1 (QR Code): Excelente
-  - Escaneia QR quando chegar
-  - Registra hora real de entrada
-
-- Opcao 2 (Manual): Fraco
-  - Pode esquecer se for depois
-
-Scenario 3: Saída para almoço (11:30)
-- Opcao 1 (QR Code): Muito bom
-  - Escaneia QR quando saem
-  - Registro automático
-
-- Opcao 2 (Manual): Fraco
-  - Requer memória de quem saiu
-
-Scenario 4: Relatório de presença do dia
-- Opcao 1 (QR Code): Excelente
-  - Tudo já está registrado
-  - Relatório completo e automático
-
-- Opcao 2 (Manual): Bom
-  - Só cria registros quando confirma
-  - Perfeito para consolidação
-
----
-
-## ESTRATEGIA RECOMENDADA
-
-### Fluxo Ideal do Dia
-
+    Operador->>App: Aponta câmera para o QR Code ("aluno_5")
+    App->>App: Parser extrai student_id = 5
+    App->>Audio: Toca áudio de confirmação (bip sonoro)
+    App->>API: POST /api/attendances { student_id: 5, date: "2026-11-07", status: "presente" }
+    API->>DB: INSERT INTO presencas ... ON DUPLICATE KEY UPDATE presente = 'presente'
+    DB-->>API: 201 Created / 200 OK
+    API-->>App: Resposta com dados da presença
+    App->>Operador: Exibe Toast: "Presença confirmada: [Nome do Aluno]"
+    Note over App: Cooldown de 2.5s para evitar leituras duplicadas acidentais
 ```
-07:30 - ABERTURA
-├─ OPÇÃO 1 (QR Code): Admin em porta escaneia cada criança
-│  └─ Entrada individual, hora automática
-├─ OU OPÇÃO 2 (Manual): Admin consolida lista depois
-│  └─ Mais rápido se usar junto
 
-11:30 - SAÍDA ALMOÇO
-├─ OPÇÃO 1 (QR Code): Cada saída escaneia
-└─ Mais preciso para rastrear saída
+### 2.3. Resiliência e Prevenção de Falhas
+- **Cooldown de Varredura**: Após o disparo de uma leitura com sucesso, a câmera entra em pausa de 2,5 segundos antes de aceitar a leitura do próximo aluno.
+- **Tratamento de Duplicidade**: Se o aluno já teve a presença registrada no mesmo dia, o backend atualiza o registro ou responde com confirmação idempotente, evitando erro 409 ou tela travada.
+- **Formato Inválido**: Códigos QR desconhecidos que não seguem o formato de aluno geram um alerta amigável na tela informando que o código não pertence ao sistema.
 
-12:30 - RETORNO ALMOÇO
-├─ OPÇÃO 1 (QR Code): Cada retorno escaneia
-└─ Mais preciso para rastrear retorno
+---
 
-17:00 - SAÍDA FINAL
-├─ OPÇÃO 1 (QR Code): Escaneia quando saem
-├─ OU OPÇÃO 2 (Manual): Consolida quem saiu
-└─ Pode usar as duas
+## 3. Método 2: Chamada Manual por Turma (Sala de Aula / Coordenação)
 
-17:30 - RELATÓRIO DO DIA
-├─ Sistema mostra tudo consolidado
-└─ Admin gera relatório
+### 3.1. Como Funciona
+Ideal para o professor em sala de aula ao iniciar ou finalizar o período letivo:
+1. O professor seleciona a sua turma em um seletor visual (dropdown ou abas de turmas cadastradas).
+2. O aplicativo lista todos os alunos vinculados àquela turma com seus respectivos avatares e matrículas.
+3. Para a data selecionada (por padrão a data atual no fuso local), o app já traz pré-carregado o status atual de cada estudante (`presente` ou `ausente`).
+4. Com um único toque (**1-Tap**), o professor alterna o status do aluno entre presente e ausente.
+
+### 3.2. Fluxo de Execução
+```mermaid
+flowchart TD
+    A["Professor abre Lista de Chamada"] --> B["GET /api/classes (Busca turmas)"]
+    B --> C["GET /api/students?class_id=X (Lista alunos da turma)"]
+    C --> D["GET /api/attendances?date=YYYY-MM-DD (Carrega status do dia)"]
+    D --> E["Interface exibe cartões com botões de presença"]
+    E -->|"Professor clica no aluno"| F["Alterna status: Presente ↔ Ausente"]
+    F -->|"Otimista na UI"| G["POST /api/attendances (Atualiza no banco)"]
+    G --> H["Registro persistido com sucesso"]
 ```
 
 ---
 
-## ENDPOINTS NECESSARIOS
+## 4. Acompanhamento e Histórico de Presença
 
-### QR Code
-```
-POST /api/movimentacoes/qrcode
-  - codigo_qr (string)
-  - usuario_id (int)
-  - tipo (entrada|saida)
+### 4.1. Para a Escola (Administradores, Professores e Portaria)
+A tela `AttendanceHistoryScreen` permite:
+- Filtrar presenças por data específica (seletor de calendário).
+- Filtrar por aluno ou turma.
+- Visualizar taxa percentual de comparecimento do dia.
+- Identificar rapidamente ausências para contato imediato com os responsáveis.
 
-Response:
-  - aluno (nome, matricula, turma)
-  - tipo (entrada|saida)
-  - hora (timestamp)
-```
-
-### Confirmação Manual
-```
-POST /api/movimentacoes/confirmacao
-  - usuario_id (int)
-  - aluno_ids (array)
-  - tipo_movimentacao (entrada|saida)
-
-Response:
-  - total (int)
-  - registros (array)
-```
-
-### Consultar Alunos (Para Confirmação Manual)
-```
-GET /api/meus-alunos (se pai)
-GET /api/alunos (se admin)
-
-Response:
-  - id
-  - matricula
-  - nome_completo
-  - turma
-```
-
-### Histórico
-```
-GET /api/movimentacoes/historico/:matricula
-
-Response:
-  - aluno (nome)
-  - registros (array de entradas/saídas com horário)
-```
+### 4.2. Para os Responsáveis (`PARENT`)
+Ao acessar o aplicativo com perfil de responsável:
+- O responsável visualiza apenas o histórico dos seus dependentes cadastrados (filtrados via `/api/students/pai/:id`).
+- Recebe a confirmação de horário de entrada do filho na escola.
+- Consulta o histórico de frequências do mês corrente.
 
 ---
 
-## CHECKLIST PARA O BACKEND
+## 5. Contratos de API e Persistência no Banco
 
-### QR Code
-- [ ] Decodificar código QR
-- [ ] Extrair matrícula
-- [ ] Validar aluno existe
-- [ ] Validar aluno está ativo
-- [ ] Validar permissão do usuário
-- [ ] Registrar com data/hora automática
-- [ ] Retornar confirmação com nome + turma
-
-### Confirmação Manual
-- [ ] Receber lista de alunos selecionados
-- [ ] Validar permissão para cada aluno
-- [ ] Validar alunos estão ativos
-- [ ] Inserir registros em lote
-- [ ] Retornar confirmação com total
-- [ ] Mostrar alunos registrados
-
-### Comum
-- [ ] Validar usuario está logado
-- [ ] Validar tipo_movimentacao (entrada/saida)
-- [ ] Registrar apenas datas de hoje
-- [ ] Usar data/hora automática (NOW())
-- [ ] Nunca permitir editar/deletar registros
-
----
-
-## EXEMPLOS DE RESPOSTA
-
-### QR Code - Sucesso
+### 5.1. Rota de Registro de Presença
+- **Método**: `POST`
+- **URL**: `/api/attendances`
+- **Headers**: `Authorization: Bearer <JWT>`
+- **Permissões**: `ADM`, `PROF`, `PORTEIRO`
+- **Corpo da Requisição (Payload)**:
 ```json
 {
-  "sucesso": true,
-  "mensagem": "Entrada registrada com sucesso",
-  "aluno": {
-    "matricula": "MAT001",
-    "nome_completo": "João Silva Santos",
-    "turma": "Turma A"
-  },
-  "tipo": "entrada",
-  "hora": "07:30:45",
-  "timestamp": "2024-09-06T07:30:45.000Z"
+  "student_id": 1,
+  "date": "2026-11-07",
+  "status": "presente",
+  "notes": "Entrada via QR Code na portaria principal"
+}
+```
+- **Resposta de Sucesso (HTTP 201 / 200)**:
+```json
+{
+  "message": "Presença registrada com sucesso",
+  "data": {
+    "id": 154,
+    "aluno_id": 1,
+    "data": "2026-11-07",
+    "presente": "presente",
+    "observacoes": "Entrada via QR Code na portaria principal",
+    "data_criacao": "2026-11-07T10:30:00.000Z"
+  }
 }
 ```
 
-### QR Code - Erro
-```json
-{
-  "sucesso": false,
-  "erro": "QR Code inválido ou aluno não encontrado"
-}
-```
-
-### Confirmação Manual - Sucesso
-```json
-{
-  "sucesso": true,
-  "mensagem": "Presença de 3 alunos registrada com sucesso",
-  "total": 3,
-  "registros": [
-    {
-      "aluno_id": 1,
-      "matricula": "MAT001",
-      "nome_completo": "João Silva Santos",
-      "tipo": "entrada",
-      "hora": "07:35:00"
-    },
-    {
-      "aluno_id": 2,
-      "matricula": "MAT002",
-      "nome_completo": "Ana Paula Costa",
-      "tipo": "entrada",
-      "hora": "07:35:00"
-    },
-    {
-      "aluno_id": 3,
-      "matricula": "MAT003",
-      "nome_completo": "Pedro Oliveira",
-      "tipo": "entrada",
-      "hora": "07:35:00"
-    }
-  ]
-}
-```
-
-### Confirmação Manual - Erro
-```json
-{
-  "sucesso": false,
-  "erro": "Nenhum aluno selecionado"
-}
+### 5.2. Estrutura da Tabela no MySQL (`presencas`)
+```sql
+CREATE TABLE IF NOT EXISTS presencas (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  aluno_id INT NOT NULL,
+  data DATE NOT NULL,
+  presente ENUM('presente', 'ausente') DEFAULT 'presente',
+  observacoes VARCHAR(255) NULL,
+  data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  data_atualizacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (aluno_id) REFERENCES alunos(id) ON DELETE CASCADE,
+  UNIQUE KEY uq_aluno_data (aluno_id, data)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 ```
 
 ---
 
-Pronto para implementar!
+## 6. Tratamento de Fuso Horário (Timezone BRT)
+
+> [!IMPORTANT]
+> O BipEscola utiliza estritamente o utilitário compartilhado [`getLocalDateString()`](file:///mobile/src/shared/utils/dateUtils.js) em todas as telas de chamada e histórico do aplicativo mobile.
+
+### O Problema do `toISOString()`
+Em sistemas rodando no fuso horário do Brasil (UTC-3), o método JavaScript padrão `.toISOString().split('T')[0]` gera a data do dia seguinte a partir das 21:00 BRT (pois `21:00 BRT` = `00:00 UTC` do dia subsequente). Isso fazia com que uma chamada noturna ou registros após as 21h fossem gravados incorretamente no dia de amanhã.
+
+### A Solução Implementada
+A função `getLocalDateString(d = new Date())` extrai o ano, mês e dia locais com `getFullYear()`, `getMonth() + 1` e `getDate()`, formatando deterministicamente como `YYYY-MM-DD` de acordo com a data local do dispositivo, eliminando 100% dos erros de data incorreta.

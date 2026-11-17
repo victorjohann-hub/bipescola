@@ -1,8 +1,9 @@
+import * as studentService from "../services/studentService.js";
 import * as attendanceService from "../services/attendanceService.js";
 
 export async function createAttendance(req, res) {
   try {
-    const { aluno_id, data, presente } = req.body;
+    const { aluno_id, data, presente } = req.body ?? {};
 
     if (!aluno_id || !data || presente === undefined) {
       return res.status(400).json({
@@ -28,8 +29,6 @@ export async function createAttendance(req, res) {
       data: attendance
     });
   } catch (error) {
-    console.error(error);
-
     if (error.code === "ER_DUP_ENTRY") {
       return res.status(409).json({
         error: "A presença desse aluno já foi registrada nessa data"
@@ -44,15 +43,32 @@ export async function createAttendance(req, res) {
 
 export async function listAttendanceByStudent(req, res) {
   try {
-    const { id } = req.params;
+    const id = Number(req.params.id);
 
-    const attendance =
-      await attendanceService.getAttendanceByStudent(id);
+    if (!Number.isInteger(id)) {
+      return res.status(400).json({
+        error: "ID do aluno inválido"
+      });
+    }
+
+    if (req.user && req.user.role === 'PARENT') {
+      const student = await studentService.getStudentById(id);
+      if (!student) {
+        return res.status(404).json({
+          error: "Aluno não encontrado"
+        });
+      }
+      if (student.id_pai !== Number(req.user.id)) {
+        return res.status(403).json({
+          error: "Acesso negado: você não tem permissão para visualizar este aluno"
+        });
+      }
+    }
+
+    const attendance = await attendanceService.getAttendanceByStudent(id);
 
     return res.status(200).json(attendance);
   } catch (error) {
-    console.error(error);
-
     return res.status(500).json({
       error: "Erro ao buscar presença do aluno"
     });
@@ -63,13 +79,10 @@ export async function listAttendanceByDate(req, res) {
   try {
     const { data } = req.params;
 
-    const attendance =
-      await attendanceService.getAttendanceByDate(data);
+    const attendance = await attendanceService.getAttendanceByDate(data);
 
     return res.status(200).json(attendance);
   } catch (error) {
-    console.error(error);
-
     return res.status(500).json({
       error: "Erro ao buscar presenças da data"
     });
@@ -78,10 +91,15 @@ export async function listAttendanceByDate(req, res) {
 
 export async function getAttendance(req, res) {
   try {
-    const { id } = req.params;
+    const id = Number(req.params.id);
 
-    const attendance =
-      await attendanceService.getAttendanceById(id);
+    if (!Number.isInteger(id)) {
+      return res.status(400).json({
+        error: "ID da presença inválido"
+      });
+    }
+
+    const attendance = await attendanceService.getAttendanceById(id);
 
     if (!attendance) {
       return res.status(404).json({
@@ -89,10 +107,17 @@ export async function getAttendance(req, res) {
       });
     }
 
+    if (req.user && req.user.role === 'PARENT') {
+      const student = await studentService.getStudentById(attendance.aluno_id);
+      if (!student || student.id_pai !== Number(req.user.id)) {
+        return res.status(403).json({
+          error: "Acesso negado"
+        });
+      }
+    }
+
     return res.status(200).json(attendance);
   } catch (error) {
-    console.error(error);
-
     return res.status(500).json({
       error: "Erro ao buscar presença"
     });
@@ -101,8 +126,15 @@ export async function getAttendance(req, res) {
 
 export async function updateAttendance(req, res) {
   try {
-    const { id } = req.params;
-    const { data, presente } = req.body;
+    const id = Number(req.params.id);
+
+    if (!Number.isInteger(id)) {
+      return res.status(400).json({
+        error: "ID da presença inválido"
+      });
+    }
+
+    const { data, presente } = req.body ?? {};
 
     if (!data || presente === undefined) {
       return res.status(400).json({
@@ -110,11 +142,10 @@ export async function updateAttendance(req, res) {
       });
     }
 
-    const attendance =
-      await attendanceService.updateAttendance(id, {
-        data,
-        presente
-      });
+    const attendance = await attendanceService.updateAttendance(id, {
+      data,
+      presente
+    });
 
     if (!attendance) {
       return res.status(404).json({
@@ -127,8 +158,6 @@ export async function updateAttendance(req, res) {
       data: attendance
     });
   } catch (error) {
-    console.error(error);
-
     return res.status(500).json({
       error: "Erro ao atualizar presença"
     });
@@ -137,10 +166,15 @@ export async function updateAttendance(req, res) {
 
 export async function deleteAttendance(req, res) {
   try {
-    const { id } = req.params;
+    const id = Number(req.params.id);
 
-    const deleted =
-      await attendanceService.deleteAttendance(id);
+    if (!Number.isInteger(id)) {
+      return res.status(400).json({
+        error: "ID da presença inválido"
+      });
+    }
+
+    const deleted = await attendanceService.deleteAttendance(id);
 
     if (!deleted) {
       return res.status(404).json({
@@ -152,8 +186,6 @@ export async function deleteAttendance(req, res) {
       message: "Presença excluída com sucesso"
     });
   } catch (error) {
-    console.error(error);
-
     return res.status(500).json({
       error: "Erro ao excluir presença"
     });
@@ -175,7 +207,6 @@ export async function getAttendanceHistory(req, res) {
 
     return res.status(200).json(result);
   } catch (error) {
-    console.error("Erro ao buscar histórico de presenças:", error);
     return res.status(500).json({
       error: "Erro ao buscar histórico de presenças"
     });

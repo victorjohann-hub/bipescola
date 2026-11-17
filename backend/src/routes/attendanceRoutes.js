@@ -38,6 +38,7 @@ router.get(
 router.get(
   "/data/:data",
   authMiddleware,
+  roleMiddleware("ADM", "PROF", "PORTEIRO"),
   listAttendanceByDate
 );
 
