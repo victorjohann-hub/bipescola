@@ -17,6 +17,7 @@ import { markAttendanceAPI } from "@shared/api/schoolApi";
 import { colors, radius, shadows, spacing, typography } from "@shared/theme";
 import { useResponsiveLayout } from "@shared/hooks/useResponsiveLayout";
 import { playCheckinBeep } from "@shared/utils/soundPlayer";
+import { getLocalDateString } from "@shared/utils/dateUtils";
 
 export const ClassListScreen = ({ navigation }) => {
   const { isTablet } = useResponsiveLayout();
@@ -63,7 +64,7 @@ export const ClassListScreen = ({ navigation }) => {
   };
 
   const submitAttendance = async (aluno_id, presente, silentSuccess = false) => {
-    const today = new Date().toISOString().split("T")[0];
+    const today = getLocalDateString();
     setSessionMarks((prev) => ({ ...prev, [aluno_id]: "saving" }));
     try {
       await markAttendanceAPI({ aluno_id, data: today, presente });

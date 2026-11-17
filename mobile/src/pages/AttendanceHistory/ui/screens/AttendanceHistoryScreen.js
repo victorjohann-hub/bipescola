@@ -18,6 +18,7 @@ import { getAttendanceHistoryAPI } from "@shared/api/schoolApi";
 import { listClassesAPI } from "@shared/api/adminApi";
 import { apiClient } from "@shared/api/apiClient";
 import { useResponsiveLayout } from "@shared/hooks/useResponsiveLayout";
+import { getLocalDateString } from "@shared/utils/dateUtils";
 
 const PERIODS = [
   { id: "today", label: "Hoje" },
@@ -47,7 +48,7 @@ export const AttendanceHistoryScreen = () => {
 
   const getDateParams = useCallback((periodId) => {
     const today = new Date();
-    const formatDate = (d) => d.toISOString().split("T")[0];
+    const formatDate = (d) => getLocalDateString(d);
 
     if (periodId === "today") {
       return { data: formatDate(today) };

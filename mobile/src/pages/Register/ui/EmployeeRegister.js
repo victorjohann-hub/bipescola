@@ -25,14 +25,12 @@ export const EmployeeRegister = () => {
   const { isTablet } = useResponsiveLayout();
   const [loading, setLoading] = useState(false);
   const [nome, setNome] = useState("");
-  const [telefone, setTelefone] = useState("");
   const [email, setEmail] = useState("");
-  const [cpf, setCpf] = useState("");
   const [role, setRole] = useState("PROF");
 
   const handleRegister = async () => {
     if (!nome.trim() || !email.trim()) {
-      Alert.alert("Atenção", "Preencha ao menos Nome e Email.");
+      Alert.alert("Atenção", "Preencha o Nome e o E-mail Institucional.");
       return;
     }
     try {
@@ -45,15 +43,13 @@ export const EmployeeRegister = () => {
       const tempPass = res?.tempPassword || "Definida no sistema";
       Alert.alert(
         "Sucesso",
-        `Cadastro de funcionário (${role}) realizado com sucesso!\n\nE-mail: ${email}\nSenha Temporária: ${tempPass}`,
+        `Cadastro de funcionário (${role}) realizado com sucesso!\n\nE-mail: ${email.trim()}\nSenha Temporária: ${tempPass}`,
         [
           {
             text: "OK",
             onPress: () => {
               setNome("");
-              setTelefone("");
               setEmail("");
-              setCpf("");
             },
           },
         ]
@@ -89,14 +85,6 @@ export const EmployeeRegister = () => {
           />
           <RegisterInput
             containerStyle={isTablet && styles.halfField}
-            label="Telefone (Opcional)"
-            placeholder="Ex: (79) 91234-5678"
-            keyboardType="phone-pad"
-            value={telefone}
-            onChangeText={setTelefone}
-          />
-          <RegisterInput
-            containerStyle={isTablet && styles.halfField}
             label="E-mail Institucional"
             placeholder="Ex: carlos@bipescola.com"
             keyboardType="email-address"
@@ -104,14 +92,6 @@ export const EmployeeRegister = () => {
             required
             value={email}
             onChangeText={setEmail}
-          />
-          <RegisterInput
-            containerStyle={isTablet && styles.halfField}
-            label="CPF (Opcional)"
-            placeholder="Ex: 123.456.789-00"
-            keyboardType="numeric"
-            value={cpf}
-            onChangeText={setCpf}
           />
         </View>
 

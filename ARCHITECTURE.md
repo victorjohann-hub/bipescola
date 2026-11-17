@@ -230,21 +230,30 @@ npm install
 ### Executando Testes Específicos
 Para rodar apenas uma categoria ou arquivo de teste:
 ```bash
-# Apenas testes unitários
+# Apenas testes unitários do backend
 npm test -- tests/unit/
 
-# Apenas testes de integração
+# Apenas testes de integração do backend
 npm test -- tests/integration/
 
 # Teste de um módulo específico
 npm test -- tests/integration/attendances.integration.test.js
+
+# Testes automatizados do mobile
+cd ../mobile
+npm test
 ```
 
 ---
 
 ## 📈 7. Relatório de Cobertura de Código (Quality Gate)
 
-A suíte conta com **17 suítes de testes** e **233 testes automatizados**, atingindo **100% de sucesso**.
+A suíte conta com **22 suítes de testes** e **268 testes automatizados** distribuídos entre backend e frontend mobile, atingindo **100% de sucesso**.
+
+### Backend (Node.js ESM + Jest)
+- **17 suítes de testes**
+- **251 testes unitários e de integração**
+- **100% aprovados**
 
 ```
 --------------------------|---------|----------|---------|---------|-------------------
@@ -268,6 +277,12 @@ All files                 |   96.13 |    86.02 |     100 |   96.10 | ✅ Meta > 
  backend/src/services     |     100 |    97.67 |     100 |     100 | ✅ 100%
 --------------------------|---------|----------|---------|---------|-------------------
 Total Test Suites: 17 passed / 17 total (100%)
-Total Tests:       233 passed / 233 total (100%)
-Tempo Médio:       ~7.2 segundos
+Total Tests:       251 passed / 251 total (100%)
+Tempo Médio:       ~6.5 segundos
 ```
+
+### Mobile (React Native Expo + Jest)
+- **5 suítes de testes**
+- **17 testes unitários e de componentes** (incluindo utilitários de timezone `getLocalDateString`, formatadores e autenticação)
+- **100% aprovados**
+- Execução: `cd mobile && npm test`

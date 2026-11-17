@@ -19,35 +19,29 @@ export const ParentRegister = () => {
   const { isTablet } = useResponsiveLayout();
   const [loading, setLoading] = useState(false);
   const [nome, setNome] = useState("");
-  const [telefone, setTelefone] = useState("");
   const [email, setEmail] = useState("");
-  const [cpf, setCpf] = useState("");
-  const [senha, setSenha] = useState("");
 
   const handleRegister = async () => {
-    if (!nome || !email) {
+    if (!nome.trim() || !email.trim()) {
       Alert.alert(
         "Atenção",
-        "Preencha ao menos Nome e Email do responsável."
+        "Preencha o Nome e o E-mail do responsável."
       );
       return;
     }
     try {
       setLoading(true);
-      const res = await createParentAPI({ nome, email });
+      const res = await createParentAPI({ nome: nome.trim(), email: email.trim() });
       const tempPass = res?.tempPassword || "Definida no sistema";
       Alert.alert(
         "Sucesso",
-        `Cadastro de responsável realizado com sucesso!\n\nE-mail: ${email}\nSenha Temporária: ${tempPass}`,
+        `Cadastro de responsável realizado com sucesso!\n\nE-mail: ${email.trim()}\nSenha Temporária: ${tempPass}`,
         [
           {
             text: "OK",
             onPress: () => {
               setNome("");
-              setTelefone("");
               setEmail("");
-              setCpf("");
-              setSenha("");
             },
           },
         ]
@@ -73,19 +67,11 @@ export const ParentRegister = () => {
         <View style={[styles.fieldsGrid, isTablet && styles.fieldsGridTablet]}>
           <RegisterInput
             containerStyle={isTablet && styles.halfField}
-            label="Nome Completo"
+            label="Nome Completo do Responsável"
             placeholder="Ex: Maria Oliveira"
             required
             value={nome}
             onChangeText={setNome}
-          />
-          <RegisterInput
-            containerStyle={isTablet && styles.halfField}
-            label="Telefone / WhatsApp"
-            placeholder="Ex: (79) 91234-5678"
-            keyboardType="phone-pad"
-            value={telefone}
-            onChangeText={setTelefone}
           />
           <RegisterInput
             containerStyle={isTablet && styles.halfField}
@@ -97,51 +83,17 @@ export const ParentRegister = () => {
             value={email}
             onChangeText={setEmail}
           />
-          <RegisterInput
-            containerStyle={isTablet && styles.halfField}
-            label="CPF"
-            placeholder="Ex: 123.456.789-00"
-            keyboardType="numeric"
-            value={cpf}
-            onChangeText={setCpf}
-          />
-          <RegisterInput
-            containerStyle={isTablet && styles.halfField}
-            label="Senha Inicial (Opcional - Gerada automaticamente)"
-            placeholder="••••••••"
-            isPassword
-            value={senha}
-            onChangeText={setSenha}
-          />
         </View>
 
-        <View style={[styles.sectionHeader, { marginTop: spacing.md }]}>
-          <Feather name="book-open" size={18} color={colors.secondary} />
-          <Text style={styles.sectionTitle}>
-            Vínculo de Aluno(a) Dependente
-          </Text>
+        <View style={styles.guidanceBox}>
+          <Feather name="info" size={18} color={colors.secondary} />
+          <View style={{ flex: 1 }}>
+            <Text style={styles.guidanceTitle}>Vínculo de Alunos Dependentes</Text>
+            <Text style={styles.guidanceText}>
+              A credencial de acesso do responsável será gerada com senha temporária. Para vincular os filhos a esta conta, acesse o módulo "Gerenciar Alunos" após concluir este cadastro.
+            </Text>
+          </View>
         </View>
-
-        <View style={[styles.fieldsGrid, isTablet && styles.fieldsGridTablet]}>
-          <RegisterInput
-            containerStyle={isTablet && styles.halfField}
-            label="Nome do Aluno(a)"
-            placeholder="Ex: Pedro Oliveira"
-          />
-          <RegisterInput
-            containerStyle={isTablet && styles.halfField}
-            label="CPF / Matrícula do Aluno(a)"
-            placeholder="Ex: 123.456.789-00"
-            keyboardType="numeric"
-          />
-        </View>
-
-        <TouchableOpacity style={styles.addStudentButton} activeOpacity={0.75}>
-          <Feather name="plus-circle" size={16} color={colors.secondary} />
-          <Text style={styles.addStudentText}>
-            Adicionar outro dependente
-          </Text>
-        </TouchableOpacity>
 
         <View
           style={[
@@ -204,22 +156,26 @@ const styles = StyleSheet.create({
   halfField: {
     width: "48.5%",
   },
-  addStudentButton: {
+  guidanceBox: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     backgroundColor: colors.secondarySurface,
-    alignSelf: "flex-start",
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
     borderRadius: radius.md,
-    gap: spacing.xs,
-    marginTop: spacing.xs,
-    marginBottom: spacing.xl,
+    padding: spacing.md,
+    gap: spacing.sm,
+    marginTop: spacing.md,
+    marginBottom: spacing.lg,
   },
-  addStudentText: {
+  guidanceTitle: {
     fontSize: 13,
     fontFamily: "Roboto_700Bold",
     color: colors.secondary,
+    marginBottom: 2,
+  },
+  guidanceText: {
+    ...typography.caption,
+    color: colors.textSecondary,
+    lineHeight: 18,
   },
   buttonContainer: {
     width: "100%",

@@ -187,9 +187,10 @@ INSERT INTO turmas (nome, status) VALUES
 -- PROF: prof@emei.com / prof123
 -- ADM: admin@emei.com / admin123
 INSERT INTO users (email, senha, nome, aniversario, role, firstLogin, ativo) VALUES
-('pai@email.com', '5f4dcc3b5aa765d61d8327deb882cf99', 'Maria Silva Santos', '1985-06-15', 'PARENT', true, 'sim'),
-('prof@emei.com', '58e53f64b2b35524696f1d27f44f5c27', 'Professora Escola', '1990-03-20', 'PROF', true, 'sim'),
-('admin@emei.com', '0192023a7bbd73250516f069df18b500', 'Coordenadora Escola', '1988-11-10', 'ADM', true, 'sim');
+('pai@email.com', '$2b$10$4e98Q9IEsVhiT5vto2oNmuaM04ZV4/wNEwiUFC.G2su6Cw7QewYWu', 'Maria Silva Santos', '1985-06-15', 'PARENT', true, 'sim'),
+('prof@emei.com', '$2b$10$t0TdN2cnVmk7sFtIzvqBCew3aEHRMBxb/Y9r6yOBxUX1kniYku57C', 'Professora Escola', '1990-03-20', 'PROF', true, 'sim'),
+('admin@emei.com', '$2b$10$lonT2EU4iCSXNoaJcj8V8uphdG0lEZHn9Dv8.B6PHxMaUd.CQanEe', 'Coordenadora Escola', '1988-11-10', 'ADM', true, 'sim'),
+('porteiro@emei.com', '$2b$10$A9WArw./5lFX31M5bXhI..Q.bIa2BG.4EK6.axNEpRQCUr6ex.sPe', 'Portaria Escola', '1982-04-12', 'PORTEIRO', true, 'sim');
 
 -- Inserir alunos
 -- MAT001 e MAT002 sao filhos de Maria Silva (id_pai = 1)

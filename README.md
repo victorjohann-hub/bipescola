@@ -1,353 +1,257 @@
 <div align="center">
   <h1>🏫 BipEscola</h1>
-  <p><strong>Sistema de Controle de Presença Escolar</strong></p>
+  <p><strong>Sistema de Controle de Presença Escolar e Gestão Institucional</strong></p>
 
   <p>
     <img src="https://img.shields.io/badge/Node.js-43853D?style=for-the-badge&logo=node.js&logoColor=white" alt="NodeJS" />
     <img src="https://img.shields.io/badge/Express.js-404D59?style=for-the-badge" alt="ExpressJS" />
     <img src="https://img.shields.io/badge/MySQL-005C84?style=for-the-badge&logo=mysql&logoColor=white" alt="MySQL" />
+    <img src="https://img.shields.io/badge/React_Native-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React Native" />
+    <img src="https://img.shields.io/badge/Expo-000020?style=for-the-badge&logo=expo&logoColor=white" alt="Expo" />
   </p>
   
-  <p>Sistema completo para registrar e gerenciar entrada/saída de alunos em escola municipal via QR Code ou confirmação manual.</p>
+  <p>Solução integrada de software para controle de fluxo de alunos, chamada diária, carteirinha digital QR Code e comunicação com responsáveis.</p>
 </div>
 
 ---
 
 ## 📖 Sumário
-- [Visão Geral](#-visão-geral)
-- [Stack Tecnológico](#-stack-tecnológico)
-- [Como Executar](#-como-executar)
-- [🧪 Testes Automatizados & QA](#-testes-automatizados--qa)
-- [🏛️ Arquitetura & Especificação OpenAPI](#-arquitetura--especificação-openapi)
-- [Permissões por Perfil](#-permissões-por-perfil)
-- [Status de Desenvolvimento](#-status-de-desenvolvimento)
-- [Estrutura do Projeto](#-estrutura-do-projeto)
-- [Banco de Dados](#-banco-de-dados)
-- [Documentação da API](#-documentação-da-api)
+- [🎯 Visão Geral](#-visão-geral)
+- [💻 Stack Tecnológico](#-stack-tecnológico)
+- [🔐 Controle de Acesso e Perfis (RBAC)](#-controle-de-acesso-e-perfis-rbac)
+- [📱 Métodos de Frequência e Presença](#-métodos-de-frequência-e-presença)
+- [🚀 Como Executar o Sistema](#-como-executar-o-sistema)
+- [🧪 Testes Automatizados & Qualidade de Software](#-testes-automatizados--qualidade-de-software)
+- [🏛️ Arquitetura do Sistema](#-arquitetura-do-sistema)
+- [📂 Estrutura do Repositório](#-estrutura-do-repositório)
+- [🔌 Referência Resumida de Endpoints](#-referência-resumida-de-endpoints)
+- [🔑 Credenciais Padrão](#-credenciais-padrão)
 
 ---
 
 ## 🎯 Visão Geral
 
-O **BipEscola** automatiza o registro de presença escolar oferecendo dois métodos práticos:
-1. **📱 QR Code:** Leitura rápida quando o aluno entra ou sai da escola.
-2. **✅ Confirmação Manual:** Lista interativa com checkboxes para confirmar a presença de vários alunos simultaneamente.
+O **BipEscola** moderniza a gestão de presença e segurança em unidades escolares, atendendo desde a identificação rápida na portaria até o lançamento pedagógico do diário de classe.
 
-### Perfis de Usuário (Roles)
-- 👤 **PARENT (Pais/Responsáveis):** Acesso restrito. Visualizam apenas as informações e frequência de seus próprios filhos.
-- 👨‍🏫 **PROF (Professores/Coordenadores):** Visão de turmas, podem registrar presenças e gerar relatórios.
-- 🛠️ **ADM (Administradores):** Acesso total e irrestrito ao sistema e configurações.
+### Principais Módulos:
+1. **Controle de Presença Híbrido**: Registro via leitor óptico de QR Code na portaria ou chamada manual interativa (1-Toque) por turma.
+2. **Carteirinha Digital**: Geração em tempo real de QR Code seguro para os alunos, acessível pelos pais e equipe escolar.
+3. **Mural de Avisos Institucionais**: Envio de comunicados gerais para toda a escola ou direcionados a responsáveis específicos.
+4. **Secretaria Acadêmica & Painel ADM**: Gerenciamento completo de contas de usuários, permissões, turmas e enturmação de alunos.
+5. **Histórico & Frequência**: Acompanhamento analítico da assiduidade com filtros por período, turma e status.
 
 ---
 
 ## 💻 Stack Tecnológico
 
-**Backend:**
-- Node.js + Express 5.2.1
-- MySQL 2 (`mysql2/promise`)
-- Autenticação com JWT
-- Criptografia de senhas com Bcrypt
-
-**Principais Dependências:**
-```json
-{
-  "bcrypt": "^6.0.0",
-  "cors": "^2.8.6",
-  "dotenv": "^17.4.2",
-  "express": "^5.2.1",
-  "jsonwebtoken": "^9.0.3",
-  "mysql2": "^3.24.4"
-}
-```
+| Camada | Tecnologias Principais |
+|---|---|
+| **Backend** | Node.js (ESM), Express 5, MySQL 2 (`mysql2/promise`), JWT (`jsonwebtoken`), Bcrypt, Nodemailer |
+| **Frontend Mobile** | React Native, Expo 58, React Navigation 7, Expo Camera, Expo Audio, react-native-qrcode-svg |
+| **Qualidade & Testes** | Jest, Supertest, React Native Testing Library, Mocks ESM nativos |
+| **Banco de Dados** | MySQL 8.0+ com tabelas normalizadas e integridade referencial estrita |
 
 ---
 
-## 🚀 Como Executar
+## 🔐 Controle de Acesso e Perfis (RBAC)
+
+O sistema opera sob 4 perfis de permissão bem delimitados:
+
+| Ação / Permissão | PARENT (Pais) | PORTEIRO | PROF (Professores) | ADM (Gestão) |
+|---|:---:|:---:|:---:|:---:|
+| Ver Carteirinha QR dos Filhos | ✅ | ❌ | ✅ | ✅ |
+| Escanear QR Code na Portaria | ❌ | ✅ | ✅ | ✅ |
+| Realizar Chamada Manual por Turma | ❌ | ❌ | ✅ | ✅ |
+| Consultar Histórico e Frequência | Somente Filhos | ✅ | ✅ | ✅ |
+| Publicar Comunicados no Mural | ❌ | ❌ | ✅ | ✅ |
+| Gerenciar Usuários e Permissões | ❌ | ❌ | ❌ | ✅ |
+| Gerenciar Turmas e Salas | ❌ | ❌ | ❌ | ✅ |
+| Gerenciar e Matricular Alunos | ❌ | ❌ | ❌ | ✅ |
+
+---
+
+## 📱 Métodos de Frequência e Presença
+
+1. **Leitura Óptica de QR Code (Modo Totem / Portaria)**:
+   - O responsável ou aluno apresenta a carteirinha digital no app.
+   - O porteiro ou coordenador utiliza a câmera no modo totem.
+   - O código óptico padrão `aluno_<ID>` é decodificado instantaneamente com bipe sonoro de confirmação e persistido no banco via `POST /api/attendances`.
+2. **Chamada Manual por Turma (Diário de Classe 1-Toque)**:
+   - Professores selecionam a turma desejada e visualizam a listagem de estudantes matriculados.
+   - Botões rápidos de **Presente (✓)** e **Falta (✕)** registram a assiduidade individual com retorno visual imediato.
+
+---
+
+## 🚀 Como Executar o Sistema
 
 ### Pré-requisitos
-- Node.js v18+
-- MySQL 8.0+
-- npm ou yarn
+- **Node.js**: v18 ou superior
+- **MySQL**: 8.0 ou superior instalado e em execução
+- **Expo Go** (opcional, para testes no celular físico)
 
-### 🖥️ Executando o Backend
-
-1. **Crie o banco de dados**
+### 1. Inicializar o Banco de Dados
+Abra o terminal MySQL e execute o script DDL:
 ```bash
-mysql -u root -p < database.sql
+mysql -u root -p < database/database.sql
 ```
 
-2. **Instale as dependências e configure o ambiente**
+### 2. Configurar e Iniciar o Backend
 ```bash
 cd backend
 npm install
 ```
-Crie um arquivo `.env` na pasta `backend` com as seguintes variáveis:
+
+Crie o arquivo `.env` dentro da pasta `backend`:
 ```env
 PORT=3000
 DB_HOST=localhost
 DB_USER=root
 DB_PASSWORD=sua_senha
 DB_NAME=bipescola
-JWT_SECRET=sua_chave_secreta
+JWT_SECRET=bipescola_jwt_secret_key_2026
 NODE_ENV=development
+RESET_TOKEN_LOG=true
 ```
 
-3. **Inicie o servidor**
+Inicie o servidor:
 ```bash
 npm start
 ```
-O servidor estará rodando em: `http://localhost:3000`
+O servidor estará acessível em: `http://localhost:3000`
+
+### 3. Iniciar o Aplicativo Mobile (Expo)
+Em um novo terminal:
+```bash
+cd mobile
+npm install
+npm start
+```
+- Pressione **`w`** para abrir no navegador web.
+- Pressione **`a`** para abrir no emulador Android.
+- Pressione **`i`** para abrir no simulador iOS.
+- Ou escaneie o QR Code com o app **Expo Go** no smartphone conectado na mesma rede Wi-Fi.
+
+> 💡 **Inicialização Rápida no Windows**: Você também pode executar o arquivo `iniciar.bat` na raiz do projeto para inicializar o backend e o mobile simultaneamente.
 
 ---
 
-## 🧪 Testes Automatizados & QA
+## 🧪 Testes Automatizados & Qualidade de Software
 
-O backend conta com uma suíte de testes unitários e de integração desenvolvida sob rigorosos padrões de confiabilidade de software (QA), com cobertura de testes superior a **96%** no core do sistema e **100% de aprovação (233 testes em 17 suítes)**.
+O ecossistema dispõe de testes unitários e de integração abrangendo regras de negócio, autorização RBAC, modelos relacionais e componentes visuais responsivos.
 
-### Executando os Testes
-Acesse a pasta do backend e utilize os comandos:
+### Resultados da Suíte:
+- **Backend**: **251 testes passando em 17 suítes** (> 96% de cobertura de código).
+- **Mobile**: **17 testes passando em 5 suítes** (utilitários, layout adaptativo, sound player e APIs).
 
 ```bash
+# Rodar testes do backend
 cd backend
-
-# Executar todos os testes
 npm test
 
-# Executar todos os testes com relatório detalhado de cobertura (Coverage)
+# Rodar testes com relatório de cobertura
 npm run test:coverage
 
-# Executar testes em modo interativo contínuo (Watch)
-npm run test:watch
-```
-
-### Categorias de Testes
-- **Testes Unitários (`backend/tests/unit/`)**: Isolam middlewares (`authMiddleware`, `roleMiddleware`), services (`userService`, `attendanceService`, `classService`, `postService`, `studentService`, `roleServices`), models SQL e pool de conexões (`db.js`) utilizando mocks ESM determinísticos.
-- **Testes de Integração (`backend/tests/integration/`)**: Validam requisições HTTP reais de ponta a ponta via `supertest`, abrangendo caminhos felizes, validações de entrada inválida (400), falhas de autenticação (401), permissões RBAC negadas (403), recursos inexistentes (404), conflitos de duplicidade (409) e tolerância a falhas (500).
-
----
-
-## 🏛️ Arquitetura & Especificação OpenAPI
-
-- 📘 **Documento de Arquitetura Completo**: Consulte o [ARCHITECTURE.md](ARCHITECTURE.md) para diagramas de fluxo de dados (Mermaid), detalhamento de camadas, regras de negócio e estratégia de resiliência.
-- 📄 **Especificação OpenAPI / Swagger**: A especificação OpenAPI 3.0 completa da API está disponível em [`docs/openapi.json`](docs/openapi.json), contendo todos os schemas de entrada, saída, parâmetros e autenticação Bearer JWT.
-
----
-
-### 📱 Executando o Frontend (Aplicativo Mobile)
-
-O frontend foi construído utilizando **React Native com Expo**. Para rodar no emulador ou no seu celular físico:
-
-1. **Acesse a pasta do aplicativo e instale as dependências**
-```bash
+# Rodar testes do mobile
 cd ../mobile
-npm install
+npm test
 ```
 
-2. **Inicie o Expo**
-```bash
-npm start
-```
+---
 
-3. **Inicie o aplicativo**
-Após rodar o comando acima, um menu com QR Code aparecerá no terminal. Você pode:
-- **Ler o QR Code** com o aplicativo [Expo Go](https://expo.dev/go) no seu celular.
-- Pressionar `a` para abrir no emulador **Android**.
-- Pressionar `i` para abrir no simulador **iOS**.
+## 🏛️ Arquitetura do Sistema
+
+O sistema é desenhado em camadas desacopladas (Controller ➔ Service ➔ Model ➔ Database), com documentação completa disponível em:
+- 📘 [ARCHITECTURE.md](ARCHITECTURE.md): Diagramas de sequência Mermaid, arquitetura de resiliência e tratamento de exceções.
+- 📄 [`docs/openapi.json`](docs/openapi.json): Especificação formal OpenAPI 3.0 de todos os endpoints REST.
+- 🔑 [credenciais.md](credenciais.md): Lista completa de usuários padrão de testes e demonstração.
 
 ---
 
-## 🔐 Permissões por Perfil
-
-| Ação | PARENT | PROF | ADM |
-|------|--------|------|-----|
-| Ver alunos | Somente Filhos | Todos | Todos |
-| Registrar presença | Somente Filhos | Todos | Todos |
-| Gerar relatórios | Não | Sim | Sim |
-| Gerenciar usuários | Não | Não | Sim |
-| Gerenciar turmas | Não | Não | Sim |
-| Deletar dados | Não | Não | Sim |
-
----
-
-## 🚧 Status de Desenvolvimento
-
-### ✅ Implementado
-- [x] Modelagem do banco de dados (5 tabelas normalizadas)
-- [x] Setup do Express
-- [x] Estrutura padrão MVC
-- [x] Endpoint de criação de pai/responsável
-
-### ⏳ Pendente
-- [ ] Autenticação JWT
-- [ ] Fluxo de gestão de alunos
-- [ ] Registro de presença via QR Code
-- [ ] Registro de presença manual
-- [ ] Consulta de histórico
-- [ ] Geração de relatórios
-- [ ] Desenvolvimento Frontend/Mobile
-- [ ] Cobertura de testes
-
----
-
-## 📂 Estrutura do Projeto
-
-<details>
-<summary><b>Clique para expandir</b></summary>
+## 📂 Estrutura do Repositório
 
 ```text
 bipescola/
-├── backend/
-│   ├── server.js
-│   ├── package.json
-│   └── src/
-│       ├── controllers/
-│       │   ├── userController.js
-│       │   ├── studentController.js
-│       │   ├── parentController.js
-│       │   ├── teacherController.js
-│       │   ├── admController.js
-│       │   └── schoolController.js
-│       ├── models/
-│       ├── services/
-│       ├── routes/
-│       ├── middlewares/
-│       └── database/
-├── database.sql
+├── backend/                  # Servidor API RESTful Node.js + Express
+│   ├── src/
+│   │   ├── controllers/      # Controladores HTTP (validação e status)
+│   │   ├── services/         # Regras de negócio, hashing e auth
+│   │   ├── models/           # Abstração de queries SQL parametrizadas
+│   │   ├── routes/           # Mapeamento de rotas e middlewares RBAC
+│   │   ├── middlewares/      # authMiddleware (JWT) e roleMiddleware
+│   │   └── database/         # Pool de conexões MySQL 2
+│   ├── tests/                # Testes unitários e de integração (Jest)
+│   ├── app.js                # Configuração do Express, CORS e erros globais
+│   └── server.js             # Inicialização do servidor HTTP e verificação de ping
+├── mobile/                   # Aplicativo React Native & Expo
+│   ├── src/
+│   │   ├── app/              # Ponto de entrada, fontes e navegação mestre
+│   │   ├── pages/            # Módulos: Admin, Presença, Frequência, Avisos, Perfil
+│   │   └── shared/           # API clients, design tokens, hooks responsivos, sons
+│   └── package.json
+├── database/
+│   └── database.sql          # Script DDL com constraints, FKs e dados iniciais
+├── docs/                     # Documentação de banco, presença e OpenAPI 3.0
+├── credenciais.md            # Guia de credenciais padrão para testes
+├── ARCHITECTURE.md           # Guia arquitetural completo e relatório de QA
 └── README.md
 ```
-</details>
 
 ---
 
-## 🗄️ Banco de Dados
+## 🔌 Referência Resumida de Endpoints
 
-<details>
-<summary><b>Setup, Modelagem e Dados de Teste</b></summary>
+### Autenticação & Usuários
+- `POST /api/users/login` - Autenticação por e-mail e senha (retorna JWT e perfil)
+- `GET /api/users` - Listagem de usuários (restrito a ADM)
+- `POST /api/users` - Cadastro de usuário com senha temporária
+- `PUT /api/users/:id` - Atualização cadastral
+- `DELETE /api/users/:id` - Exclusão de usuário (protegido contra auto-exclusão do ADM)
+- `PUT /api/users/change-password` - Alteração da própria senha
+- `POST /api/users/forgot-password` / `POST /api/users/reset-password` - Recuperação de senha
 
-### Setup
-```bash
-mysql -u root -p < database.sql
-```
+### Turmas
+- `GET /api/class` (aliases `/api/classes`, `/api/turmas`) - Listagem de turmas ativas/inativas
+- `POST /api/class` - Criação de nova turma (ADM)
+- `PUT /api/class/:id` - Edição de turma (ADM)
+- `DELETE /api/class/:id` - Exclusão de turma (impede exclusão se houver alunos vinculados)
 
-### Tabelas Principais
-1. **TURMAS:** `id`, `nome`, `data_criacao`, `status`
-2. **USERS:** `id`, `email`, `senha`, `nome`, `aniversario`, `role`, `ativo`
-3. **ALUNOS:** `id`, `matricula`, `nome`, `turma_id`, `id_pai`, `faltas`, `status`
-4. **QR_CODES:** `id`, `aluno_id`, `codigo_qr`, `ativo`
-5. **REGISTROS_MOVIMENTACAO:** `id`, `aluno_id`, `turma_id`, `tipo_movimentacao`, `data_registro`, `hora_registro`, `data_hora_completa`
+### Alunos
+- `GET /api/students` - Listagem completa de alunos
+- `GET /api/students/turma/:id` - Alunos de uma turma específica
+- `GET /api/students/pai/:id` - Filhos vinculados a um responsável
+- `POST /api/students` - Matrícula de aluno (ADM)
+- `PUT /api/students/:id` - Edição de matrícula e status (ADM)
+- `DELETE /api/students/:id` - Exclusão de aluno (ADM)
 
-### Normalização
-- **1FN:** Valores atômicos
-- **2FN:** Sem dependências parciais
-- **3FN:** Sem dependências transitivas
-- **Integridade:** Foreign Keys com ON DELETE RESTRICT/CASCADE
+### Presenças & Frequência
+- `POST /api/attendances` - Registro de presença (QR Code ou chamada)
+- `GET /api/attendances/historico` - Relatório com métricas e taxa de comparecimento
+- `GET /api/attendances/aluno/:id` - Histórico individual do estudante
+- `PUT /api/attendances/:id` - Correção de lançamento (ADM, PROF)
+- `DELETE /api/attendances/:id` - Exclusão de lançamento (ADM)
 
-### Índices Críticos
-- `alunos.idx_matricula`: Busca rápida por QR Code
-- `registros_movimentacao.idx_aluno_data`: Verificar presença diária
-- `registros_movimentacao.idx_data_hora_completa`: Otimização de relatórios
-
-### Dados de Teste (Mock)
-**Usuários:**
-- `pai@email.com` | `123456` | PARENT
-- `prof@emei.com` | `prof123` | PROF
-- `admin@emei.com` | `admin123` | ADM
-
-**Alunos (MAT001-MAT006):**
-- Turma 1º Ano A: João Silva Santos, Ana Paula Costa
-- Turma 1º Ano B: Pedro Oliveira, Lucia Ferreira
-- Turma 2º Ano A: Bruno Martins, Gabriela Rocha
-
-**QR Codes:** `QR_001_MAT001` até `QR_006_MAT006`
-
-</details>
-
-<details>
-<summary><b>SQL Essencial</b></summary>
-
-**Registrar entrada:**
-```sql
-INSERT INTO registros_movimentacao 
-(aluno_id, turma_id, tipo_movimentacao, data_registro, hora_registro, data_hora_completa)
-SELECT a.id, a.turma_id, 'entrada', CURDATE(), CURTIME(), NOW()
-FROM alunos a
-WHERE a.matricula = 'MAT001' AND a.status = 'ativo';
-```
-
-**Histórico:**
-```sql
-SELECT data_hora_completa, tipo_movimentacao, observacoes
-FROM registros_movimentacao
-WHERE matricula = 'MAT001'
-ORDER BY data_hora_completa DESC;
-```
-
-**Presentes hoje:**
-```sql
-SELECT a.nome, rm.hora_registro
-FROM registros_movimentacao rm
-JOIN alunos a ON rm.aluno_id = a.id
-WHERE rm.data_registro = CURDATE()
-  AND rm.id = (SELECT MAX(id) FROM registros_movimentacao rm2 
-               WHERE rm2.aluno_id = rm.aluno_id AND rm2.data_registro = CURDATE())
-  AND rm.tipo_movimentacao = 'entrada'
-ORDER BY a.nome;
-```
-
-**Relatório diário:**
-```sql
-SELECT t.nome AS turma,
-    COUNT(DISTINCT CASE WHEN rm.tipo_movimentacao = 'entrada' THEN rm.aluno_id END) AS presentes,
-    COUNT(DISTINCT a.id) - COUNT(DISTINCT CASE WHEN rm.tipo_movimentacao = 'entrada' THEN rm.aluno_id END) AS ausentes
-FROM alunos a
-LEFT JOIN turmas t ON a.turma_id = t.id
-LEFT JOIN registros_movimentacao rm ON a.id = rm.aluno_id AND rm.data_registro = CURDATE()
-WHERE a.status = 'ativo'
-GROUP BY t.id, t.nome;
-```
-</details>
+### Mural de Avisos
+- `GET /api/posts` - Lista avisos (pais veem apenas comunicados gerais ou direcionados)
+- `POST /api/posts` - Publicação de comunicado geral ou individual (ADM, PROF)
+- `PUT /api/posts/:id` / `DELETE /api/posts/:id` - Edição ou remoção de aviso
 
 ---
 
-## 🔌 Documentação da API
+## 🔑 Credenciais Padrão
 
-### Base URL
-```
-http://localhost:3000/api
-```
+Para testes imediatos após executar o `database/database.sql`:
 
-### Usuários
+| Role | E-mail | Senha |
+|---|---|---|
+| **ADM** | `admin@emei.com` | `admin123` |
+| **PROF** | `prof@emei.com` | `prof123` |
+| **PORTEIRO** | `porteiro@emei.com` | `portaria123` |
+| **PARENT** | `pai@email.com` | `123456` |
 
-#### `POST /users/parents`
-Criar novo pai/responsável.
-
-**Request:**
-```json
-{
-  "name": "Maria Silva",
-  "email": "maria@email.com"
-}
-```
-
-**Response (201):**
-```json
-{
-  "message": "Conta criada",
-  "tempPassword": "ABC123"
-}
-```
-
-<details>
-<summary><b>Endpoints Pendentes (TO DO)</b></summary>
-
-- `POST /attendance/qrcode`: Registrar entrada/saída via QR Code.
-- `POST /attendance/manual`: Registrar presença em lote.
-- `GET /attendance/historico/:matricula`: Ver histórico de um aluno.
-- `GET /attendance/presentes-hoje`: Ver alunos presentes na escola hoje.
-</details>
+Para mais detalhes e cenários adicionais com turmas e alunos semeados, consulte [credenciais.md](credenciais.md).
 
 ---
 
 <div align="center">
-  <sub>Licença ISC • BipEscola</sub>
+  <sub>BipEscola • Licença ISC • Confiabilidade, Segurança e Frequência Escolar</sub>
 </div>

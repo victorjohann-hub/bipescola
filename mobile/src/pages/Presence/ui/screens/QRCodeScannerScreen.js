@@ -17,6 +17,7 @@ import { markAttendanceAPI } from "@shared/api/schoolApi";
 import { colors, radius, shadows, spacing, typography } from "@shared/theme";
 import { useResponsiveLayout } from "@shared/hooks/useResponsiveLayout";
 import { playCheckinBeep } from "@shared/utils/soundPlayer";
+import { getLocalDateString } from "@shared/utils/dateUtils";
 
 export const QRCodeScannerScreen = ({ navigation }) => {
   const { isTablet } = useResponsiveLayout();
@@ -81,7 +82,7 @@ export const QRCodeScannerScreen = ({ navigation }) => {
     }
 
     const aluno_id = scannedData.split("_")[1];
-    const dataAtual = new Date().toISOString().split("T")[0];
+    const dataAtual = getLocalDateString();
     const horaAtual = new Date().toLocaleTimeString([], {
       hour: "2-digit",
       minute: "2-digit",
